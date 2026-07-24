@@ -37,9 +37,14 @@ buy upgrades/unlocks → survive the night → repeat.
 Class-based, one instance each: `EnvironmentBuilder` (env/collision),
 `GrassManager` (grass/cutting/piles/regrowth), `ToolManager` (equip/drop/swing),
 `Vehicle` (ride-on mower, cuts only — no cargo of its own), `CartManager`
-(pushable cart, driven like `Vehicle`, the only thing that collects grass),
-`DayNightManager`, `Economy`, `PlayerController` (camera-as-player + input
-dispatch), plus static `Utils`/`Input` objects and a module-level `CONFIG`.
+(pushable cart, driven like `Vehicle`, its own cargo — extra capacity beyond
+what the player can hand-carry, not the only way to collect grass),
+`DayNightManager`, `PlayerController` (camera-as-player + input dispatch),
+plus static `Utils`/`Input`/`Economy` objects and a module-level `CONFIG`.
+The player also hand-carries grass directly (`carriedGrass`, capped at
+`CONFIG.player.carryCapacity`) and can deposit it as a pile, load it into the
+cart, or sell it straight at the drop-off — the cart is a capacity upgrade,
+not a chokepoint.
 
 `Input` is one object: held-state booleans for movement, plus edge-triggered
 one-shot flags (`interact`, `drop`, `attack`) each with `consumeX()`. **This is
