@@ -1,0 +1,1302 @@
+<!--
+===========================================================================
+COMMIT LOG
+===========================================================================
+Date: 2026-07-24
+Version: v0.12 - Cheat Menu Bugfixes
+- Reason: v0.11.1's commit log only documented the grass-color fix, but the
+  actual diff also added the cheat menu, tree rework, balance numbers, and
+  a mower/cart turn-direction change - none logged. Per this project's
+  owner: all of that was directed intentionally, so left as-is here except
+  two genuine, unintentional bugs in the new cheat menu.
+- Changes:
+  * [Cheat Menu] `Input`'s mousedown listener sits on `document` and wasn't
+    guarded - clicking any control inside the cheat menu (the gold button,
+    the time slider) also set `Input.attack = true`, causing a stray tool
+    swing the instant the menu closed. Added a `mousedown` listener on
+    `#cheat-menu` with `stopPropagation()` (the existing `click` listener
+    only covered the `click` event, not the `mousedown` Input actually
+    listens for).
+  * [Cheat Menu] Opening the menu calls `document.exitPointerLock()`, which
+    fires `PointerLockControls`' pre-existing `'unlock'` handler and shows
+    the "click to start" blocker underneath the cheat menu - clicking that
+    visible area would silently re-lock the pointer while the cheat menu
+    stayed open on screen. Now explicitly hides the blocker when opening,
+    and calls `Player.controls.lock()` directly when closing (F2 again) -
+    no stray click-through needed either way.
+- NOT touched: the mower/cart turn-direction sign flip, tree visual rework,
+  balance numbers (carryCapacity/cart.capacity/dropOffPos/dropOffRadius) -
+  all intentional per the owner, out of scope for this bugfix pass.
+- Verification: `node --check` passed. Traced both fixes by hand: the new
+  `mousedown` listener fires before `document`'s (target-then-bubble order,
+  cheat-menu is the event target so its own listener runs first), so
+  `stopPropagation()` there reliably keeps `Input.attack` from being set by
+  clicks inside the menu. `Player.controls.lock()` is available at that
+  point in the script (`Player` is constructed before the main-loop/cheat-
+  menu section runs) and mirrors the existing `blocker` click-to-lock
+  pattern already used elsewhere in `PlayerController`.
+===========================================================================
+-->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Lawn Mower Simulator 3D</title>
+    <style>
+        body { margin: 0; overflow: hidden; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
+        canvas { display: block; }
+        
+        #ui-layer { position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; }
+        #crosshair { position: absolute; top: 50%; left: 50%; width: 6px; height: 6px; background: white; border-radius: 50%; transform: translate(-50%, -50%); mix-blend-mode: difference; }
+        
+        #blocker { position: absolute; width: 100%; height: 100%; background-color: rgba(0,0,0,0.8); display: flex; flex-direction: column; justify-content: center; align-items: center; color: white; pointer-events: auto; cursor: pointer; z-index: 10; }
+        #instructions { text-align: center; }
+        #instructions h1 { font-size: 36px; margin-bottom: 10px; color: #ffaa00; }
+        #instructions p { font-size: 18px; line-height: 1.5; }
+
+        #interact-msg { position: absolute; top: 60%; left: 50%; transform: translate(-50%, -50%); color: yellow; font-size: 20px; font-weight: bold; display: none; text-shadow: 1px 1px 2px black; }
+        #score-board { position: absolute; top: 20px; left: 20px; color: white; font-size: 24px; font-weight: bold; text-shadow: 1px 1px 2px black; }
+        #clock-display { position: absolute; top: 55px; left: 20px; color: white; font-size: 16px; font-weight: bold; text-shadow: 1px 1px 2px black; }
+        #gold-display { position: absolute; top: 85px; left: 20px; color: #ffd700; font-size: 20px; font-weight: bold; text-shadow: 1px 1px 2px black; }
+        #cart-ui { position: absolute; bottom: 20px; left: 20px; color: white; font-size: 18px; font-weight: bold; text-shadow: 1px 1px 2px black; display: none; }
+        #tool-ui { position: absolute; bottom: 20px; right: 20px; color: white; font-size: 24px; font-weight: bold; text-shadow: 1px 1px 2px black; text-align: right; }
+        .tool-hint { font-size: 14px; color: #aaaaaa; }
+        
+        #cheat-menu { position: absolute; top: 20px; left: 50%; transform: translateX(-50%); background: rgba(0, 0, 0, 0.9); border: 2px solid #ffaa00; padding: 20px; color: white; z-index: 100; border-radius: 8px; display: none; pointer-events: auto; font-family: monospace; min-width: 300px; }
+        #cheat-menu h3 { margin-top: 0; color: #ffaa00; border-bottom: 1px solid #ffaa00; padding-bottom: 10px; }
+        #cheat-menu .cheat-row { margin-bottom: 15px; display: flex; justify-content: space-between; align-items: center; }
+        #cheat-menu button { background: #333; color: white; border: 1px solid #777; padding: 5px 10px; cursor: pointer; border-radius: 4px; font-family: monospace; }
+        #cheat-menu button:hover { background: #555; }
+    </style>
+</head>
+<body>
+    <div id="ui-layer">
+        <div id="score-board">หญ้าที่ตัดแล้ว: <span id="score">0</span> / <span id="max-score">10000</span></div>
+        <div id="clock-display">06 น.</div>
+        <div id="gold-display">เงิน: <span id="gold">0</span> บาท</div>
+        <div id="cart-ui"></div>
+        <div id="tool-ui">
+            <span id="current-tool-name">มือเปล่า</span><br>
+            <span class="tool-hint">กด [Q] ทิ้งของ | [E] ใช้งาน</span>
+        </div>
+        <div id="crosshair"></div>
+        <div id="interact-msg">[E] เพื่อใช้งาน</div>
+    </div>
+
+    <div id="blocker">
+        <div id="instructions">
+            <h1>Lawn Mower Simulator</h1>
+            <p>
+                คลิกเพื่อเริ่มเกม<br><br>
+                <b>[E]</b> - หยิบของ / ขับรถ<br>
+                <b>[Q]</b> - ทิ้งอุปกรณ์ลงพื้น<br>
+                <b>[คลิกซ้าย]</b> - เหวี่ยงเคียว<br>
+                <b>[Space]</b> - กระโดด<br>
+                <b>[W, A, S, D]</b> - เดิน / ขับรถ<br>
+                <b>[เมาส์]</b> - หันมุมกล้อง<br>
+                <b>[F2]</b> - เปิด/ปิด Cheat Menu
+            </p>
+        </div>
+    </div>
+
+    <div id="cheat-menu">
+        <h3>🛠 Developer Cheats [F2]</h3>
+        <div class="cheat-row">
+            <label>เวลา (Time): <span id="cheat-time-label"></span></label>
+            <input type="range" id="cheat-time" min="0" max="0.99" step="0.01" value="0.25">
+        </div>
+        <div class="cheat-row">
+            <label>เงิน (Gold):</label>
+            <button id="cheat-gold">+1000 Gold</button>
+        </div>
+    </div>
+
+    <script type="importmap">
+        {
+            "imports": {
+                "three": "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js",
+                "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/"
+            }
+        }
+    </script>
+
+    <script type="module">
+        import * as THREE from 'three';
+        import { PointerLockControls } from 'three/addons/controls/PointerLockControls.js';
+
+        // ==========================================
+        // 0. CONFIGURATION (MAGIC NUMBERS) & UTILS
+        // ==========================================
+        const CONFIG = {
+            grass: { count: 10000, area: 38, regrowDays: 3, regrowCheckHours: 4 },
+            dayNight: { cycleDuration: 480, startTime: 0.25 }, // 480s = 8 real-min per full cycle; 0.25 = dawn
+            player: { 
+                height: 1.6, radius: 0.3, 
+                bounds: 18.5, houseBounds: -9.5,
+                speed: 40.0, drag: 10.0, gravity: 30.0, jumpForce: 10.0,
+                carryCapacity: 100, pickupRadius: 1.5, transferRadius: 2.0
+            },
+            mower: { 
+                radius: 0.8, bounds: 18.0, houseBounds: -9.0, 
+                speed: 5.0, turnSpeed: 2.0, cutRadius: 1.2, camCatchUp: 3.0 
+            },
+            tools: {
+                trimmer: { cutRadius: 0.8, spinSpeed: 20.0 },
+                scythe: { cutRadius: 2.5, cutAngle: Math.PI / 3.5, swingSpeed: 7.0 }
+            },
+            cart: {
+                capacity: 500, collectRadius: 1.8,
+                radius: 0.7, bounds: 18.2, houseBounds: -9.2,
+                startPos: { x: -3, z: -3 },
+                speed: 3.0, turnSpeed: 1.3, camCatchUp: 3.0
+            },
+            economy: { sellRate: 1, dropOffPos: { x: -7.5, z: -15 }, dropOffRadius: 2 }
+        };
+
+        const Utils = {
+            // Helper to recursively free up memory for any Three.js object
+            disposeNode(node) {
+                if (node instanceof THREE.Mesh) {
+                    if (node.geometry) node.geometry.dispose();
+                    if (node.material) {
+                        if (Array.isArray(node.material)) node.material.forEach(m => m.dispose());
+                        else node.material.dispose();
+                    }
+                }
+                if (node.children) {
+                    const children = [...node.children];
+                    children.forEach(child => Utils.disposeNode(child));
+                }
+            }
+        };
+
+        // ==========================================
+        // 1. GLOBAL SETUP & MANAGERS
+        // ==========================================
+        const scene = new THREE.Scene();
+        scene.background = new THREE.Color(0x87CEEB);
+        scene.fog = new THREE.Fog(0x87CEEB, 15, 60);
+
+        const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+        scene.add(camera);
+
+        const renderer = new THREE.WebGLRenderer({ antialias: true });
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        renderer.shadowMap.enabled = true;
+        document.body.appendChild(renderer.domElement);
+
+        const ambientLight = new THREE.AmbientLight(0xffffff, 0.6);
+        scene.add(ambientLight);
+        const dirLight = new THREE.DirectionalLight(0xffffff, 1.5);
+        dirLight.position.set(20, 40, 20);
+        dirLight.castShadow = true;
+        dirLight.shadow.camera.top = 25; dirLight.shadow.camera.bottom = -25;
+        dirLight.shadow.camera.left = -25; dirLight.shadow.camera.right = 25;
+        scene.add(dirLight);
+
+        // --- Day/Night: pure state function (no THREE.* inside, testable headlessly) ---
+        // Takes normalized time (0-1, 0=midnight) + a plain keyframe table (hex ints),
+        // returns plain numbers only. Mirrors the renderer-separation pattern GrassManager uses.
+        function computeDayNightState(time, keyframes) {
+            let a = keyframes[0], b = keyframes[keyframes.length - 1];
+            for (let i = 0; i < keyframes.length - 1; i++) {
+                if (time >= keyframes[i].t && time <= keyframes[i + 1].t) {
+                    a = keyframes[i]; b = keyframes[i + 1];
+                    break;
+                }
+            }
+            const span = b.t - a.t;
+            const f = span > 0 ? (time - a.t) / span : 0;
+
+            // Pure integer RGB lerp over 0xRRGGBB ints - no THREE.Color needed here.
+            const lerpHex = (h1, h2, blend) => {
+                const r1 = (h1 >> 16) & 0xff, g1 = (h1 >> 8) & 0xff, b1 = h1 & 0xff;
+                const r2 = (h2 >> 16) & 0xff, g2 = (h2 >> 8) & 0xff, b2 = h2 & 0xff;
+                const r = Math.round(r1 + (r2 - r1) * blend);
+                const g = Math.round(g1 + (g2 - g1) * blend);
+                const bch = Math.round(b1 + (b2 - b1) * blend);
+                return (r << 16) | (g << 8) | bch;
+            };
+            const lerp = (v1, v2, blend) => v1 + (v2 - v1) * blend;
+
+            // Sun arc: continuous trig, independent of the keyframe table (no manual authoring,
+            // stays continuous across the time=1.0 -> 0.0 wrap). Dawn(0.25)=horizon rising,
+            // noon(0.5)=peak, dusk(0.75)=horizon setting, midnight(0/1)=directly below.
+            const angle = (time - 0.25) * Math.PI * 2;
+            const sunRadius = 40;
+
+            return {
+                skyColor: lerpHex(a.sky, b.sky, f),
+                fogColor: lerpHex(a.fog, b.fog, f),
+                ambientIntensity: lerp(a.ambient, b.ambient, f),
+                sunIntensity: lerp(a.sunI, b.sunI, f),
+                sunColor: lerpHex(a.sunC, b.sunC, f),
+                fogNear: lerp(a.fogNear, b.fogNear, f),
+                fogFar: lerp(a.fogFar, b.fogFar, f),
+                sunX: Math.cos(angle) * sunRadius,
+                sunY: Math.sin(angle) * sunRadius,
+                sunZ: 20,
+                sunAngle: angle // raw angle - other consumers (sun/moon sprites) need this at a different radius
+            };
+        }
+
+        class DayNightManager {
+            constructor(scene, ambientLight, dirLight) {
+                this.scene = scene;
+                this.ambientLight = ambientLight;
+                this.dirLight = dirLight;
+                this.time = CONFIG.dayNight.startTime;
+
+                // Authored look per time-of-day. Plain hex ints - THREE.Color only touched in _applyState().
+                this.keyframes = [
+                    { t: 0.00, sky: 0x0a0a1a, fog: 0x0a0a1a, ambient: 0.15, sunI: 0.05, sunC: 0x1a1a3a, fogNear: 3, fogFar: 14 },
+                    { t: 0.22, sky: 0x0a0a1a, fog: 0x0a0a1a, ambient: 0.15, sunI: 0.05, sunC: 0x1a1a3a, fogNear: 3, fogFar: 14 },
+                    { t: 0.27, sky: 0xff9955, fog: 0xffaa77, ambient: 0.50, sunI: 0.90, sunC: 0xffaa66, fogNear: 8, fogFar: 32 },
+                    { t: 0.35, sky: 0x87CEEB, fog: 0x87CEEB, ambient: 0.60, sunI: 1.50, sunC: 0xffffff, fogNear: 15, fogFar: 60 },
+                    { t: 0.65, sky: 0x87CEEB, fog: 0x87CEEB, ambient: 0.60, sunI: 1.50, sunC: 0xffffff, fogNear: 15, fogFar: 60 },
+                    { t: 0.73, sky: 0xff9955, fog: 0xffaa77, ambient: 0.50, sunI: 0.90, sunC: 0xffaa66, fogNear: 8, fogFar: 32 },
+                    { t: 0.78, sky: 0x0a0a1a, fog: 0x0a0a1a, ambient: 0.15, sunI: 0.05, sunC: 0x1a1a3a, fogNear: 3, fogFar: 14 },
+                    { t: 1.00, sky: 0x0a0a1a, fog: 0x0a0a1a, ambient: 0.15, sunI: 0.05, sunC: 0x1a1a3a, fogNear: 3, fogFar: 14 }
+                ];
+
+                this._buildCelestialBodies();
+
+                const initialState = computeDayNightState(this.time, this.keyframes);
+                this._applyState(initialState); // set look immediately, no first-frame pop
+                this._updateCelestial(initialState);
+            }
+
+            // Two THREE.Sprite objects for sun/moon, using a canvas-generated radial-gradient
+            // glow texture - no external image asset needed. fog:false + depthWrite:false so
+            // they read as sky objects rather than fogged-out scenery.
+            _buildCelestialBodies() {
+                const sunTex = this._createGlowTexture(0xfff4cc);
+                this.sunSprite = new THREE.Sprite(new THREE.SpriteMaterial({ map: sunTex, transparent: true, fog: false, depthWrite: false }));
+                this.sunSprite.scale.set(24, 24, 1);
+                this.scene.add(this.sunSprite);
+
+                const moonTex = this._createGlowTexture(0xccd5e8);
+                this.moonSprite = new THREE.Sprite(new THREE.SpriteMaterial({ map: moonTex, transparent: true, fog: false, depthWrite: false }));
+                this.moonSprite.scale.set(16, 16, 1);
+                this.scene.add(this.moonSprite);
+            }
+
+            _createGlowTexture(colorHex) {
+                const canvas = document.createElement('canvas');
+                canvas.width = 64; canvas.height = 64;
+                const ctx = canvas.getContext('2d');
+                const r = (colorHex >> 16) & 0xff, g = (colorHex >> 8) & 0xff, bch = colorHex & 0xff;
+                const grad = ctx.createRadialGradient(32, 32, 0, 32, 32, 32);
+                grad.addColorStop(0,   `rgba(${r},${g},${bch},1)`);
+                grad.addColorStop(0.5, `rgba(${r},${g},${bch},0.6)`);
+                grad.addColorStop(1,   `rgba(${r},${g},${bch},0)`);
+                ctx.fillStyle = grad;
+                ctx.fillRect(0, 0, 64, 64);
+                return new THREE.CanvasTexture(canvas);
+            }
+
+            // Hooks for future systems (monster spawn windows, light posts) - no such logic added yet.
+            getPhase() {
+                const t = this.time;
+                if (t >= 0.22 && t < 0.35) return 'dawn';
+                if (t >= 0.35 && t < 0.65) return 'day';
+                if (t >= 0.65 && t < 0.78) return 'dusk';
+                return 'night';
+            }
+            getTimeNormalized() { return this.time; }
+
+            update(delta) {
+                this.time += delta / CONFIG.dayNight.cycleDuration;
+                if (this.time >= 1.0) this.time -= 1.0;
+
+                const state = computeDayNightState(this.time, this.keyframes);
+                this._applyState(state);
+                this._updateCelestial(state);
+                this._updateClockUI();
+            }
+
+            // Only place that touches THREE objects for lighting/fog - everything above is plain numbers.
+            _applyState(state) {
+                this.scene.background.setHex(state.skyColor);
+                this.scene.fog.color.setHex(state.fogColor);
+                this.scene.fog.near = state.fogNear;
+                this.scene.fog.far = state.fogFar;
+                this.ambientLight.intensity = state.ambientIntensity;
+                this.dirLight.intensity = state.sunIntensity;
+                this.dirLight.color.setHex(state.sunColor);
+                this.dirLight.position.set(state.sunX, state.sunY, state.sunZ);
+            }
+
+            // Positions sun/moon sprites along the same arc as the light, but at a much larger
+            // radius (200 vs the light's 40) so a shrunk night fog.far doesn't fog them out.
+            // Moon sits opposite the sun (sunAngle + PI). Visibility is a simple height-sign
+            // flip for now - no crossfade.
+            _updateCelestial(state) {
+                const skyRadius = 200;
+                const sunAngle = state.sunAngle;
+                this.sunSprite.position.set(Math.cos(sunAngle) * skyRadius, Math.sin(sunAngle) * skyRadius, 20);
+                this.sunSprite.visible = Math.sin(sunAngle) > -0.05;
+
+                const moonAngle = sunAngle + Math.PI;
+                this.moonSprite.position.set(Math.cos(moonAngle) * skyRadius, Math.sin(moonAngle) * skyRadius, 20);
+                this.moonSprite.visible = Math.sin(moonAngle) > -0.05;
+            }
+
+            _updateClockUI() {
+                const hh = Math.floor(this.time * 24).toString().padStart(2, '0');
+                const phaseTh = { dawn: 'รุ่งอรุณ', day: 'กลางวัน', dusk: 'พลบค่ำ', night: 'กลางคืน' }[this.getPhase()];
+                const el = document.getElementById('clock-display');
+                if (el) el.innerText = `${hh} น. (${phaseTh})`;
+            }
+        }
+
+        // --- Input Manager ---
+        const Input = {
+            forward: false, backward: false, left: false, right: false,
+            jump: false, interact: false, drop: false, attack: false,
+            init() {
+                document.addEventListener('keydown', (e) => {
+                    switch (e.code) {
+                        case 'KeyW': case 'ArrowUp': this.forward = true; break;
+                        case 'KeyA': case 'ArrowLeft': this.left = true; break;
+                        case 'KeyS': case 'ArrowDown': this.backward = true; break;
+                        case 'KeyD': case 'ArrowRight': this.right = true; break;
+                        case 'Space': this.jump = true; break;
+                        case 'KeyE': this.interact = true; break;
+                        case 'KeyQ': this.drop = true; break;
+                    }
+                });
+                document.addEventListener('keyup', (e) => {
+                    switch (e.code) {
+                        case 'KeyW': case 'ArrowUp': this.forward = false; break;
+                        case 'KeyA': case 'ArrowLeft': this.left = false; break;
+                        case 'KeyS': case 'ArrowDown': this.backward = false; break;
+                        case 'KeyD': case 'ArrowRight': this.right = false; break;
+                        case 'Space': this.jump = false; break;
+                        case 'KeyE': this.interact = false; break;
+                        case 'KeyQ': this.drop = false; break;
+                    }
+                });
+                document.addEventListener('mousedown', (e) => { 
+                    if (e.button === 0) this.attack = true; 
+                });
+            },
+            consumeInteract() { const res = this.interact; this.interact = false; return res; },
+            consumeDrop() { const res = this.drop; this.drop = false; return res; },
+            consumeAttack() { const res = this.attack; this.attack = false; return res; }
+        };
+        Input.init();
+
+        const DayNight = new DayNightManager(scene, ambientLight, dirLight);
+
+        // ==========================================
+        // 2. ENVIRONMENT & LEVEL BUILDER
+        // ==========================================
+        class EnvironmentBuilder {
+            constructor(scene) {
+                this.scene = scene;
+                this.treeHitboxes = [];
+                this.clouds = [];
+                this.buildWorld();
+            }
+
+            buildWorld() {
+                // Ground
+                const groundMat = new THREE.MeshLambertMaterial({ color: 0x3d2817 });
+                const ground = new THREE.Mesh(new THREE.PlaneGeometry(100, 100), groundMat);
+                ground.rotation.x = -Math.PI / 2; ground.receiveShadow = true;
+                this.scene.add(ground);
+
+                // Picket Fence
+                const fenceGroup = new THREE.Group();
+                const woodMat = new THREE.MeshLambertMaterial({ color: 0x8b5a2b });
+                const railGeo = new THREE.BoxGeometry(40, 0.15, 0.1);
+                const picketGeo = new THREE.BoxGeometry(0.3, 1.8, 0.1); picketGeo.translate(0, 0.9, 0);
+                const fenceOffsets = [ { x: 0, z: -20, r: 0 }, { x: 0, z: 20, r: 0 }, { x: -20, z: 0, r: Math.PI/2 }, { x: 20, z: 0, r: Math.PI/2 } ];
+                
+                fenceOffsets.forEach(pos => {
+                    const sideGroup = new THREE.Group();
+                    const rail1 = new THREE.Mesh(railGeo, woodMat); rail1.position.set(0, 0.6, 0); rail1.castShadow = true; sideGroup.add(rail1);
+                    const rail2 = new THREE.Mesh(railGeo, woodMat); rail2.position.set(0, 1.4, 0); rail2.castShadow = true; sideGroup.add(rail2);
+                    for (let i = -19.6; i <= 19.6; i += 0.8) {
+                        const picket = new THREE.Mesh(picketGeo, woodMat);
+                        picket.position.set(i, 0, 0.1); picket.scale.y = 1.0 + (Math.random() * 0.1 - 0.05); 
+                        picket.castShadow = true; picket.receiveShadow = true; sideGroup.add(picket);
+                    }
+                    sideGroup.position.set(pos.x, 0, pos.z); sideGroup.rotation.y = pos.r;
+                    fenceGroup.add(sideGroup);
+                });
+                this.scene.add(fenceGroup);
+
+                // House & Patio
+                const houseMat = new THREE.MeshLambertMaterial({ color: 0xe0e0e0 });
+                const house = new THREE.Mesh(new THREE.BoxGeometry(10, 5, 10), houseMat); house.position.set(-15, 2.5, -15); house.castShadow = true; house.receiveShadow = true; this.scene.add(house);
+                const roof = new THREE.Mesh(new THREE.ConeGeometry(8, 3, 4), new THREE.MeshLambertMaterial({ color: 0x8b0000 })); roof.position.set(-15, 6.5, -15); roof.rotation.y = Math.PI / 4; roof.castShadow = true; this.scene.add(roof);
+                const patio = new THREE.Mesh(new THREE.PlaneGeometry(15, 15), new THREE.MeshLambertMaterial({ color: 0x999999 })); patio.position.set(-12.5, 0.05, -12.5); patio.rotation.x = -Math.PI / 2; patio.receiveShadow = true; this.scene.add(patio);
+
+                // Trees
+                const trunkGeo = new THREE.CylinderGeometry(0.4, 0.6, 2); const trunkMat = new THREE.MeshLambertMaterial({ color: 0x5c4033 });
+                const leafGeo1 = new THREE.ConeGeometry(2.5, 4, 7);
+                const leafGeo2 = new THREE.ConeGeometry(2.0, 3.5, 7);
+                const leafGeo3 = new THREE.ConeGeometry(1.5, 3, 7);
+                const leavesMat = new THREE.MeshLambertMaterial({ color: 0x2e8b57 });
+                
+                for(let i=0; i<6; i++) {
+                    const tree = new THREE.Group();
+                    
+                    // ลำต้น
+                    const trunk = new THREE.Mesh(trunkGeo, trunkMat); trunk.position.y = 1; trunk.castShadow = true; trunk.receiveShadow = true; tree.add(trunk);
+                    
+                    // ใบ 3 ชั้น (ทรงต้นสน)
+                    const leaves1 = new THREE.Mesh(leafGeo1, leavesMat); leaves1.position.y = 3.5; leaves1.castShadow = true; leaves1.receiveShadow = true; tree.add(leaves1);
+                    const leaves2 = new THREE.Mesh(leafGeo2, leavesMat); leaves2.position.y = 5.5; leaves2.castShadow = true; leaves2.receiveShadow = true; tree.add(leaves2);
+                    const leaves3 = new THREE.Mesh(leafGeo3, leavesMat); leaves3.position.y = 7.0; leaves3.castShadow = true; leaves3.receiveShadow = true; tree.add(leaves3);
+                    
+                    // สุ่มหมุนใบแต่ละชั้นให้ดูเป็นธรรมชาติขึ้น
+                    const randRot = Math.random() * Math.PI;
+                    leaves1.rotation.y = randRot; leaves2.rotation.y = randRot + 0.5; leaves3.rotation.y = randRot + 1.0;
+
+                    let tx, tz; let valid = false;
+                    while(!valid) { tx = (Math.random() - 0.5) * 32; tz = (Math.random() - 0.5) * 32; if(tx > -5 || tz > -5) valid = true; }
+                    
+                    // สุ่มขนาดโดยรวมของต้นไม้ (Scale)
+                    const scale = 0.8 + Math.random() * 0.4; // สุ่มระหว่าง 0.8 ถึง 1.2
+                    tree.scale.set(scale, scale, scale);
+                    
+                    tree.position.set(tx, 0, tz); this.scene.add(tree);
+                    
+                    // Hitbox ต้องคำนวณตาม Scale ด้วย
+                    this.treeHitboxes.push({ x: tx, z: tz, radius: 0.8 * scale }); 
+                }
+
+                // Rocks & Clouds
+                const rockGeo = new THREE.DodecahedronGeometry(0.5, 0); const rockMat = new THREE.MeshLambertMaterial({ color: 0x7a7a7a });
+                for(let i=0; i<12; i++) {
+                    const rock = new THREE.Mesh(rockGeo, rockMat);
+                    let rx, rz; let valid = false;
+                    while(!valid) { rx = (Math.random() - 0.5) * 35; rz = (Math.random() - 0.5) * 35; if(rx > -5 || rz > -5) valid = true; }
+                    rock.position.set(rx, 0.1, rz); rock.rotation.set(Math.random()*Math.PI, Math.random()*Math.PI, 0); rock.scale.set(1, Math.random()*0.5 + 0.3, Math.random()*0.5 + 0.7); rock.castShadow = true; rock.receiveShadow = true; this.scene.add(rock);
+                }
+
+                const cloudMat = new THREE.MeshLambertMaterial({ color: 0xffffff, transparent: true, opacity: 0.9 });
+                for(let i=0; i<8; i++) {
+                    const cloud = new THREE.Group();
+                    for(let j=0; j<Math.floor(Math.random() * 3) + 3; j++) {
+                        const puff = new THREE.Mesh(new THREE.SphereGeometry(Math.random() * 2 + 1.5, 7, 7), cloudMat); puff.position.set((Math.random()-0.5)*4, (Math.random()-0.5)*1.5, (Math.random()-0.5)*3); cloud.add(puff);
+                    }
+                    cloud.position.set((Math.random()-0.5)*80, Math.random()*10 + 20, (Math.random()-0.5)*80); this.scene.add(cloud);
+                    this.clouds.push({ mesh: cloud, speed: Math.random() * 1.5 + 0.5 });
+                }
+            }
+
+            update(delta) {
+                this.clouds.forEach(c => { c.mesh.position.x += c.speed * delta; if(c.mesh.position.x > 60) c.mesh.position.x = -60; });
+            }
+
+            checkCollision(pos, radius, boundLimit, houseLimit, pushForce = 1.0) {
+                // Outer Bounds
+                pos.x = THREE.MathUtils.clamp(pos.x, -boundLimit, boundLimit); 
+                pos.z = THREE.MathUtils.clamp(pos.z, -boundLimit, boundLimit);
+                
+                // House bounds
+                if (pos.x < houseLimit && pos.z < houseLimit) { 
+                    if (pos.x > pos.z) pos.x = houseLimit; 
+                    else pos.z = houseLimit; 
+                }
+                
+                // Trees (Push outward)
+                this.treeHitboxes.forEach(tree => {
+                    let dx = pos.x - tree.x; let dz = pos.z - tree.z; let dist = Math.sqrt(dx*dx + dz*dz);
+                    let minCollisionDist = tree.radius + radius; 
+                    if(dist < minCollisionDist && dist > 0) { 
+                        let push = (minCollisionDist - dist) / dist * pushForce; 
+                        pos.x += dx * push; pos.z += dz * push; 
+                    }
+                });
+            }
+        }
+        const Env = new EnvironmentBuilder(scene);
+
+        // ==========================================
+        // 3. GRASS SYSTEM (SPATIAL GRID + FLOAT32ARRAY + PURE MATH)
+        // ==========================================
+        class GrassManager {
+            constructor(scene, count) {
+                this.count = count;
+                this.score = 0;
+                
+                const grassGeo = new THREE.PlaneGeometry(0.2, 0.8); grassGeo.translate(0, 0.4, 0);
+                const grassMat = new THREE.MeshLambertMaterial({ color: 0x228b22, side: THREE.DoubleSide });
+                this.mesh = new THREE.InstancedMesh(grassGeo, grassMat, this.count);
+                this.mesh.castShadow = true;
+                
+                this.data = new Float32Array(this.count).fill(1); // 1=alive, 2=cut/piled(uncollected), 0=cut/collected
+                this.positions = new Float32Array(this.count * 2); // Caches X and Z
+                this.dummy = new THREE.Object3D();
+                this.pileColor = new THREE.Color(0xc4a35a); // dry-hay tint applied once, at cut time
+                this.defaultColor = new THREE.Color(0xffffff); // multiplies to base material green - reset on regrowth
+                this.cutTime = new Float32Array(this.count).fill(0); // elapsedTime when each blade was last cut/deposited
+                this.elapsedTime = 0;
+                this.timeSinceRegrowCheck = 0;
+                // Design-facing numbers are in-game days/hours (CONFIG.grass), derived here into
+                // real seconds via the day/night cycle length - stays in proportion if that ever
+                // changes, and reads the way the person actually thinks about it ("3 days").
+                this.regrowDuration = CONFIG.grass.regrowDays * CONFIG.dayNight.cycleDuration; // 3 * 480 = 1440s
+                this.regrowCheckInterval = (CONFIG.grass.regrowCheckHours / 24) * CONFIG.dayNight.cycleDuration; // 4/24 * 480 = 80s
+                
+                // --- Spatial Grid Setup ---
+                this.cellSize = 2.0;
+                this.gridCells = Math.ceil(CONFIG.grass.area / this.cellSize);
+                this.gridOffset = CONFIG.grass.area / 2;
+                this.grid = new Array(this.gridCells * this.gridCells).fill(0).map(() => []);
+                this.uncollected = new Int32Array(this.gridCells * this.gridCells); // cut-but-not-yet-collected count, per grid cell
+
+                for (let i = 0; i < this.count; i++) {
+                    let gx, gz; let valid = false;
+                    while (!valid) { 
+                        gx = (Math.random() - 0.5) * CONFIG.grass.area; 
+                        gz = (Math.random() - 0.5) * CONFIG.grass.area; 
+                        if (gx < -5 && gz < -5) valid = false; else valid = true; 
+                    }
+                    this.positions[i*2] = gx;
+                    this.positions[i*2+1] = gz;
+                    
+                    this.dummy.position.set(gx, 0, gz); 
+                    this.dummy.rotation.y = Math.random() * Math.PI; 
+                    this.dummy.updateMatrix();
+                    this.mesh.setMatrixAt(i, this.dummy.matrix);
+                    
+                    // FIX: Pre-fill color buffer with white so non-cut grass doesn't turn black
+                    this.mesh.setColorAt(i, this.defaultColor);
+
+                    // Register to grid
+                    this.grid[this.cellIndexFor(gx, gz)].push(i);
+                }
+                scene.add(this.mesh);
+                document.getElementById('max-score').innerText = this.count;
+            }
+
+            // Shared col/row-safe-clamp cell lookup - used here at construction and by
+            // depositAt(). Single source of truth for the coordinate->cell math (Part 7).
+            cellIndexFor(x, z) {
+                const col = Math.floor((x + this.gridOffset) / this.cellSize);
+                const row = Math.floor((z + this.gridOffset) / this.cellSize);
+                const safeCol = Math.max(0, Math.min(this.gridCells - 1, col));
+                const safeRow = Math.max(0, Math.min(this.gridCells - 1, row));
+                return safeRow * this.gridCells + safeCol;
+            }
+
+            cutGrass(sourcePos, forwardVec, maxDistSq, angleLimit = Math.PI) {
+                let needsUpdate = false;
+                const radius = Math.sqrt(maxDistSq);
+                
+                // Determine grid cells to search
+                const minCol = Math.max(0, Math.floor((sourcePos.x - radius + this.gridOffset) / this.cellSize));
+                const maxCol = Math.min(this.gridCells - 1, Math.floor((sourcePos.x + radius + this.gridOffset) / this.cellSize));
+                const minRow = Math.max(0, Math.floor((sourcePos.z - radius + this.gridOffset) / this.cellSize));
+                const maxRow = Math.min(this.gridCells - 1, Math.floor((sourcePos.z + radius + this.gridOffset) / this.cellSize));
+
+                // Only iterate through nearby grass
+                for (let r = minRow; r <= maxRow; r++) {
+                    for (let c = minCol; c <= maxCol; c++) {
+                        const cell = this.grid[r * this.gridCells + c];
+                        for (let j = 0; j < cell.length; j++) {
+                            const i = cell[j];
+                            if (this.data[i] === 1) {
+                                const dx = this.positions[i*2] - sourcePos.x; 
+                                const dz = this.positions[i*2+1] - sourcePos.z;
+                                const distSq = (dx*dx) + (dz*dz);
+
+                                if (distSq < maxDistSq) {
+                                    let shouldCut = true;
+                                    // 100% Pure math dot product (no THREE.Vector3 dependency)
+                                    if (forwardVec && angleLimit < Math.PI) {
+                                        const dist = Math.sqrt(distSq);
+                                        if (dist > 0) {
+                                            const dot = ((dx / dist) * forwardVec.x) + ((dz / dist) * forwardVec.z);
+                                            if (dot <= Math.cos(angleLimit)) shouldCut = false;
+                                        }
+                                    }
+                                    if (shouldCut) {
+                                        this.data[i] = 2; // cut, piled - not yet collected
+                                        this.uncollected[r * this.gridCells + c]++; // r,c already known from the outer loop
+                                        this.cutTime[i] = this.elapsedTime;
+                                        
+                                        // Update visual matrix (small mound, taller than "collected")
+                                        this.mesh.getMatrixAt(i, this.dummy.matrix); 
+                                        this.dummy.position.setFromMatrixPosition(this.dummy.matrix);
+                                        this.dummy.rotation.setFromRotationMatrix(this.dummy.matrix);
+                                        this.dummy.scale.set(1, 0.35, 1); 
+                                        this.dummy.updateMatrix();
+                                        this.mesh.setMatrixAt(i, this.dummy.matrix); 
+                                        this.mesh.setColorAt(i, this.pileColor); // dry-hay tint, set once here, persists through collect/revive
+                                        
+                                        needsUpdate = true; this.score++;
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+                
+                if (needsUpdate) {
+                    this.mesh.instanceMatrix.needsUpdate = true;
+                    this.mesh.instanceColor.needsUpdate = true;
+                    document.getElementById('score').innerText = this.score;
+                }
+            }
+
+            // Drains uncollected[] within radius of sourcePos into a returned total, capped at
+            // maxAmount (the caller's remaining capacity). Reuses cutGrass()'s exact grid-bounds
+            // search so cut and collect always agree on which cell is which. Pure math - no THREE.*.
+            // Drains uncollected[] within radius, flipping specific piled(2) blades to
+            // collected(0) and flattening them - so the world visually clears as things get
+            // picked up, not just an invisible counter. Reuses cutGrass()'s grid-bounds search.
+            collectNear(sourcePos, radius, maxAmount) {
+                if (maxAmount <= 0) return 0;
+                let collected = 0;
+                let needsUpdate = false;
+
+                const minCol = Math.max(0, Math.floor((sourcePos.x - radius + this.gridOffset) / this.cellSize));
+                const maxCol = Math.min(this.gridCells - 1, Math.floor((sourcePos.x + radius + this.gridOffset) / this.cellSize));
+                const minRow = Math.max(0, Math.floor((sourcePos.z - radius + this.gridOffset) / this.cellSize));
+                const maxRow = Math.min(this.gridCells - 1, Math.floor((sourcePos.z + radius + this.gridOffset) / this.cellSize));
+
+                for (let r = minRow; r <= maxRow; r++) {
+                    for (let c = minCol; c <= maxCol; c++) {
+                        const idx = r * this.gridCells + c;
+                        if (this.uncollected[idx] <= 0) continue;
+
+                        const cellBlades = this.grid[idx];
+                        for (let j = 0; j < cellBlades.length; j++) {
+                            if (collected >= maxAmount) break;
+                            const i = cellBlades[j];
+                            if (this.data[i] !== 2) continue;
+
+                            this.data[i] = 0; // now collected - flatten it away
+                            this.mesh.getMatrixAt(i, this.dummy.matrix);
+                            this.dummy.position.setFromMatrixPosition(this.dummy.matrix);
+                            this.dummy.rotation.setFromRotationMatrix(this.dummy.matrix);
+                            this.dummy.scale.set(1, 0.02, 1);
+                            this.dummy.updateMatrix();
+                            this.mesh.setMatrixAt(i, this.dummy.matrix);
+
+                            this.uncollected[idx]--;
+                            collected++;
+                            needsUpdate = true;
+                        }
+                        if (collected >= maxAmount) {
+                            if (needsUpdate) this.mesh.instanceMatrix.needsUpdate = true;
+                            return collected;
+                        }
+                    }
+                }
+
+                if (needsUpdate) this.mesh.instanceMatrix.needsUpdate = true;
+                return collected;
+            }
+
+            // Reverse of collectNear(): deposits `amount` into the cell containing pos (the
+            // numeric total in uncollected[] is always exact), and best-effort revives up to
+            // that many already-collected(0) blades in the same cell back to the piled look.
+            // Color isn't touched here - it was set once in cutGrass() and persists through
+            // collect/revive cycles. If a cell has fewer spare blades than `amount`, the pile
+            // is still tracked correctly but may be visually under-represented.
+            depositAt(pos, amount) {
+                const idx = this.cellIndexFor(pos.x, pos.z);
+                this.uncollected[idx] += amount;
+
+                const cellBlades = this.grid[idx];
+                let toRevive = amount;
+                let needsUpdate = false;
+                for (let j = 0; j < cellBlades.length && toRevive > 0; j++) {
+                    const i = cellBlades[j];
+                    if (this.data[i] === 0) {
+                        this.data[i] = 2;
+                        this.cutTime[i] = this.elapsedTime; // this represents freshly-dropped grass, timer restarts
+                        this.mesh.getMatrixAt(i, this.dummy.matrix);
+                        this.dummy.position.setFromMatrixPosition(this.dummy.matrix);
+                        this.dummy.rotation.setFromRotationMatrix(this.dummy.matrix);
+                        this.dummy.scale.set(1, 0.35, 1);
+                        this.dummy.updateMatrix();
+                        this.mesh.setMatrixAt(i, this.dummy.matrix);
+                        toRevive--;
+                        needsUpdate = true;
+                    }
+                }
+                if (needsUpdate) this.mesh.instanceMatrix.needsUpdate = true;
+            }
+
+            // Regrowth: a throttled full-array scan (once per regrowCheckInterval, not every
+            // frame) rather than a sorted queue - deliberately, because depositAt() can reset
+            // cutTime[i] for an already-queued index (see its comment), which would break a
+            // FIFO queue's sorted-order assumption. A scan over 10,000 floats once a second is
+            // trivially cheap - this isn't the same hot path cutGrass()'s spatial grid protects.
+            update(delta) {
+                this.elapsedTime += delta;
+                this.timeSinceRegrowCheck += delta;
+                if (this.timeSinceRegrowCheck < this.regrowCheckInterval) return;
+                this.timeSinceRegrowCheck = 0;
+
+                let needsUpdate = false;
+                for (let i = 0; i < this.count; i++) {
+                    if (this.data[i] === 1) continue; // already alive
+                    if (this.elapsedTime - this.cutTime[i] < this.regrowDuration) continue;
+
+                    const wasPiled = (this.data[i] === 2);
+                    this.data[i] = 1;
+
+                    this.mesh.getMatrixAt(i, this.dummy.matrix);
+                    this.dummy.position.setFromMatrixPosition(this.dummy.matrix);
+                    this.dummy.rotation.setFromRotationMatrix(this.dummy.matrix);
+                    this.dummy.scale.set(1, 1, 1);
+                    this.dummy.updateMatrix();
+                    this.mesh.setMatrixAt(i, this.dummy.matrix);
+                    this.mesh.setColorAt(i, this.defaultColor);
+
+                    if (wasPiled) {
+                        // Was still an uncollected pile - regrowing removes it from that count.
+                        // (Already-collected blades were decremented back in collectNear(), so
+                        // no adjustment needed for those.)
+                        const cellIdx = this.cellIndexFor(this.positions[i*2], this.positions[i*2+1]);
+                        if (this.uncollected[cellIdx] > 0) this.uncollected[cellIdx]--;
+                    }
+                    // score was only ever incremented once, at the original cut (not again on
+                    // collect/revive) - so it decrements once here too, regardless of which
+                    // non-alive state this blade was in.
+                    this.score--;
+                    needsUpdate = true;
+                }
+
+                if (needsUpdate) {
+                    this.mesh.instanceMatrix.needsUpdate = true;
+                    this.mesh.instanceColor.needsUpdate = true;
+                    document.getElementById('score').innerText = this.score;
+                }
+            }
+        }
+        const GrassSys = new GrassManager(scene, CONFIG.grass.count);
+
+        // ==========================================
+        // 4. TOOLS & INTERACTION MANAGER
+        // ==========================================
+        const handleMat = new THREE.MeshLambertMaterial({ color: 0x333333 });
+        const hitboxGeo = new THREE.BoxGeometry(2.5, 2.5, 2.5); const hitboxMat = new THREE.MeshBasicMaterial({ visible: false });
+
+        class ToolManager {
+            constructor(camera, scene) {
+                this.camera = camera; this.scene = scene;
+                this.activeTool = null; // 'trimmer' or 'scythe'
+                this.tools = {}; this.worldTools = {};
+                this.isSwinging = false; this.swingTimer = 0;
+                this.hasCutThisSwing = false;
+                this.buildTools();
+            }
+
+            buildTools() {
+                // Trimmer
+                const trimmer = new THREE.Group();
+                const tShaft = new THREE.Mesh(new THREE.CylinderGeometry(0.02, 0.02, 1.8), new THREE.MeshLambertMaterial({ color: 0xff6600 })); tShaft.rotation.x = Math.PI / 2; trimmer.add(tShaft);
+                const tGrip = new THREE.Mesh(new THREE.CylinderGeometry(0.03, 0.03, 0.3), handleMat); tGrip.position.set(0, 0.1, 0.3); tGrip.rotation.z = Math.PI / 2; trimmer.add(tGrip);
+                const tBlade = new THREE.Mesh(new THREE.CylinderGeometry(0.25, 0.25, 0.01, 8), new THREE.MeshLambertMaterial({ color: 0xdddddd, transparent: true, opacity: 0.5 })); tBlade.position.set(0, -0.08, -0.85); trimmer.add(tBlade);
+                trimmer.position.set(0.4, -0.4, -0.8); trimmer.rotation.set(-0.2, 0.2, 0); 
+                this.camera.add(trimmer); trimmer.visible = false;
+                this.tools['trimmer'] = { group: trimmer, blade: tBlade };
+
+                const wTrimmer = trimmer.clone(); wTrimmer.visible = true; wTrimmer.position.set(-13, 0.9, -9.8); wTrimmer.rotation.set(-Math.PI / 2 - 0.2, 0, 0); this.scene.add(wTrimmer);
+                const tHit = new THREE.Mesh(hitboxGeo, hitboxMat); tHit.userData = { type: 'trimmer' }; wTrimmer.add(tHit);
+                this.worldTools['trimmer'] = { group: wTrimmer, hitbox: tHit };
+
+                // Scythe
+                const scythe = new THREE.Group();
+                const sShaft = new THREE.Mesh(new THREE.CylinderGeometry(0.025, 0.025, 2.2), new THREE.MeshLambertMaterial({ color: 0x654321 })); sShaft.rotation.x = Math.PI / 2; scythe.add(sShaft);
+                const sGrip = new THREE.Mesh(new THREE.CylinderGeometry(0.02, 0.02, 0.2), new THREE.MeshLambertMaterial({ color: 0xaaaaaa })); sGrip.position.set(0, 0.1, 0.2); sGrip.rotation.z = Math.PI / 2; scythe.add(sGrip);
+                const sBladeGeo = new THREE.ConeGeometry(0.15, 1.2, 4); sBladeGeo.rotateZ(Math.PI / 2); sBladeGeo.scale(1, 0.1, 1); 
+                const sBlade = new THREE.Mesh(sBladeGeo, new THREE.MeshLambertMaterial({ color: 0xcccccc })); sBlade.position.set(-0.6, 0, -1.05); sBlade.rotation.y = -0.2; scythe.add(sBlade);
+                scythe.position.set(0.8, -0.6, -1.0); scythe.rotation.set(0.1, 0.3, 0); 
+                this.camera.add(scythe); scythe.visible = false;
+                this.tools['scythe'] = { group: scythe };
+
+                const wScythe = scythe.clone(); wScythe.visible = true; wScythe.position.set(-9.8, 1.1, -13); wScythe.rotation.set(-Math.PI / 2, -0.15, 0); this.scene.add(wScythe);
+                const sHit = new THREE.Mesh(hitboxGeo, hitboxMat); sHit.userData = { type: 'scythe' }; wScythe.add(sHit);
+                this.worldTools['scythe'] = { group: wScythe, hitbox: sHit };
+            }
+
+            equip(toolName) {
+                if (this.activeTool !== null) this.drop(); 
+                this.activeTool = toolName; this.isSwinging = false;
+                this.worldTools[toolName].group.visible = false;
+                this.tools[toolName].group.visible = true;
+                
+                const nameUI = document.getElementById('current-tool-name');
+                if (toolName === 'trimmer') { nameUI.innerText = "เครื่องเล็มหญ้า (Auto)"; nameUI.style.color = "#ffaa00"; }
+                else if (toolName === 'scythe') { nameUI.innerText = "เคียวเกี่ยวหญ้า (คลิกซ้ายฟัน)"; nameUI.style.color = "#aaaaaa"; }
+            }
+
+            drop() {
+                if (!this.activeTool) return;
+                const toolName = this.activeTool;
+                
+                const dropPos = this.camera.position.clone();
+                const forward = new THREE.Vector3(0, 0, -1).applyQuaternion(this.camera.quaternion); forward.y = 0; forward.normalize();
+                dropPos.add(forward.multiplyScalar(1.5)); dropPos.y = 0.1;
+                
+                // Keep dropped item within bounds and out of trees
+                Env.checkCollision(dropPos, 0.5, CONFIG.player.bounds, CONFIG.player.houseBounds); 
+
+                const wt = this.worldTools[toolName].group;
+                wt.position.copy(dropPos);
+                wt.rotation.set(0, this.camera.rotation.y + (toolName === 'scythe' ? Math.PI/2 : 0), 0);
+                wt.visible = true; this.tools[toolName].group.visible = false;
+                
+                this.activeTool = null; this.isSwinging = false;
+                document.getElementById('current-tool-name').innerText = "มือเปล่า";
+                document.getElementById('current-tool-name').style.color = "#ffffff";
+            }
+
+            hideActiveTool() { if(this.activeTool) this.tools[this.activeTool].group.visible = false; }
+            showActiveTool() { if(this.activeTool) this.tools[this.activeTool].group.visible = true; }
+
+            update(delta, playerPos, forwardVec) {
+                if (!this.activeTool) return;
+
+                if (this.activeTool === 'trimmer') {
+                    this.tools['trimmer'].blade.rotation.y += CONFIG.tools.trimmer.spinSpeed * delta;
+                    const tipPos = playerPos.clone().add(forwardVec.clone().multiplyScalar(1.2)); tipPos.y = 0;
+                    GrassSys.cutGrass(tipPos, null, CONFIG.tools.trimmer.cutRadius ** 2);
+                } 
+                else if (this.activeTool === 'scythe') {
+                    // True Edge-Trigger using Input.consumeAttack()
+                    if (!this.isSwinging && Input.consumeAttack()) { 
+                        this.isSwinging = true; 
+                        this.swingTimer = 0; 
+                        this.hasCutThisSwing = false;
+                    }
+                    
+                    if (this.isSwinging) {
+                        this.swingTimer += delta * CONFIG.tools.scythe.swingSpeed; 
+                        const sf = Math.sin(this.swingTimer); 
+                        const grp = this.tools['scythe'].group;
+                        grp.rotation.set(0.1 + (sf*0.2), 0.3 + (sf*2.0), 0);
+                        grp.position.set(0.8 - (sf*1.4), -0.6 + (sf*0.1), -1.0);
+                        
+                        // Fire cut logic only once near the apex of the swing
+                        if (!this.hasCutThisSwing && this.swingTimer > Math.PI / 4) {
+                            GrassSys.cutGrass(playerPos, forwardVec, CONFIG.tools.scythe.cutRadius ** 2, CONFIG.tools.scythe.cutAngle);
+                            this.hasCutThisSwing = true;
+                        }
+
+                        if (this.swingTimer >= Math.PI) { 
+                            this.isSwinging = false; 
+                            grp.rotation.set(0.1, 0.3, 0); grp.position.set(0.8, -0.6, -1.0); 
+                        }
+                    }
+                }
+            }
+
+            getInteractableHitboxes() {
+                const arr = [];
+                if (this.activeTool !== 'trimmer') arr.push(this.worldTools['trimmer'].hitbox);
+                if (this.activeTool !== 'scythe') arr.push(this.worldTools['scythe'].hitbox);
+                return arr;
+            }
+        }
+        const Tools = new ToolManager(camera, scene);
+
+        // ==========================================
+        // 5. VEHICLE (RIDE-ON MOWER)
+        // ==========================================
+        class Vehicle {
+            constructor(scene) {
+                this.group = new THREE.Group();
+                const body = new THREE.Mesh(new THREE.BoxGeometry(1.2, 0.4, 1.5), new THREE.MeshLambertMaterial({ color: 0xcc0000 })); body.position.y = 0.4; body.castShadow = true; body.userData = { type: 'mower' }; this.group.add(body);
+                this.hitbox = body;
+                const mHandle = new THREE.Mesh(new THREE.BoxGeometry(1, 0.1, 0.1), handleMat); mHandle.position.set(0, 1.3, 1.2); this.group.add(mHandle);
+                const mStick = new THREE.Mesh(new THREE.CylinderGeometry(0.05, 0.05, 1.4), handleMat); mStick.position.set(-0.4, 0.8, 0.7); mStick.rotation.x = Math.PI / 4; this.group.add(mStick); this.group.add(mStick.clone().translateX(0.8));
+                
+                const wheelGeo = new THREE.CylinderGeometry(0.25, 0.25, 0.1, 16); const wheelMat = new THREE.MeshLambertMaterial({ color: 0x111111 });
+                [[-0.65, 0.25, 0.5], [0.65, 0.25, 0.5], [-0.65, 0.25, -0.5], [0.65, 0.25, -0.5]].forEach(pos => { const w = new THREE.Mesh(wheelGeo, wheelMat); w.position.set(...pos); w.rotation.z = Math.PI / 2; w.castShadow = true; this.group.add(w); });
+                
+                this.group.position.set(-8, 0, -8); this.group.rotation.y = Math.PI / 4; scene.add(this.group);
+            }
+
+            update(delta) {
+                if (Input.forward) this.group.translateZ(-CONFIG.mower.speed * delta);
+                if (Input.backward) this.group.translateZ(CONFIG.mower.speed * delta);
+                // สลับเครื่องหมาย + และ - สำหรับการเลี้ยวซ้ายขวา
+                if (Input.left) this.group.rotation.y -= CONFIG.mower.turnSpeed * delta;
+                if (Input.right) this.group.rotation.y += CONFIG.mower.turnSpeed * delta;
+
+                Env.checkCollision(this.group.position, CONFIG.mower.radius, CONFIG.mower.bounds, CONFIG.mower.houseBounds, 1.0);
+
+                GrassSys.cutGrass(this.group.position, null, CONFIG.mower.cutRadius ** 2);
+
+                const camOffset = new THREE.Vector3(0, 2.5, 1.5).applyQuaternion(this.group.quaternion);
+                camera.position.lerp(this.group.position.clone().add(camOffset), 5.0 * delta);
+                
+                let yawDiff = this.group.rotation.y - camera.rotation.y;
+                while (yawDiff > Math.PI) yawDiff -= Math.PI * 2; while (yawDiff < -Math.PI) yawDiff += Math.PI * 2;
+                if (yawDiff > 0.5) camera.rotation.y += (yawDiff - 0.5) * CONFIG.mower.camCatchUp * delta; 
+                else if (yawDiff < -0.5) camera.rotation.y += (yawDiff + 0.5) * CONFIG.mower.camCatchUp * delta;
+            }
+        }
+        const Mower = new Vehicle(scene);
+
+        // ==========================================
+        // 6. CART & ECONOMY (HAULING LOOP)
+        // ==========================================
+        class CartManager {
+            constructor(scene) {
+                this.group = new THREE.Group();
+                const tray = new THREE.Mesh(new THREE.BoxGeometry(1.0, 0.5, 1.3), new THREE.MeshLambertMaterial({ color: 0x8b5a2b }));
+                tray.position.y = 0.5; tray.castShadow = true; tray.receiveShadow = true; tray.userData = { type: 'cart' };
+                this.group.add(tray);
+                this.hitbox = tray;
+
+                const wheelGeo = new THREE.CylinderGeometry(0.3, 0.3, 0.12, 16);
+                const wheelMat = new THREE.MeshLambertMaterial({ color: 0x222222 });
+                [[-0.5, 0.3, 0], [0.5, 0.3, 0]].forEach(pos => {
+                    const w = new THREE.Mesh(wheelGeo, wheelMat); w.position.set(...pos); w.rotation.z = Math.PI / 2; w.castShadow = true; this.group.add(w);
+                });
+
+                const handleGeo = new THREE.CylinderGeometry(0.04, 0.04, 1.1);
+                const handleMat = new THREE.MeshLambertMaterial({ color: 0x654321 });
+                [[-0.3, 0.55, 0.9], [0.3, 0.55, 0.9]].forEach(pos => {
+                    const h = new THREE.Mesh(handleGeo, handleMat); h.position.set(...pos); h.rotation.x = Math.PI * 0.42; h.castShadow = true; this.group.add(h);
+                });
+
+                this.group.position.set(CONFIG.cart.startPos.x, 0, CONFIG.cart.startPos.z);
+                scene.add(this.group);
+
+                this.cargo = 0;
+                this.capacity = CONFIG.cart.capacity;
+            }
+
+            // Driven exactly like Vehicle.update(): WASD moves/turns the cart's own group,
+            // then the camera lerps to a trailing offset with the same yaw catch-up pattern.
+            update(delta) {
+                if (Input.forward) this.group.translateZ(-CONFIG.cart.speed * delta);
+                if (Input.backward) this.group.translateZ(CONFIG.cart.speed * delta);
+                // สลับเครื่องหมาย + และ - สำหรับการเลี้ยวซ้ายขวา
+                if (Input.left) this.group.rotation.y -= CONFIG.cart.turnSpeed * delta;
+                if (Input.right) this.group.rotation.y += CONFIG.cart.turnSpeed * delta;
+
+                Env.checkCollision(this.group.position, CONFIG.cart.radius, CONFIG.cart.bounds, CONFIG.cart.houseBounds, 1.0);
+
+                const remaining = this.capacity - this.cargo;
+                if (remaining > 0) this.cargo += GrassSys.collectNear(this.group.position, CONFIG.cart.collectRadius, remaining);
+
+                const camOffset = new THREE.Vector3(0, 1.7, 1.8).applyQuaternion(this.group.quaternion);
+                camera.position.lerp(this.group.position.clone().add(camOffset), 5.0 * delta);
+
+                let yawDiff = this.group.rotation.y - camera.rotation.y;
+                while (yawDiff > Math.PI) yawDiff -= Math.PI * 2; while (yawDiff < -Math.PI) yawDiff += Math.PI * 2;
+                if (yawDiff > 0.5) camera.rotation.y += (yawDiff - 0.5) * CONFIG.cart.camCatchUp * delta;
+                else if (yawDiff < -0.5) camera.rotation.y += (yawDiff + 0.5) * CONFIG.cart.camCatchUp * delta;
+            }
+
+            isNearDropOff() {
+                return Economy.isNearDropOff(this.group.position);
+            }
+
+            distanceToXZ(pos) {
+                const dx = this.group.position.x - pos.x;
+                const dz = this.group.position.z - pos.z;
+                return Math.sqrt(dx * dx + dz * dz);
+            }
+        }
+        const Cart = new CartManager(scene);
+
+        // Flat marker ring on the existing patio showing where to sell - not part of
+        // EnvironmentBuilder since it's an economy concern, not a level-geometry one.
+        const sellZoneMarker = new THREE.Mesh(
+            new THREE.RingGeometry(CONFIG.economy.dropOffRadius - 0.15, CONFIG.economy.dropOffRadius, 32),
+            new THREE.MeshBasicMaterial({ color: 0xffd700, side: THREE.DoubleSide, transparent: true, opacity: 0.6 })
+        );
+        sellZoneMarker.rotation.x = -Math.PI / 2;
+        sellZoneMarker.position.set(CONFIG.economy.dropOffPos.x, 0.06, CONFIG.economy.dropOffPos.z);
+        scene.add(sellZoneMarker);
+
+        // Plain singleton object, same style as Input/Utils - just a counter + one method.
+        const Economy = {
+            gold: 0,
+            sell(units) {
+                this.gold += units * CONFIG.economy.sellRate;
+                document.getElementById('gold').innerText = this.gold;
+            },
+            isNearDropOff(pos) {
+                const dx = pos.x - CONFIG.economy.dropOffPos.x;
+                const dz = pos.z - CONFIG.economy.dropOffPos.z;
+                return (dx * dx + dz * dz) < (CONFIG.economy.dropOffRadius ** 2);
+            }
+        };
+
+        // ==========================================
+        // 7. PLAYER CONTROLLER
+        // ==========================================
+        class PlayerController {
+            constructor(camera) {
+                this.camera = camera;
+                this.controls = new PointerLockControls(camera, document.body);
+                this.velocity = new THREE.Vector3();
+                this.direction = new THREE.Vector3();
+                this.canJump = false;
+                this.isDriving = false;
+                this.isPushingCart = false;
+                this.carriedGrass = 0;
+
+                const blocker = document.getElementById('blocker');
+                blocker.addEventListener('click', () => { this.controls.lock(); });
+                this.controls.addEventListener('lock', () => { blocker.style.display = 'none'; });
+                this.controls.addEventListener('unlock', () => { blocker.style.display = 'flex'; });
+                this.camera.position.set(-5, CONFIG.player.height, -5);
+
+                this.raycaster = new THREE.Raycaster();
+                this.centerScreen = new THREE.Vector2(0, 0);
+
+                // --- Grass Carry Visual ---
+                this.carryGroup = new THREE.Group();
+                const cGrassGeo = new THREE.PlaneGeometry(0.15, 0.8); cGrassGeo.translate(0, 0.4, 0);
+                const cGrassMat = new THREE.MeshLambertMaterial({ color: 0xc4a35a, side: THREE.DoubleSide }); // สีฟางแห้ง
+                for(let i=0; i<20; i++) {
+                    const blade = new THREE.Mesh(cGrassGeo, cGrassMat);
+                    blade.position.set((Math.random()-0.5)*0.8, -0.2, (Math.random()-0.5)*0.5);
+                    blade.rotation.set(Math.random()*0.4 - 0.2, Math.random()*Math.PI, Math.random()*0.8 - 0.4);
+                    this.carryGroup.add(blade);
+                }
+                this.carryGroup.position.set(0, -0.5, -0.7); // ตำแหน่งกึ่งกลางจอด้านล่าง
+                this.carryGroup.rotation.x = 0.2;
+                this.carryGroup.visible = false;
+                this.camera.add(this.carryGroup);
+            }
+
+            update(delta) {
+                if (!this.controls.isLocked) return;
+
+                // Handle Interaction [E]
+                let interactables = [Mower.hitbox, Cart.hitbox, ...Tools.getInteractableHitboxes()];
+                this.raycaster.setFromCamera(this.centerScreen, this.camera);
+                const intersects = this.raycaster.intersectObjects(interactables);
+                const msgUI = document.getElementById('interact-msg');
+                
+                let targetType = null;
+                if (intersects.length > 0 && intersects[0].distance < 3.0) {
+                    targetType = intersects[0].object.userData.type;
+                    msgUI.style.display = 'block';
+                    if (targetType === 'mower') msgUI.innerText = "[E] ขับรถตัดหญ้า";
+                    else if (targetType === 'trimmer') msgUI.innerText = "[E] หยิบเครื่องเล็มหญ้า";
+                    else if (targetType === 'scythe') msgUI.innerText = "[E] หยิบเคียว";
+                    else if (targetType === 'cart' && !this.isPushingCart) msgUI.innerText = "[E] เข็นเกวียน";
+                } else {
+                    msgUI.style.display = 'none';
+                }
+
+                // While pushing, [E]'s prompt doesn't depend on where the camera is looking -
+                // same as how the mower's exit already works regardless of aim.
+                if (this.isPushingCart) {
+                    msgUI.style.display = 'block';
+                    msgUI.innerText = (Cart.isNearDropOff() && Cart.cargo > 0) ? `[E] ขายหญ้าในเกวียน (${Cart.cargo})` : "[E] วางเกวียน";
+                }
+
+                if (Input.consumeInteract()) {
+                    if (!this.isDriving && !this.isPushingCart && this.carriedGrass === 0 && targetType) {
+                        if (targetType === 'mower') {
+                            this.isDriving = true;
+                            this.camera.rotation.set(-0.3, Mower.group.rotation.y, 0, 'YXZ');
+                            Tools.hideActiveTool();
+                        } else if (targetType === 'cart') {
+                            this.isPushingCart = true;
+                            this.camera.rotation.set(-0.15, Cart.group.rotation.y, 0, 'YXZ');
+                            Tools.hideActiveTool();
+                        } else {
+                            Tools.equip(targetType);
+                        }
+                    } else if (this.isDriving) {
+                        this.isDriving = false;
+                        const exitOffset = new THREE.Vector3(-1, 0, 1).applyQuaternion(Mower.group.quaternion);
+                        this.camera.position.copy(Mower.group.position).add(exitOffset); this.camera.position.y = CONFIG.player.height;
+                        Tools.showActiveTool();
+                    } else if (this.isPushingCart) {
+                        if (Cart.isNearDropOff() && Cart.cargo > 0) {
+                            Economy.sell(Cart.cargo);
+                            Cart.cargo = 0;
+                        } else {
+                            this.isPushingCart = false;
+                            const exitOffset = new THREE.Vector3(-1, 0, 1).applyQuaternion(Cart.group.quaternion);
+                            this.camera.position.copy(Cart.group.position).add(exitOffset); this.camera.position.y = CONFIG.player.height;
+                            Tools.showActiveTool();
+                        }
+                    } else {
+                        // Nothing targeted, not driving/pushing - baseline manual pickup:
+                        // hoist nearby uncollected grass into arms, up to carry capacity.
+                        const remaining = CONFIG.player.carryCapacity - this.carriedGrass;
+                        if (remaining > 0) {
+                            const picked = GrassSys.collectNear(this.camera.position, CONFIG.player.pickupRadius, remaining);
+                            if (picked > 0) {
+                                if (this.carriedGrass === 0) Tools.hideActiveTool(); // hands full now
+                                this.carriedGrass += picked;
+                            }
+                        }
+                    }
+                }
+
+                if (Input.consumeDrop() && !this.isDriving && !this.isPushingCart) {
+                    if (this.carriedGrass > 0) {
+                        // Q with hands full: set the pile down here. Lands in the same per-cell
+                        // uncollected counter cutGrass() already uses, so dropping onto a spot
+                        // that already has cut grass just merges into it - no new pile bookkeeping.
+                        GrassSys.depositAt(this.camera.position, this.carriedGrass);
+                        this.carriedGrass = 0;
+                        Tools.showActiveTool();
+                    } else {
+                        Tools.drop();
+                    }
+                }
+
+                // State Updates - three-way, same shape as Mower's branch, so Tools.update()
+                // (and therefore tool swinging) is only reachable in the plain-walk branch.
+                if (this.isDriving) {
+                    Mower.update(delta);
+                } else if (this.isPushingCart) {
+                    Cart.update(delta);
+                } else {
+                    // Movement
+                    this.velocity.x -= this.velocity.x * CONFIG.player.drag * delta; 
+                    this.velocity.z -= this.velocity.z * CONFIG.player.drag * delta;
+                    this.direction.z = Number(Input.forward) - Number(Input.backward); 
+                    this.direction.x = Number(Input.right) - Number(Input.left); 
+                    this.direction.normalize();
+                    
+                    if (Input.forward || Input.backward) this.velocity.z -= this.direction.z * CONFIG.player.speed * delta;
+                    if (Input.left || Input.right) this.velocity.x -= this.direction.x * CONFIG.player.speed * delta;
+                    this.controls.moveRight(-this.velocity.x * delta); 
+                    this.controls.moveForward(-this.velocity.z * delta);
+                    
+                    Env.checkCollision(this.camera.position, CONFIG.player.radius, CONFIG.player.bounds, CONFIG.player.houseBounds);
+
+                    // Jumping & Gravity
+                    if (Input.jump && this.canJump) { this.velocity.y += CONFIG.player.jumpForce; this.canJump = false; Input.jump = false; }
+                    this.velocity.y -= CONFIG.player.gravity * delta; this.camera.position.y += this.velocity.y * delta; 
+                    if (this.camera.position.y < CONFIG.player.height) { this.velocity.y = 0; this.camera.position.y = CONFIG.player.height; this.canJump = true; }
+
+                    // Carry auto-transfer: sell directly at the drop-off, else dump into a nearby cart.
+                    // Proximity-based like the cart's own auto-collect, no separate button.
+                    if (this.carriedGrass > 0) {
+                        if (Economy.isNearDropOff(this.camera.position)) {
+                            Economy.sell(this.carriedGrass);
+                            this.carriedGrass = 0;
+                            Tools.showActiveTool();
+                        } else if (Cart.distanceToXZ(this.camera.position) < CONFIG.player.transferRadius) {
+                            const room = Cart.capacity - Cart.cargo;
+                            const move = Math.min(room, this.carriedGrass);
+                            Cart.cargo += move; this.carriedGrass -= move;
+                            if (this.carriedGrass === 0) Tools.showActiveTool();
+                        }
+                    }
+
+                    // Update Tools (skipped while hands are full of carried grass)
+                    if (this.carriedGrass === 0) {
+                        const forwardVec = new THREE.Vector3(0, 0, -1).applyQuaternion(this.camera.quaternion); forwardVec.y = 0; forwardVec.normalize();
+                        Tools.update(delta, this.camera.position, forwardVec);
+                    }
+                }
+
+                // Bottom-left HUD line: cart cargo while pushing, or carried-pile amount while
+                // hoisting - the two states are mutually exclusive so sharing one line is safe.
+                const statusUI = document.getElementById('cart-ui');
+                if (this.isPushingCart) {
+                    statusUI.style.display = 'block';
+                    statusUI.innerText = `หญ้าในเกวียน: ${Cart.cargo} / ${Cart.capacity}`;
+                } else if (this.carriedGrass > 0) {
+                    statusUI.style.display = 'block';
+                    statusUI.innerText = `หอบหญ้าอยู่: ${this.carriedGrass} / ${CONFIG.player.carryCapacity}`;
+                } else {
+                    statusUI.style.display = 'none';
+                }
+
+                // Update 3D Carry Visual
+                if (this.carriedGrass > 0 && !this.isDriving && !this.isPushingCart) {
+                    this.carryGroup.visible = true;
+                    // คำนวณ Scale ตามปริมาณที่ถืออยู่ (สเกล 0.3 ถึง 0.8)
+                    const fillRatio = this.carriedGrass / CONFIG.player.carryCapacity;
+                    const scale = 0.3 + (fillRatio * 0.5); 
+                    this.carryGroup.scale.set(scale, scale, scale);
+                } else {
+                    this.carryGroup.visible = false;
+                }
+            }
+        }
+        const Player = new PlayerController(camera);
+
+        // ==========================================
+        // 8. MAIN GAME LOOP
+        // ==========================================
+        let prevTime = performance.now();
+
+        // --- Cheat Menu Logic ---
+        const cheatMenu = document.getElementById('cheat-menu');
+        const cheatTime = document.getElementById('cheat-time');
+        const cheatTimeLabel = document.getElementById('cheat-time-label');
+        let isCheatMenuOpen = false;
+
+        document.addEventListener('keydown', (e) => {
+            if (e.code === 'F2') {
+                isCheatMenuOpen = !isCheatMenuOpen;
+                cheatMenu.style.display = isCheatMenuOpen ? 'block' : 'none';
+                if (isCheatMenuOpen) {
+                    document.exitPointerLock(); // Free mouse
+                    // exitPointerLock() fires PointerLockControls' 'unlock' event, which shows
+                    // the "click to start" blocker underneath the cheat menu - hide it back so
+                    // the two overlays don't fight for clicks.
+                    document.getElementById('blocker').style.display = 'none';
+                    cheatTime.value = DayNight.time;
+                    cheatTimeLabel.innerText = DayNight.time.toFixed(2);
+                } else {
+                    Player.controls.lock(); // resume play directly, no extra click needed
+                }
+            }
+        });
+
+        cheatMenu.addEventListener('click', (e) => {
+            e.stopPropagation(); // Prevent clicking cheat menu from locking pointer
+        });
+        cheatMenu.addEventListener('mousedown', (e) => {
+            e.stopPropagation(); // Input's mousedown listener is on document - without this,
+                                  // clicking any cheat-menu control also sets Input.attack = true,
+                                  // causing a stray tool-swing the moment the menu closes.
+        });
+
+        cheatTime.addEventListener('input', (e) => {
+            const val = parseFloat(e.target.value);
+            DayNight.time = val;
+            cheatTimeLabel.innerText = val.toFixed(2);
+        });
+
+        document.getElementById('cheat-gold').addEventListener('click', () => {
+            Economy.gold += 1000;
+            document.getElementById('gold').innerText = Economy.gold;
+        });
+
+        function animate() {
+            requestAnimationFrame(animate);
+            const time = performance.now();
+            const delta = (time - prevTime) / 1000;
+
+            DayNight.update(delta);
+            Env.update(delta);
+            GrassSys.update(delta);
+            Player.update(delta);
+
+            renderer.render(scene, camera);
+            prevTime = time;
+        }
+
+        window.addEventListener('resize', () => {
+            camera.aspect = window.innerWidth / window.innerHeight; camera.updateProjectionMatrix(); renderer.setSize(window.innerWidth, window.innerHeight);
+        });
+
+        animate();
+    </script>
+</body>
+</html>
