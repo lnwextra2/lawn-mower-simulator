@@ -2,7 +2,7 @@
 
 ## WHAT
 First-person 3D survival horror disguised as a lawn-mowing simulator. Single
-self-contained HTML file (`lawn_mower_simulator_v0_XX.html`), Three.js r160 via
+self-contained HTML file (`lawn_mower_simulator.html`), Three.js r160 via
 ES modules/importmap, no build step, no dependencies to install. Open the file
 directly in a browser to run it.
 
@@ -86,9 +86,15 @@ deliberate step, not folded into an unrelated feature.
    it — this project's history has caught real bugs this way (see e.g. the
    collect/deposit/regrowth timer interactions).
 8. **Keep an in-file commit log** at the top of the HTML (what changed, why,
-   what was verified) and bump the version in the filename. This has been the
-   single most useful thing for resuming context across sessions — keep it
-   honest and complete (see rule 1: don't let it undersell the actual diff).
+   what was verified) and bump the `Version:` line in that same header block.
+   This has been the single most useful thing for resuming context across
+   sessions — keep it honest and complete (see rule 1: don't let it undersell
+   the actual diff).
+9. **Versioning lives in git, not in the filename.** The filename stays
+   `lawn_mower_simulator.html` forever — renaming per version breaks
+   `git diff` across versions, which rule 1 depends on. One logical change =
+   one commit; tag only real milestones (`git tag -a v0.13 -m "…"`). Remote is
+   `origin` → `github.com/lnwextra2/lawn-mower-simulator`.
 
 ## Priority when things conflict
 Gameplay → Behavior → Readability → Architecture → Performance → Code Shortness.
