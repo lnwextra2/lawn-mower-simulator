@@ -3,10 +3,19 @@ extends CharacterBody3D
 signal stamina_changed(current: float, max_value: float)
 signal carried_grass_changed(current: float, max_value: float)
 signal look_target_changed(target: Node3D)
+signal held_tool_changed(tool: ToolData)
+
+const TOOL_PICKUP_SCENE := preload("res://tools/tool_pickup.tscn")
+
+## The default belt-clipped tool (a rice sickle). Assigned in the Inspector to
+## knife.tres. It's the "empty hands" state - always held when nothing else is,
+## and can't be dropped.
+@export var knife: ToolData
 
 var gravity: float = ProjectSettings.get_setting("physics/3d/default_gravity")
 var stamina: float = GameConfig.STAMINA_MAX
 var carried_grass: float = 0.0
+var held_tool: ToolData
 
 @onready var camera: Camera3D = $Camera3D
 @onready var interact_ray: RayCast3D = $Camera3D/RayCast3D
@@ -17,6 +26,8 @@ var current_target: Node3D = null
 
 func _ready() -> void:
 	Input.mouse_mode = Input.MOUSE_MODE_CAPTURED
+	held_tool = knife
+	held_tool_changed.emit(held_tool)
 
 func _unhandled_input(event: InputEvent) -> void:
 	if event is InputEventMouseMotion:
@@ -51,20 +62,52 @@ func _physics_process(delta: float) -> void:
 
 	#Handle Interaction
 	if Input.is_action_just_pressed("attack"):
-		var cut_count := grass_field.cut_near(global_position, GameConfig.HAND_CUT_RADIUS)
+		# The whole point of Approach A: cut through the held tool's data, not a
+		# hardcoded radius. Swapping tools swaps the reach with zero code change.
+		var cut_count := grass_field.cut_near(global_position, held_tool.cut_radius)
 		carried_grass = min(carried_grass + cut_count, GameConfig.PLAYER_CARRY_CAPACITY)
 		carried_grass_changed.emit(carried_grass, GameConfig.PLAYER_CARRY_CAPACITY)
-		
-	if Input.is_action_just_pressed("interact") and carried_grass > 0.0:
-		var flat_player := Vector2(global_position.x, global_position.z)
-		var flat_dropoff := Vector2(drop_off.global_position.x, drop_off.global_position.z)
-		if flat_player.distance_to(flat_dropoff) <= GameConfig.DROPOFF_RADIUS:
-			Economy.sell(carried_grass)
-			carried_grass = 0.0
-			carried_grass_changed.emit(carried_grass, GameConfig.PLAYER_CARRY_CAPACITY)
-	
+
+	if Input.is_action_just_pressed("interact"):
+		# E is context-sensitive: pick up a looked-at tool if hands are free
+		# (holding only the knife); otherwise fall back to selling grass.
+		if current_target and current_target.is_in_group("tool_pickup") and held_tool == knife:
+			_pick_up_tool(current_target)
+		elif carried_grass > 0.0:
+			_try_sell()
+
+	if Input.is_action_just_pressed("drop") and held_tool != knife:
+		_drop_tool()
+
 	_update_look_target()
 	move_and_slide()
+
+func _try_sell() -> void:
+	var flat_player := Vector2(global_position.x, global_position.z)
+	var flat_dropoff := Vector2(drop_off.global_position.x, drop_off.global_position.z)
+	if flat_player.distance_to(flat_dropoff) <= GameConfig.DROPOFF_RADIUS:
+		Economy.sell(carried_grass)
+		carried_grass = 0.0
+		carried_grass_changed.emit(carried_grass, GameConfig.PLAYER_CARRY_CAPACITY)
+
+func _pick_up_tool(pickup: Node) -> void:
+	held_tool = pickup.tool_data
+	held_tool_changed.emit(held_tool)
+	pickup.queue_free()
+	# The looked-at node is gone now; clear the prompt this frame.
+	current_target = null
+	look_target_changed.emit(null)
+
+func _drop_tool() -> void:
+	# Put the held tool back into the world as a fresh pickup in front of us,
+	# then fall back to the knife. The knife itself is never dropped.
+	var pickup := TOOL_PICKUP_SCENE.instantiate()
+	pickup.tool_data = held_tool
+	get_parent().add_child(pickup)
+	var drop_pos := global_position + (-global_transform.basis.z * 1.5)
+	pickup.global_position = Vector3(drop_pos.x, 0.3, drop_pos.z)
+	held_tool = knife
+	held_tool_changed.emit(held_tool)
 
 func _update_look_target() -> void:
 	var target: Node3D = null

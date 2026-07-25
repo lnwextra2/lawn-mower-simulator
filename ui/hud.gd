@@ -4,6 +4,7 @@ extends CanvasLayer
 @onready var carried_bar: ProgressBar = $CarriedBar
 @onready var gold_label: Label = $GoldLabel
 @onready var interact_prompt: Label = $InteractPrompt
+@onready var tool_label: Label = $ToolLabel
 
 func _ready() -> void:
 	var player := get_tree().get_first_node_in_group("player")
@@ -11,10 +12,12 @@ func _ready() -> void:
 	player.carried_grass_changed.connect(_on_carried_changed)
 	Economy.gold_changed.connect(_on_gold_changed)
 	player.look_target_changed.connect(_on_look_target_changed)
+	player.held_tool_changed.connect(_on_held_tool_changed)
 
 	_on_stamina_changed(player.stamina, GameConfig.STAMINA_MAX)
 	_on_carried_changed(player.carried_grass, GameConfig.PLAYER_CARRY_CAPACITY)
-	_on_gold_changed(Economy.gold) 
+	_on_gold_changed(Economy.gold)
+	_on_held_tool_changed(player.held_tool)
 
 func _on_stamina_changed(current: float, max_value: float) -> void:
 	stamina_bar.max_value = max_value
@@ -28,4 +31,14 @@ func _on_gold_changed(current: int) -> void:
 	gold_label.text = "Gold: %d" % current
 
 func _on_look_target_changed(target: Node3D) -> void:
-	interact_prompt.visible = target != null
+	if target == null:
+		interact_prompt.visible = false
+	elif target.is_in_group("tool_pickup"):
+		interact_prompt.text = "[E] เก็บ %s" % target.tool_data.tool_name
+		interact_prompt.visible = true
+	else:
+		interact_prompt.text = "[E] โต้ตอบ"
+		interact_prompt.visible = true
+
+func _on_held_tool_changed(tool: ToolData) -> void:
+	tool_label.text = "ถือ: %s" % tool.tool_name

@@ -1,0 +1,22 @@
+[gd_scene format=3 uid="uid://c32btr4mcljm2"]
+
+[ext_resource type="Script" uid="uid://c1rqri1r85tl2" path="res://tools/tool_pickup.gd" id="1_dehgq"]
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_5h11f"]
+size = Vector3(0.3, 0.3, 0.3)
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_bx8n8"]
+albedo_color = Color(0.85490197, 0.85490197, 0.88235295, 0.972549)
+
+[sub_resource type="BoxMesh" id="BoxMesh_5h11f"]
+material = SubResource("StandardMaterial3D_bx8n8")
+size = Vector3(0.3, 0.3, 0.3)
+
+[node name="ToolPickup" type="StaticBody3D" unique_id=223509862]
+script = ExtResource("1_dehgq")
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="." unique_id=1147438110]
+shape = SubResource("BoxShape3D_5h11f")
+
+[node name="MeshInstance3D" type="MeshInstance3D" parent="." unique_id=1329567297]
+mesh = SubResource("BoxMesh_5h11f")
