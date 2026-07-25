@@ -16,3 +16,23 @@ offset_top = 54.992
 offset_right = 203.18399
 offset_bottom = 81.992004
 value = 100.0
+
+[node name="CarriedBar" type="ProgressBar" parent="." unique_id=249371229]
+anchors_preset = -1
+anchor_left = 0.058000002
+anchor_top = -0.054
+anchor_right = 0.058000002
+anchor_bottom = -0.054
+offset_left = -46.816
+offset_top = 84.992004
+offset_right = 203.18399
+offset_bottom = 111.992004
+value = 100.0
+
+[node name="GoldLabel" type="Label" parent="." unique_id=550342186]
+offset_left = 20.0
+offset_top = 80.0
+offset_right = 270.0
+offset_bottom = 104.0
+text = "Gold: 0
+"

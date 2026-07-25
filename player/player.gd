@@ -1,12 +1,15 @@
 extends CharacterBody3D
 
 signal stamina_changed(current: float, max_value: float)
+signal carried_grass_changed(current: float, max_value: float)
 
 var gravity: float = ProjectSettings.get_setting("physics/3d/default_gravity")
 var stamina: float = GameConfig.STAMINA_MAX
+var carried_grass: float = 0.0
 
 @onready var camera: Camera3D = $Camera3D
 @onready var grass_field: GrassField = get_node("../GrassField")
+@onready var drop_off: Node3D = get_node("../DropOff")
 
 func _ready() -> void:
 	Input.mouse_mode = Input.MOUSE_MODE_CAPTURED
@@ -23,9 +26,6 @@ func _physics_process(delta: float) -> void:
 
 	if Input.is_action_just_pressed("jump") and is_on_floor():
 		velocity.y = GameConfig.PLAYER_JUMP_VELOCITY
-	
-	if Input.is_action_just_pressed("attack"):
-		grass_field.cut_near(global_position, GameConfig.HAND_CUT_RADIUS)
 	
 	var input_dir := Input.get_vector("move_left", "move_right", "move_forward", "move_back")
 	var direction := (transform.basis * Vector3(input_dir.x, 0, input_dir.y)).normalized()
@@ -45,4 +45,18 @@ func _physics_process(delta: float) -> void:
 		velocity.x = move_toward(velocity.x, 0, current_speed)
 		velocity.z = move_toward(velocity.z, 0, current_speed)
 
+	#Handle Interaction
+	if Input.is_action_just_pressed("attack"):
+		var cut_count := grass_field.cut_near(global_position, GameConfig.HAND_CUT_RADIUS)
+		carried_grass = min(carried_grass + cut_count, GameConfig.PLAYER_CARRY_CAPACITY)
+		carried_grass_changed.emit(carried_grass, GameConfig.PLAYER_CARRY_CAPACITY)
+		
+	if Input.is_action_just_pressed("interact") and carried_grass > 0.0:
+		var flat_player := Vector2(global_position.x, global_position.z)
+		var flat_dropoff := Vector2(drop_off.global_position.x, drop_off.global_position.z)
+		if flat_player.distance_to(flat_dropoff) <= GameConfig.DROPOFF_RADIUS:
+			Economy.sell(carried_grass)
+			carried_grass = 0.0
+			carried_grass_changed.emit(carried_grass, GameConfig.PLAYER_CARRY_CAPACITY)
+		
 	move_and_slide()

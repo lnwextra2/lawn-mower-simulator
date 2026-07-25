@@ -30,7 +30,7 @@ func _ready() -> void:
 		positions[i] = Vector2(x, z)
 
 		var xform := Transform3D().rotated(Vector3.UP, yaw)
-		xform.origin = Vector3(x, -0.4, z)
+		xform.origin = Vector3(x, 0.4, z)
 		multimesh.set_instance_transform(i, xform)
 
 func cut_near(world_pos: Vector3, radius: float) -> int:
