@@ -12,3 +12,6 @@ const STAMINA_REGEN_RATE: float = 15.0
 #GRASS
 const GRASS_COUNT: int = 10000
 const GRASS_FIELD_SIZE: float = 38.0
+
+#GRASS THINGS
+const HAND_CUT_RADIUS: float = 1.0

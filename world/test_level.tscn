@@ -1,7 +1,7 @@
 [gd_scene format=3 uid="uid://2b1itpc4jfbp"]
 
 [ext_resource type="PackedScene" uid="uid://crk8xw4lu2ftp" path="res://player/player.tscn" id="1_8jkpt"]
-[ext_resource type="Material" path="res://assets/textures/ground048/Ground048_1K-JPG.tres" id="1_kfa7i"]
+[ext_resource type="Material" uid="uid://c2bnvttbfx38s" path="res://assets/textures/ground048/Ground048_1K-JPG.tres" id="1_kfa7i"]
 [ext_resource type="PackedScene" uid="uid://cyy4qah0fufr0" path="res://ui/hud.tscn" id="2_abcqb"]
 [ext_resource type="PackedScene" uid="uid://cag4mjiiu3xxj" path="res://world/grass_field.tscn" id="3_434qw"]
 
