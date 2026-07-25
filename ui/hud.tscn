@@ -1,0 +1,18 @@
+[gd_scene format=3 uid="uid://cyy4qah0fufr0"]
+
+[ext_resource type="Script" uid="uid://cbgb0jwqwj5f5" path="res://ui/hud.gd" id="1_rbyyf"]
+
+[node name="HUD" type="CanvasLayer" unique_id=1194393735]
+script = ExtResource("1_rbyyf")
+
+[node name="StaminaBar" type="ProgressBar" parent="." unique_id=1747988708]
+anchors_preset = -1
+anchor_left = 0.058000002
+anchor_top = -0.054
+anchor_right = 0.058000002
+anchor_bottom = -0.054
+offset_left = -46.816
+offset_top = 54.992
+offset_right = 203.18399
+offset_bottom = 81.992004
+value = 100.0

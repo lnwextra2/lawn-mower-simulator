@@ -1,12 +1,19 @@
 [gd_scene format=3 uid="uid://2b1itpc4jfbp"]
 
 [ext_resource type="PackedScene" uid="uid://crk8xw4lu2ftp" path="res://player/player.tscn" id="1_8jkpt"]
+[ext_resource type="PackedScene" uid="uid://cyy4qah0fufr0" path="res://ui/hud.tscn" id="2_abcqb"]
 
 [sub_resource type="BoxShape3D" id="BoxShape3D_5h11f"]
 size = Vector3(50, 1, 50)
 
 [sub_resource type="BoxMesh" id="BoxMesh_5h11f"]
 size = Vector3(50, 1, 50)
+
+[sub_resource type="SphereShape3D" id="SphereShape3D_5h11f"]
+
+[sub_resource type="SphereMesh" id="SphereMesh_bx8n8"]
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_8jkpt"]
 
 [sub_resource type="Environment" id="Environment_5h11f"]
 ambient_light_energy = 0.3
@@ -27,8 +34,25 @@ mesh = SubResource("BoxMesh_5h11f")
 transform = Transform3D(1, 0, 0, 0, 0.70710677, 0.70710677, 0, -0.70710677, 0.70710677, 0, 0, 0)
 shadow_enabled = true
 
+[node name="Circle1" type="StaticBody3D" parent="." unique_id=183466491]
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Circle1" unique_id=1360794449]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -2, 1, -2)
+shape = SubResource("SphereShape3D_5h11f")
+
+[node name="MeshInstance3D" type="MeshInstance3D" parent="Circle1" unique_id=857324591]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -2, 1, -2)
+mesh = SubResource("SphereMesh_bx8n8")
+surface_material_override/0 = SubResource("StandardMaterial3D_8jkpt")
+
+[node name="DirectionalLight3D" type="DirectionalLight3D" parent="Circle1" unique_id=148087548]
+transform = Transform3D(1, 0, 0, 0, 0.70710677, 0.70710677, 0, -0.70710677, 0.70710677, 0, 0, 0)
+shadow_enabled = true
+
 [node name="Player" parent="." unique_id=799154422 instance=ExtResource("1_8jkpt")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 2, 0)
+
+[node name="HUD" parent="." unique_id=1194393735 instance=ExtResource("2_abcqb")]
 
 [node name="WorldEnvironment" type="WorldEnvironment" parent="." unique_id=695950947]
 environment = SubResource("Environment_5h11f")

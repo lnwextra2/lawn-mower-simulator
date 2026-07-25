@@ -1,6 +1,9 @@
 extends CharacterBody3D
 
+signal stamina_changed(current: float, max_value: float)
+
 var gravity: float = ProjectSettings.get_setting("physics/3d/default_gravity")
+var stamina: float = GameConfig.STAMINA_MAX
 
 @onready var camera: Camera3D = $Camera3D
 
@@ -22,11 +25,20 @@ func _physics_process(delta: float) -> void:
 
 	var input_dir := Input.get_vector("move_left", "move_right", "move_forward", "move_back")
 	var direction := (transform.basis * Vector3(input_dir.x, 0, input_dir.y)).normalized()
-	if direction:
-		velocity.x = direction.x * GameConfig.PLAYER_SPEED
-		velocity.z = direction.z * GameConfig.PLAYER_SPEED
+
+	var is_sprinting := Input.is_action_pressed("sprint") and stamina > 0.0 and direction != Vector3.ZERO
+	if is_sprinting:
+		stamina = max(0.0, stamina - GameConfig.STAMINA_DRAIN_RATE * delta)
 	else:
-		velocity.x = move_toward(velocity.x, 0, GameConfig.PLAYER_SPEED)
-		velocity.z = move_toward(velocity.z, 0, GameConfig.PLAYER_SPEED)
+		stamina = min(GameConfig.STAMINA_MAX, stamina + GameConfig.STAMINA_REGEN_RATE * delta)
+	stamina_changed.emit(stamina, GameConfig.STAMINA_MAX)
+
+	var current_speed := GameConfig.PLAYER_SPRINT_SPEED if is_sprinting else GameConfig.PLAYER_SPEED
+	if direction:
+		velocity.x = direction.x * current_speed
+		velocity.z = direction.z * current_speed
+	else:
+		velocity.x = move_toward(velocity.x, 0, current_speed)
+		velocity.z = move_toward(velocity.z, 0, current_speed)
 
 	move_and_slide()
