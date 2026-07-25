@@ -1,0 +1,6 @@
+[gd_scene format=3 uid="uid://cag4mjiiu3xxj"]
+
+[ext_resource type="Script" uid="uid://co4b8nqtokr77" path="res://world/grass_field.gd" id="1_nno27"]
+
+[node name="GrassField" type="MultiMeshInstance3D" unique_id=825723574]
+script = ExtResource("1_nno27")
