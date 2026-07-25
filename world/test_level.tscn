@@ -4,6 +4,7 @@
 [ext_resource type="Material" uid="uid://c2bnvttbfx38s" path="res://assets/textures/ground048/Ground048_1K-JPG.tres" id="1_kfa7i"]
 [ext_resource type="PackedScene" uid="uid://cyy4qah0fufr0" path="res://ui/hud.tscn" id="2_abcqb"]
 [ext_resource type="PackedScene" uid="uid://cag4mjiiu3xxj" path="res://world/grass_field.tscn" id="3_434qw"]
+[ext_resource type="Script" uid="uid://bm86i0uuq3hvr" path="res://world/lighting_controller.gd" id="4_x27he"]
 
 [sub_resource type="BoxShape3D" id="BoxShape3D_5h11f"]
 size = Vector3(50, 1, 50)
@@ -42,7 +43,7 @@ shape = SubResource("BoxShape3D_5h11f")
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.142, -0.5, -0.525)
 mesh = SubResource("BoxMesh_5h11f")
 
-[node name="DirectionalLight3D" type="DirectionalLight3D" parent="Floor" unique_id=824571888]
+[node name="DirectionalLight3D" type="DirectionalLight3D" parent="Floor" unique_id=824571888 groups=["sun_light"]]
 transform = Transform3D(1, 0, 0, 0, 0.70710677, 0.70710677, 0, -0.70710677, 0.70710677, 0, 0, 0)
 shadow_enabled = true
 
@@ -57,10 +58,6 @@ transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -2, 1, -2)
 mesh = SubResource("SphereMesh_bx8n8")
 surface_material_override/0 = SubResource("StandardMaterial3D_8jkpt")
 
-[node name="DirectionalLight3D" type="DirectionalLight3D" parent="Circle1" unique_id=148087548]
-transform = Transform3D(1, 0, 0, 0, 0.70710677, 0.70710677, 0, -0.70710677, 0.70710677, 0, 0, 0)
-shadow_enabled = true
-
 [node name="Player" parent="." unique_id=799154422 instance=ExtResource("1_8jkpt")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 2, 0)
 
@@ -68,10 +65,11 @@ transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 2, 0)
 
 [node name="WorldEnvironment" type="WorldEnvironment" parent="." unique_id=695950947]
 environment = SubResource("Environment_5h11f")
+script = ExtResource("4_x27he")
 
 [node name="GrassField" parent="." unique_id=825723574 instance=ExtResource("3_434qw")]
 
-[node name="DropOff" type="Node3D" parent="." unique_id=1248243609]
+[node name="DropOff" type="Node3D" parent="." unique_id=1248243609 groups=["drop_off"]]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 15, 0.05, 15)
 
 [node name="MeshInstance3D" type="MeshInstance3D" parent="DropOff" unique_id=1187613514]

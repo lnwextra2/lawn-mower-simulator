@@ -2,5 +2,5 @@
 
 [ext_resource type="Script" uid="uid://co4b8nqtokr77" path="res://world/grass_field.gd" id="1_nno27"]
 
-[node name="GrassField" type="MultiMeshInstance3D" unique_id=825723574]
+[node name="GrassField" type="MultiMeshInstance3D" unique_id=825723574 groups=["grass_field"]]
 script = ExtResource("1_nno27")

@@ -19,3 +19,6 @@ const GRASS_FIELD_SIZE: float = 38.0
 #GRASS THINGS
 const HAND_CUT_RADIUS: float = 1.0
  
+#Time
+const DAY_NIGHT_CYCLE_DURATION: float = 480.0 #second / 1 Day
+const DAY_NIGHT_START_TIME: float = 0.25

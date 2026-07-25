@@ -8,8 +8,8 @@ var stamina: float = GameConfig.STAMINA_MAX
 var carried_grass: float = 0.0
 
 @onready var camera: Camera3D = $Camera3D
-@onready var grass_field: GrassField = get_node("../GrassField")
-@onready var drop_off: Node3D = get_node("../DropOff")
+@onready var grass_field: GrassField = get_tree().get_first_node_in_group("grass_field")
+@onready var drop_off: Node3D = get_tree().get_first_node_in_group("drop_off")
 
 func _ready() -> void:
 	Input.mouse_mode = Input.MOUSE_MODE_CAPTURED
