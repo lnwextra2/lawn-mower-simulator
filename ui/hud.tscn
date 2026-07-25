@@ -36,3 +36,18 @@ offset_right = 270.0
 offset_bottom = 104.0
 text = "Gold: 0
 "
+
+[node name="InteractPrompt" type="Label" parent="." unique_id=628101892]
+visible = false
+anchors_preset = 7
+anchor_left = 0.5
+anchor_top = 1.0
+anchor_right = 0.5
+anchor_bottom = 1.0
+offset_left = -20.0
+offset_top = -148.0
+offset_right = 20.0
+offset_bottom = -125.0
+grow_horizontal = 2
+grow_vertical = 0
+text = "press [E] to Interact"

@@ -47,7 +47,7 @@ mesh = SubResource("BoxMesh_5h11f")
 transform = Transform3D(1, 0, 0, 0, 0.70710677, 0.70710677, 0, -0.70710677, 0.70710677, 0, 0, 0)
 shadow_enabled = true
 
-[node name="Circle1" type="StaticBody3D" parent="." unique_id=183466491]
+[node name="Circle1" type="StaticBody3D" parent="." unique_id=183466491 groups=["interactable"]]
 
 [node name="CollisionShape3D" type="CollisionShape3D" parent="Circle1" unique_id=1360794449]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -2, 1, -2)

@@ -2,14 +2,18 @@ extends CharacterBody3D
 
 signal stamina_changed(current: float, max_value: float)
 signal carried_grass_changed(current: float, max_value: float)
+signal look_target_changed(target: Node3D)
 
 var gravity: float = ProjectSettings.get_setting("physics/3d/default_gravity")
 var stamina: float = GameConfig.STAMINA_MAX
 var carried_grass: float = 0.0
 
 @onready var camera: Camera3D = $Camera3D
+@onready var interact_ray: RayCast3D = $Camera3D/RayCast3D
+var current_target: Node3D = null
 @onready var grass_field: GrassField = get_tree().get_first_node_in_group("grass_field")
 @onready var drop_off: Node3D = get_tree().get_first_node_in_group("drop_off")
+
 
 func _ready() -> void:
 	Input.mouse_mode = Input.MOUSE_MODE_CAPTURED
@@ -58,5 +62,16 @@ func _physics_process(delta: float) -> void:
 			Economy.sell(carried_grass)
 			carried_grass = 0.0
 			carried_grass_changed.emit(carried_grass, GameConfig.PLAYER_CARRY_CAPACITY)
-		
+	
+	_update_look_target()
 	move_and_slide()
+
+func _update_look_target() -> void:
+	var target: Node3D = null
+	if interact_ray.is_colliding():
+		var hit := interact_ray.get_collider()
+		if hit is Node and hit.is_in_group("interactable"):
+			target = hit
+	if target != current_target:
+		current_target = target
+		look_target_changed.emit(current_target)

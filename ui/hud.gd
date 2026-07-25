@@ -3,12 +3,14 @@ extends CanvasLayer
 @onready var stamina_bar: ProgressBar = $StaminaBar
 @onready var carried_bar: ProgressBar = $CarriedBar
 @onready var gold_label: Label = $GoldLabel
+@onready var interact_prompt: Label = $InteractPrompt
 
 func _ready() -> void:
 	var player := get_tree().get_first_node_in_group("player")
 	player.stamina_changed.connect(_on_stamina_changed)
 	player.carried_grass_changed.connect(_on_carried_changed)
 	Economy.gold_changed.connect(_on_gold_changed)
+	player.look_target_changed.connect(_on_look_target_changed)
 
 	_on_stamina_changed(player.stamina, GameConfig.STAMINA_MAX)
 	_on_carried_changed(player.carried_grass, GameConfig.PLAYER_CARRY_CAPACITY)
@@ -24,3 +26,6 @@ func _on_carried_changed(current: float, max_value: float) -> void:
 
 func _on_gold_changed(current: int) -> void:
 	gold_label.text = "Gold: %d" % current
+
+func _on_look_target_changed(target: Node3D) -> void:
+	interact_prompt.visible = target != null
