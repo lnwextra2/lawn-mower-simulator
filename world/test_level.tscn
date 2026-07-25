@@ -1,6 +1,7 @@
 [gd_scene format=3 uid="uid://2b1itpc4jfbp"]
 
 [ext_resource type="PackedScene" uid="uid://crk8xw4lu2ftp" path="res://player/player.tscn" id="1_8jkpt"]
+[ext_resource type="Material" path="res://assets/textures/ground048/Ground048_1K-JPG.tres" id="1_kfa7i"]
 [ext_resource type="PackedScene" uid="uid://cyy4qah0fufr0" path="res://ui/hud.tscn" id="2_abcqb"]
 [ext_resource type="PackedScene" uid="uid://cag4mjiiu3xxj" path="res://world/grass_field.tscn" id="3_434qw"]
 
@@ -8,6 +9,7 @@
 size = Vector3(50, 1, 50)
 
 [sub_resource type="BoxMesh" id="BoxMesh_5h11f"]
+material = ExtResource("1_kfa7i")
 size = Vector3(50, 1, 50)
 
 [sub_resource type="SphereShape3D" id="SphereShape3D_5h11f"]
