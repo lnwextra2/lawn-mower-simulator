@@ -29,7 +29,6 @@ var current_target: Node3D = null
 @onready var grass_field: GrassField = get_tree().get_first_node_in_group("grass_field")
 @onready var drop_off: Node3D = get_tree().get_first_node_in_group("drop_off")
 
-
 func _ready() -> void:
 	Input.mouse_mode = Input.MOUSE_MODE_CAPTURED
 	# Capture the idle slide position; the swing animates an offset from it.
@@ -117,15 +116,29 @@ func _pick_up_tool(pickup: Node) -> void:
 	look_target_changed.emit(null)
 
 func _drop_tool() -> void:
-	# Put the held tool back into the world as a fresh pickup in front of us,
-	# then fall back to the knife. The knife itself is never dropped.
+	# Toss the held tool out like CS: spawn it at hand height, then hand it a
+	# forward+up impulse (plus a little spin) and let RigidBody physics arc it
+	# out and tumble to rest. The knife itself is never dropped.
 	var pickup := TOOL_PICKUP_SCENE.instantiate()
 	pickup.tool_data = held_tool
 	get_parent().add_child(pickup)
-	var drop_pos := global_position + (-global_transform.basis.z * 1.5)
-	pickup.global_position = Vector3(drop_pos.x, 0.3, drop_pos.z)
+	var forward := -global_transform.basis.z
+	pickup.global_position = global_position + forward * 0.6 + Vector3(0, 1.3, 0)
+	pickup.rotation.y = randf_range(0.0, TAU)   # vary facing so it doesn't always land the same way
+	# It spawns right on top of us, so a long tool (the scythe) would jam into
+	# the player's body and spike the physics. Ignore player<->pickup collision
+	# while it's thrown, then restore it a moment later so we can still bump the
+	# tool once it has cleared us.
+	pickup.add_collision_exception_with(self)
+	get_tree().create_timer(0.5).timeout.connect(_restore_pickup_collision.bind(pickup))
+	pickup.apply_central_impulse(forward * 4.0 + Vector3(0, 2.5, 0))
+	pickup.apply_torque_impulse(Vector3(randf_range(-1.0, 1.0), randf_range(-1.0, 1.0), randf_range(-1.0, 1.0)) * 0.2)
 	held_tool = knife
 	held_tool_changed.emit(held_tool)
+
+func _restore_pickup_collision(pickup: Node) -> void:
+	if is_instance_valid(pickup):
+		pickup.remove_collision_exception_with(self)
 
 func _process(delta: float) -> void:
 	_update_swing(delta)

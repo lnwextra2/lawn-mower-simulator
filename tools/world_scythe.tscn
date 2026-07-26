@@ -1,0 +1,22 @@
+[gd_scene format=3 uid="uid://djs7ay1x2n4or"]
+
+[ext_resource type="PackedScene" uid="uid://ch3wel8xt6e6f" path="res://assets/models/scythe.glb" id="1_vb4ub"]
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_5h11f"]
+size = Vector3(0.244, 0.07, 2)
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_kjgq3"]
+size = Vector3(0.1, 1, 0.3)
+
+[node name="WorldScythe" type="Node3D" unique_id=1707286122]
+
+[node name="Root Scene" parent="." unique_id=675875990 instance=ExtResource("1_vb4ub")]
+transform = Transform3D(-0.35, -3.059797e-08, 1.3374798e-15, 0, -1.5298985e-08, -0.35, 3.059797e-08, -0.35, 1.5298985e-08, 0, 0.035, 0)
+
+[node name="HandleShape" type="CollisionShape3D" parent="." unique_id=193342173]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.04604492, 0.035, -0.20562744)
+shape = SubResource("BoxShape3D_5h11f")
+
+[node name="BladeShape" type="CollisionShape3D" parent="." unique_id=1349062313]
+transform = Transform3D(-4.371139e-08, -1, 0, 1, -4.371139e-08, 0, 0, 0, 1, -0.351, 0.035, -0.903)
+shape = SubResource("BoxShape3D_kjgq3")

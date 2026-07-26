@@ -13,3 +13,7 @@ class_name ToolData
 ## player's SwingPivot when the tool becomes the held one. Leave empty for no
 ## view model (nothing shown).
 @export var view_model_scene: PackedScene
+## The model shown when this tool is lying in the world as a pickup, posed to
+## rest on the ground (distinct from the in-hand pose). Leave empty to fall back
+## to the pickup's placeholder box.
+@export var world_model_scene: PackedScene

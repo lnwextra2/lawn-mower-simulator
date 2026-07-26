@@ -12,7 +12,7 @@ albedo_color = Color(0.85490197, 0.85490197, 0.88235295, 0.972549)
 material = SubResource("StandardMaterial3D_bx8n8")
 size = Vector3(0.3, 0.3, 0.3)
 
-[node name="ToolPickup" type="StaticBody3D" unique_id=223509862]
+[node name="ToolPickup" type="RigidBody3D" unique_id=81745028]
 script = ExtResource("1_dehgq")
 
 [node name="CollisionShape3D" type="CollisionShape3D" parent="." unique_id=1147438110]
