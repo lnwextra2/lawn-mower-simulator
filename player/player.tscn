@@ -2,6 +2,7 @@
 
 [ext_resource type="Script" uid="uid://w7g8a1a33v7t" path="res://player/player.gd" id="1_oul6g"]
 [ext_resource type="Resource" uid="uid://gb1dfwxfmpkr" path="res://tools/knife.tres" id="2_rkbax"]
+[ext_resource type="PackedScene" uid="uid://coq8sx1jey620" path="res://assets/models/sickle.glb" id="3_g1dw6"]
 
 [sub_resource type="CapsuleShape3D" id="CapsuleShape3D_5iqjx"]
 
@@ -20,6 +21,14 @@ transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.6, 0)
 
 [node name="RayCast3D" type="RayCast3D" parent="Camera3D" unique_id=2065478891]
 target_position = Vector3(0, 0, -3)
+
+[node name="ViewModel" type="Node3D" parent="Camera3D" unique_id=1957162506]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.3, -0.3, -0.5)
+
+[node name="SwingPivot" type="Node3D" parent="Camera3D/ViewModel" unique_id=935283409]
+
+[node name="sickle" parent="Camera3D/ViewModel/SwingPivot" unique_id=598634671 instance=ExtResource("3_g1dw6")]
+transform = Transform3D(-0.9396926, 0.34202006, -6.181724e-08, 0.24184474, 0.664463, -0.70710677, -0.24184465, -0.66446304, -0.70710677, 0.2, 0.1, 0)
 
 [node name="MeshInstance3D" type="MeshInstance3D" parent="." unique_id=1401295645]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1, 0)

@@ -19,6 +19,12 @@ var held_tool: ToolData
 
 @onready var camera: Camera3D = $Camera3D
 @onready var interact_ray: RayCast3D = $Camera3D/RayCast3D
+@onready var view_model: Node3D = $Camera3D/ViewModel          # slides (position), never rotated
+@onready var swing_pivot: Node3D = $Camera3D/ViewModel/SwingPivot  # rotates (swing), axes stay camera-aligned
+const SWING_SPEED: float = 7.0   # matches the prototype's CONFIG.tools.scythe.swingSpeed
+var is_swinging: bool = false
+var swing_timer: float = 0.0
+var vm_rest_pos: Vector3
 var current_target: Node3D = null
 @onready var grass_field: GrassField = get_tree().get_first_node_in_group("grass_field")
 @onready var drop_off: Node3D = get_tree().get_first_node_in_group("drop_off")
@@ -28,6 +34,8 @@ func _ready() -> void:
 	Input.mouse_mode = Input.MOUSE_MODE_CAPTURED
 	held_tool = knife
 	held_tool_changed.emit(held_tool)
+	# Capture the idle slide position; the swing animates an offset from it.
+	vm_rest_pos = view_model.position
 
 func _unhandled_input(event: InputEvent) -> void:
 	if event is InputEventMouseMotion:
@@ -67,6 +75,7 @@ func _physics_process(delta: float) -> void:
 		var cut_count := grass_field.cut_near(global_position, held_tool.cut_radius)
 		carried_grass = min(carried_grass + cut_count, GameConfig.PLAYER_CARRY_CAPACITY)
 		carried_grass_changed.emit(carried_grass, GameConfig.PLAYER_CARRY_CAPACITY)
+		start_swing()
 
 	if Input.is_action_just_pressed("interact"):
 		# E is context-sensitive: pick up a looked-at tool if hands are free
@@ -108,6 +117,41 @@ func _drop_tool() -> void:
 	pickup.global_position = Vector3(drop_pos.x, 0.3, drop_pos.z)
 	held_tool = knife
 	held_tool_changed.emit(held_tool)
+
+func _process(delta: float) -> void:
+	_update_swing(delta)
+
+func start_swing() -> void:
+	# Edge-trigger guard: ignore new clicks mid-swing so they don't chain,
+	# matching the prototype's consumeAttack() one-shot.
+	if is_swinging:
+		return
+	is_swinging = true
+	swing_timer = 0.0
+
+func _update_swing(delta: float) -> void:
+	# Port of the prototype's sin-driven scythe swing. One sin() ramps 0->1->0
+	# over swing_timer 0..PI and drives BOTH position and rotation off the same
+	# value, so slide-across and yaw stay in sync and the return is built in -
+	# no separate out/back tweens to seam or fight over the property.
+	if not is_swinging:
+		return
+	swing_timer += delta * SWING_SPEED
+	var sf := sin(swing_timer)
+	var progress := swing_timer / PI   # 0 -> 1 across the swing (monotonic)
+	# SLIDE on view_model (camera space, un-rotated) -> always screen-aligned no
+	# matter how the sickle model is oriented. -X = screen-left, small -Y dip.
+	# Z: +Z is toward the camera (player). Using sf*progress makes the pull-in
+	# peak LATE in the swing but still return to 0 at the end, so no reset pop.
+	var pull_in := 0.7 * sf * progress
+	view_model.position = vm_rest_pos + Vector3(-1.0 * sf, -0.07 * sf + 0.25, pull_in)
+	# SWING on swing_pivot (rest rotation 0) -> its axes stay camera-aligned, so
+	# Y is a clean horizontal yaw sweep independent of the sickle's own pose.
+	swing_pivot.rotation_degrees = Vector3(0, rad_to_deg(2.5) * sf, -70)
+	if swing_timer >= PI:
+		is_swinging = false
+		view_model.position = vm_rest_pos
+		swing_pivot.rotation_degrees = Vector3.ZERO
 
 func _update_look_target() -> void:
 	var target: Node3D = null
