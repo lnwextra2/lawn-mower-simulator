@@ -45,5 +45,5 @@ const COLOR_GRASS_STANDING := Color(0.13, 0.55, 0.13)
 const COLOR_GRASS_CUT := Color(0.42, 0.60, 0.22)
  
 #Time
-const DAY_NIGHT_CYCLE_DURATION: float = 480.0 #second / 1 Day
+const DAY_NIGHT_CYCLE_DURATION: float = 60.0 #second / 1 Day
 const DAY_NIGHT_START_TIME: float = 0.25

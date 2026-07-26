@@ -1,0 +1,10 @@
+[gd_resource type="Resource" script_class="LanternData" format=3 uid="uid://cv3kjy337r4uu"]
+
+[ext_resource type="Script" uid="uid://b6a8af0yb70tb" path="res://tools/lantern_data.gd" id="1_wx4mc"]
+[ext_resource type="PackedScene" uid="uid://dq30ilqy6iff4" path="res://tools/viewmodel_lantern.tscn" id="2_x8p2m"]
+[ext_resource type="PackedScene" uid="uid://d0nfarel1sddu" path="res://tools/world_lantern.tscn" id="3_6ypvs"]
+
+[resource]
+script = ExtResource("1_wx4mc")
+view_model_scene = ExtResource("2_x8p2m")
+world_model_scene = ExtResource("3_6ypvs")

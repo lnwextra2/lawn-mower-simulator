@@ -1,0 +1,15 @@
+[gd_scene format=3 uid="uid://d0nfarel1sddu"]
+
+[ext_resource type="PackedScene" uid="uid://dah3u7j74bc6i" path="res://assets/models/lantern.glb" id="1_7n5te"]
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_5h11f"]
+size = Vector3(0.55, 1, 0.55)
+
+[node name="WorldLantern" type="Node3D" unique_id=916393310]
+
+[node name="Root Scene" parent="." unique_id=895955245 instance=ExtResource("1_7n5te")]
+transform = Transform3D(0.7, 0, 0, 0, 0.7, 0, 0, 0, 0.7, 0, 0, 0)
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="." unique_id=1927600974]
+transform = Transform3D(0.7, 0, 0, 0, 0.7, 0, 0, 0, 0.7, 0, 0.25, 0)
+shape = SubResource("BoxShape3D_5h11f")

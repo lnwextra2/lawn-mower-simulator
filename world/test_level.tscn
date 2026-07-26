@@ -8,6 +8,7 @@
 [ext_resource type="PackedScene" uid="uid://c32btr4mcljm2" path="res://tools/tool_pickup.tscn" id="6_mmx4b"]
 [ext_resource type="Resource" uid="uid://b0wxx3k06huub" path="res://tools/trimmer.tres" id="7_yi58r"]
 [ext_resource type="Resource" uid="uid://bbeweuac3g0j1" path="res://tools/scythe.tres" id="8_dnf1e"]
+[ext_resource type="Resource" uid="uid://cv3kjy337r4uu" path="res://tools/Lantern.tres" id="9_3e8q6"]
 
 [sub_resource type="BoxShape3D" id="BoxShape3D_5h11f"]
 size = Vector3(50, 1, 50)
@@ -102,3 +103,8 @@ tool_data = ExtResource("7_yi58r")
 [node name="ToolPickup2" parent="." unique_id=1299284099 instance=ExtResource("6_mmx4b")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 5, 0, 3)
 tool_data = ExtResource("8_dnf1e")
+
+[node name="ToolPickup3" parent="." unique_id=81745028 instance=ExtResource("6_mmx4b")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -1.9303064, 1.7027088, -2.0025644)
+tool_data = ExtResource("9_3e8q6")
+lantern_fuel = 240.0

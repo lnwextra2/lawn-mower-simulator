@@ -26,6 +26,11 @@ transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.3, -0.3, -0.5)
 
 [node name="SwingPivot" type="Node3D" parent="Camera3D/ViewModel" unique_id=935283409]
 
+[node name="LanternModel" type="Node3D" parent="Camera3D" unique_id=940257692]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.85, -0.75, -1)
+
+[node name="LanternLight" type="OmniLight3D" parent="Camera3D/LanternModel" unique_id=1270329305]
+
 [node name="CarryModel" type="Node3D" parent="." unique_id=1799781259]
 transform = Transform3D(0.87542605, -0.23456971, 0.42261827, 0.25881904, 0.9659258, 0, -0.4082179, 0.10938165, 0.90630776, -0.25, 0.4, -0.6)
 

@@ -4,6 +4,7 @@ signal stamina_changed(current: float, max_value: float)
 signal carried_grass_changed(current: float, max_value: float)
 signal look_target_changed(target: Node3D)
 signal held_tool_changed(tool: ToolData)
+signal lantern_changed(lantern: LanternData, lit: bool, fuel: float)
 
 const TOOL_PICKUP_SCENE := preload("res://tools/tool_pickup.tscn")
 const GRASS_PILE_SCENE := preload("res://world/grass_pile.tscn")
@@ -17,6 +18,10 @@ var gravity: float = ProjectSettings.get_setting("physics/3d/default_gravity")
 var stamina: float = GameConfig.STAMINA_MAX
 var carried_grass: float = 0.0
 var held_tool: ToolData
+## The lantern occupies the off hand, a slot of its own alongside the tool.
+var lantern: LanternData = null
+var lantern_lit: bool = false
+var lantern_fuel: float = 0.0
 
 @onready var camera: Camera3D = $Camera3D
 @onready var interact_ray: RayCast3D = $Camera3D/RayCast3D
@@ -26,6 +31,8 @@ var held_tool: ToolData
 ## your chest, so it turns with you but doesn't rise when you look up - looking at
 ## the sky shouldn't lift the load into view.
 @onready var carry_model: Node3D = $CarryModel
+@onready var lantern_model: Node3D = $Camera3D/LanternModel   # in the off hand, follows the view
+@onready var lantern_light: OmniLight3D = $Camera3D/LanternModel/LanternLight
 const SWING_SPEED: float = 7.0   # matches the prototype's CONFIG.tools.scythe.swingSpeed
 var is_swinging: bool = false
 var swing_timer: float = 0.0
@@ -144,20 +151,27 @@ func _physics_process(delta: float) -> void:
 			carried_grass += picked
 			carried_grass_changed.emit(carried_grass, GameConfig.PLAYER_CARRY_CAPACITY)
 			_update_carry_model()
-
+	
 	if Input.is_action_just_pressed("interact"):
 		# E is context-sensitive: pick up a looked-at tool if hands are free
 		# (holding only the knife); otherwise fall back to selling grass.
-		if current_target and current_target.is_in_group("tool_pickup") and held_tool == knife:
-			_pick_up_tool(current_target)
+		if current_target and current_target.is_in_group("tool_pickup") and _can_pick_up(current_target):
+			_pick_up_item(current_target)
 		elif carried_grass > 0.0:
 			_try_sell()
 
+	if Input.is_action_just_pressed("toggle_lantern"):
+		_toggle_lantern()
+
 	if Input.is_action_just_pressed("drop"):
 		# Grass first: it's what's blocking the tool, so the same key that frees
-		# your hands shouldn't also throw the tool away.
+		# your hands shouldn't also throw away what you're holding. The lantern
+		# goes before the tool because the tool falls back to the undroppable
+		# knife anyway - dropping that is usually not what you meant.
 		if carried_grass > 0.0:
 			_drop_grass()
+		elif lantern:
+			_drop_lantern()
 		elif held_tool != knife:
 			_drop_tool()
 
@@ -207,34 +221,106 @@ func _try_sell() -> void:
 		carried_grass_changed.emit(carried_grass, GameConfig.PLAYER_CARRY_CAPACITY)
 		_update_carry_model()
 
-func _pick_up_tool(pickup: Node) -> void:
-	held_tool = pickup.tool_data
-	held_tool_changed.emit(held_tool)
+## A lantern goes in the off hand, so it can be picked up while holding a tool.
+## A tool needs the main hand free, i.e. nothing but the default knife in it.
+func _can_pick_up(pickup: Node) -> bool:
+	if pickup.tool_data is LanternData:
+		return lantern == null
+	return held_tool == knife
+
+func _pick_up_item(pickup: Node) -> void:
+	var data: ToolData = pickup.tool_data
+	if data is LanternData:
+		lantern = data
+		lantern_fuel = pickup.lantern_fuel   # a lantern keeps the fuel it was left with
+		lantern_lit = pickup.lantern_lit
+		_rebuild_lantern_model()
+		_refresh_lantern()
+	else:
+		held_tool = data
+		held_tool_changed.emit(held_tool)
 	pickup.queue_free()
 	# The looked-at node is gone now; clear the prompt this frame.
 	current_target = null
 	look_target_changed.emit(null)
 
+func _drop_lantern() -> void:
+	# A set-down lantern keeps burning where it lies with the fuel it had - you
+	# can put it down as a light source instead of carrying it.
+	_spawn_pickup(lantern, lantern_fuel, lantern_lit)
+	lantern = null
+	lantern_lit = false
+	lantern_fuel = 0.0
+	_rebuild_lantern_model()
+	_refresh_lantern()
+
+## Works whenever you have the lantern on you, in hand or clipped at your side -
+## you can reach it either way. Only an empty tank stops you.
+func _toggle_lantern() -> void:
+	if lantern == null or lantern_fuel <= 0.0:
+		return
+	lantern_lit = not lantern_lit
+	_refresh_lantern()
+
+func _update_lantern(delta: float) -> void:
+	if lantern == null or not lantern_lit:
+		return
+	lantern_fuel = maxf(0.0, lantern_fuel - delta)
+	if lantern_fuel <= 0.0:
+		lantern_lit = false   # burnt out
+	_refresh_lantern()
+
+## Spawns (or clears) the lantern's in-hand model. Separate from _refresh_lantern
+## because that runs every frame while burning - rebuilding a model 60 times a
+## second would be silly. Only picking one up or putting it down changes what's
+## in your hand.
+func _rebuild_lantern_model() -> void:
+	for child in lantern_model.get_children():
+		if child != lantern_light:
+			child.queue_free()
+	if lantern and lantern.view_model_scene:
+		lantern_model.add_child(lantern.view_model_scene.instantiate())
+
+## Pushes the lantern's state onto the visuals: the model shows only while you
+## have it, the light only while it's actually lit.
+func _refresh_lantern() -> void:
+	lantern_model.visible = lantern != null
+	lantern_light.visible = lantern != null and lantern_lit
+	if lantern:
+		lantern_light.light_energy = lantern.held_energy
+		lantern_light.omni_range = lantern.held_range
+		lantern_light.light_color = lantern.light_color
+	lantern_changed.emit(lantern, lantern_lit, lantern_fuel)
+
 func _drop_tool() -> void:
-	# Toss the held tool out like CS: spawn it at hand height, then hand it a
-	# forward+up impulse (plus a little spin) and let RigidBody physics arc it
-	# out and tumble to rest. The knife itself is never dropped.
+	_spawn_pickup(held_tool)
+	held_tool = knife
+	held_tool_changed.emit(held_tool)
+
+## Tosses `data` out into the world as a pickup, like a CS weapon drop: spawned
+## at hand height with a forward+up impulse and a little spin, then left to
+## RigidBody physics. Shared by dropping a tool and dropping the lantern.
+func _spawn_pickup(data: ToolData, fuel: float = 0.0, lit: bool = false) -> Node:
 	var pickup := TOOL_PICKUP_SCENE.instantiate()
-	pickup.tool_data = held_tool
+	# Everything the pickup reads in _ready must be set BEFORE add_child, because
+	# add_child runs _ready immediately - assigning afterwards is too late and the
+	# pickup would come up with defaults (an unlit, empty lantern).
+	pickup.tool_data = data
+	pickup.lantern_fuel = fuel
+	pickup.lantern_lit = lit
 	get_parent().add_child(pickup)
 	var forward := -global_transform.basis.z
 	pickup.global_position = global_position + forward * 0.6 + Vector3(0, 1.3, 0)
 	pickup.rotation.y = randf_range(0.0, TAU)   # vary facing so it doesn't always land the same way
-	# It spawns right on top of us, so a long tool (the scythe) would jam into
+	# It spawns right on top of us, so a long item (the scythe) would jam into
 	# the player's body and spike the physics. Ignore player<->pickup collision
 	# while it's thrown, then restore it a moment later so we can still bump the
-	# tool once it has cleared us.
+	# item once it has cleared us.
 	pickup.add_collision_exception_with(self)
 	get_tree().create_timer(0.5).timeout.connect(_restore_pickup_collision.bind(pickup))
 	pickup.apply_central_impulse(forward * 4.0 + Vector3(0, 2.5, 0))
 	pickup.apply_torque_impulse(Vector3(randf_range(-1.0, 1.0), randf_range(-1.0, 1.0), randf_range(-1.0, 1.0)) * 0.2)
-	held_tool = knife
-	held_tool_changed.emit(held_tool)
+	return pickup
 
 func _restore_pickup_collision(pickup: Node) -> void:
 	if is_instance_valid(pickup):
@@ -242,6 +328,7 @@ func _restore_pickup_collision(pickup: Node) -> void:
 
 func _process(delta: float) -> void:
 	_update_swing(delta)
+	_update_lantern(delta)
 
 func start_swing() -> void:
 	# Edge-trigger guard: ignore new clicks mid-swing so they don't chain,

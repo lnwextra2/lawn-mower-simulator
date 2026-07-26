@@ -1,0 +1,8 @@
+[gd_scene format=3 uid="uid://dq30ilqy6iff4"]
+
+[ext_resource type="PackedScene" uid="uid://dah3u7j74bc6i" path="res://assets/models/lantern.glb" id="1_h5dly"]
+
+[node name="ViewModelLantern" type="Node3D" unique_id=156001161]
+
+[node name="Root Scene" parent="." unique_id=895955245 instance=ExtResource("1_h5dly")]
+transform = Transform3D(0.7, 0, 0, 0, 0.7, 0, 0, 0, 0.7, 0, 0, 0)
