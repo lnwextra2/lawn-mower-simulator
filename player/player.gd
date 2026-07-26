@@ -6,6 +6,7 @@ signal look_target_changed(target: Node3D)
 signal held_tool_changed(tool: ToolData)
 
 const TOOL_PICKUP_SCENE := preload("res://tools/tool_pickup.tscn")
+const GRASS_PILE_SCENE := preload("res://world/grass_pile.tscn")
 
 ## The default belt-clipped tool (a rice sickle). Assigned in the Inspector to
 ## knife.tres. It's the "empty hands" state - always held when nothing else is,
@@ -21,6 +22,7 @@ var held_tool: ToolData
 @onready var interact_ray: RayCast3D = $Camera3D/RayCast3D
 @onready var view_model: Node3D = $Camera3D/ViewModel          # slides (position), never rotated
 @onready var swing_pivot: Node3D = $Camera3D/ViewModel/SwingPivot  # rotates (swing), axes stay camera-aligned
+@onready var carry_model: Node3D = $Camera3D/CarryModel        # the armful of grass, shown while carrying
 const SWING_SPEED: float = 7.0   # matches the prototype's CONFIG.tools.scythe.swingSpeed
 var is_swinging: bool = false
 var swing_timer: float = 0.0
@@ -38,6 +40,7 @@ func _ready() -> void:
 	held_tool_changed.connect(_swap_view_model)
 	held_tool = knife
 	held_tool_changed.emit(held_tool)
+	_update_carry_model()   # start with empty arms: grass hidden, tool shown
 
 func _swap_view_model(tool: ToolData) -> void:
 	for child in swing_pivot.get_children():
@@ -77,7 +80,9 @@ func _physics_process(delta: float) -> void:
 		velocity.z = move_toward(velocity.z, 0, current_speed)
 
 	#Handle Interaction
-	if Input.is_action_just_pressed("attack"):
+	# Carrying an armful of grass occupies both hands: the tool is still yours,
+	# it just can't be used until you put the grass down (drop key).
+	if Input.is_action_just_pressed("attack") and carried_grass <= 0.0:
 		# The whole point of Approach A: cut through the held tool's data, not a
 		# hardcoded radius. Swapping tools swaps the reach with zero code change.
 		# Cut grass is left lying on the ground as piles rather than going straight
@@ -88,10 +93,20 @@ func _physics_process(delta: float) -> void:
 
 	if Input.is_action_just_pressed("collect"):
 		var room: int = int(GameConfig.PLAYER_CARRY_CAPACITY - carried_grass)
+		# Grass on the ground comes in two forms: blades we cut in place, and
+		# heaps we (or a future cart) put down. Scoop both.
 		var picked := grass_field.collect_near(global_position, GameConfig.COLLECT_RADIUS, room)
+		for pile in get_tree().get_nodes_in_group("grass_pile"):
+			if picked >= room:
+				break
+			if pile.is_flying:
+				continue   # can't catch one mid-air
+			if global_position.distance_to(pile.global_position) <= GameConfig.COLLECT_RADIUS:
+				picked += pile.take(room - picked)
 		if picked > 0:
 			carried_grass += picked
 			carried_grass_changed.emit(carried_grass, GameConfig.PLAYER_CARRY_CAPACITY)
+			_update_carry_model()
 
 	if Input.is_action_just_pressed("interact"):
 		# E is context-sensitive: pick up a looked-at tool if hands are free
@@ -101,11 +116,39 @@ func _physics_process(delta: float) -> void:
 		elif carried_grass > 0.0:
 			_try_sell()
 
-	if Input.is_action_just_pressed("drop") and held_tool != knife:
-		_drop_tool()
+	if Input.is_action_just_pressed("drop"):
+		# Grass first: it's what's blocking the tool, so the same key that frees
+		# your hands shouldn't also throw the tool away.
+		if carried_grass > 0.0:
+			_drop_grass()
+		elif held_tool != knife:
+			_drop_tool()
 
 	_update_look_target()
 	move_and_slide()
+
+func _drop_grass() -> void:
+	# Toss the whole armful out in front of us - it can land anywhere, cut ground
+	# or not, and merges with whatever heap it lands next to.
+	var pile := GRASS_PILE_SCENE.instantiate()
+	pile.amount = int(carried_grass)
+	get_parent().add_child(pile)
+	var forward := -global_transform.basis.z
+	pile.global_position = global_position + forward * 0.6 + Vector3(0, 1.2, 0)
+	pile.throw(forward * GameConfig.GRASS_THROW_FORCE + Vector3(0, GameConfig.GRASS_THROW_LIFT, 0),
+		get_rid())
+	carried_grass = 0.0
+	carried_grass_changed.emit(carried_grass, GameConfig.PLAYER_CARRY_CAPACITY)
+	_update_carry_model()
+
+## Shows the armful only while carrying, and swells it toward full capacity so
+## the load reads at a glance.
+func _update_carry_model() -> void:
+	var fill := carried_grass / GameConfig.PLAYER_CARRY_CAPACITY
+	carry_model.visible = carried_grass > 0.0
+	carry_model.scale = Vector3.ONE * lerpf(0.5, 1.0, fill)
+	# The tool is stowed while both arms are full.
+	view_model.visible = carried_grass <= 0.0
 
 func _try_sell() -> void:
 	var flat_player := Vector2(global_position.x, global_position.z)
@@ -114,6 +157,7 @@ func _try_sell() -> void:
 		Economy.sell(carried_grass)
 		carried_grass = 0.0
 		carried_grass_changed.emit(carried_grass, GameConfig.PLAYER_CARRY_CAPACITY)
+		_update_carry_model()
 
 func _pick_up_tool(pickup: Node) -> void:
 	held_tool = pickup.tool_data

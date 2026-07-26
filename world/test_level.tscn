@@ -22,6 +22,12 @@ size = Vector3(50, 1, 50)
 
 [sub_resource type="StandardMaterial3D" id="StandardMaterial3D_8jkpt"]
 
+[sub_resource type="BoxShape3D" id="BoxShape3D_lxqqe"]
+size = Vector3(1, 5, 8)
+
+[sub_resource type="BoxMesh" id="BoxMesh_p3nrv"]
+size = Vector3(1, 5, 8)
+
 [sub_resource type="Environment" id="Environment_5h11f"]
 ambient_light_energy = 0.3
 
@@ -59,6 +65,17 @@ shape = SubResource("SphereShape3D_5h11f")
 [node name="MeshInstance3D" type="MeshInstance3D" parent="Circle1" unique_id=857324591]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -2, 1, -2)
 mesh = SubResource("SphereMesh_bx8n8")
+surface_material_override/0 = SubResource("StandardMaterial3D_8jkpt")
+
+[node name="Wall1" type="StaticBody3D" parent="." unique_id=1449572743 groups=["interactable"]]
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Wall1" unique_id=1820735192]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 24, 1.4, 2.4)
+shape = SubResource("BoxShape3D_lxqqe")
+
+[node name="MeshInstance3D" type="MeshInstance3D" parent="Wall1" unique_id=85313462]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 24, 1.4, 2.4)
+mesh = SubResource("BoxMesh_p3nrv")
 surface_material_override/0 = SubResource("StandardMaterial3D_8jkpt")
 
 [node name="Player" parent="." unique_id=799154422 instance=ExtResource("1_8jkpt")]
