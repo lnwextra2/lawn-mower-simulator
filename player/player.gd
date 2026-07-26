@@ -53,8 +53,22 @@ func _swap_view_model(tool: ToolData) -> void:
 	if tool and tool.view_model_scene:
 		swing_pivot.add_child(tool.view_model_scene.instantiate())
 
+## True while the mouse is locked to the game. When it isn't, the player has
+## stepped out (Esc) and neither looking nor gameplay input should register.
+func has_mouse_focus() -> bool:
+	return Input.mouse_mode == Input.MOUSE_MODE_CAPTURED
+
 func _unhandled_input(event: InputEvent) -> void:
-	if event is InputEventMouseMotion:
+	# Esc frees the cursor so the window can actually be used or closed - without
+	# it the mouse is trapped and Alt+F4 is the only way out.
+	if event.is_action_pressed("ui_cancel"):
+		Input.mouse_mode = Input.MOUSE_MODE_VISIBLE
+		return
+	# Clicking back into the window re-locks it.
+	if event is InputEventMouseButton and event.pressed and not has_mouse_focus():
+		Input.mouse_mode = Input.MOUSE_MODE_CAPTURED
+		return
+	if event is InputEventMouseMotion and has_mouse_focus():
 		rotate_y(-event.relative.x * GameConfig.MOUSE_SENSITIVITY)
 		camera.rotate_x(-event.relative.y * GameConfig.MOUSE_SENSITIVITY)
 		camera.rotation.x = clamp(camera.rotation.x, deg_to_rad(-89), deg_to_rad(89))
@@ -63,13 +77,18 @@ func _physics_process(delta: float) -> void:
 	if not is_on_floor():
 		velocity.y -= gravity * delta
 
-	if Input.is_action_just_pressed("jump") and is_on_floor():
+	# With the cursor released the game reads as paused: no walking, no swinging,
+	# and in particular the click that re-locks the mouse mustn't also swing the
+	# tool. Gravity and move_and_slide still run so the body stays settled.
+	var active := has_mouse_focus()
+
+	if active and Input.is_action_just_pressed("jump") and is_on_floor():
 		velocity.y = GameConfig.PLAYER_JUMP_VELOCITY
-	
-	var input_dir := Input.get_vector("move_left", "move_right", "move_forward", "move_back")
+
+	var input_dir := Input.get_vector("move_left", "move_right", "move_forward", "move_back") if active else Vector2.ZERO
 	var direction := (transform.basis * Vector3(input_dir.x, 0, input_dir.y)).normalized()
 
-	var is_sprinting := Input.is_action_pressed("sprint") and stamina > 0.0 and direction != Vector3.ZERO
+	var is_sprinting := active and Input.is_action_pressed("sprint") and stamina > 0.0 and direction != Vector3.ZERO
 	if is_sprinting:
 		stamina = max(0.0, stamina - GameConfig.STAMINA_DRAIN_RATE * delta)
 	else:
@@ -93,6 +112,11 @@ func _physics_process(delta: float) -> void:
 	velocity.z = move_toward(velocity.z, target.z, rate * delta)
 
 	#Handle Interaction
+	if not active:
+		_update_look_target()
+		move_and_slide()
+		return
+
 	# Carrying an armful of grass occupies both hands: the tool is still yours,
 	# it just can't be used until you put the grass down (drop key).
 	if Input.is_action_just_pressed("attack") and carried_grass <= 0.0:
