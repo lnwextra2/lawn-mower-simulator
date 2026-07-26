@@ -35,7 +35,9 @@ const MAX_SIZE := 4.0         ## a full day's mowing should look like a real hay
 const FLATTEN := 0.7          ## vertical squash; the clump's dome profile already
 							  ## keeps it low, so this only nudges it flatter
 
-@export var amount: int = 0
+## Grass held, measured the same way the field measures it: one unit is one
+## fully-grown blade, so part-grown blades contribute a fraction.
+@export var amount: float = 0.0
 
 var is_flying: bool = false
 var _velocity: Vector3 = Vector3.ZERO
@@ -167,16 +169,16 @@ static func find_near(tree: SceneTree, pos: Vector3, radius: float, exclude: Gra
 			best = pile
 	return best
 
-func add(extra: int) -> void:
+func add(extra: float) -> void:
 	amount += extra
 	_refresh_visual()
 
 ## Removes up to `max_amount` from the heap and returns how much was actually
 ## taken. The heap deletes itself once empty.
-func take(max_amount: int) -> int:
-	var taken: int = mini(amount, max_amount)
+func take(max_amount: float) -> float:
+	var taken: float = minf(amount, max_amount)
 	amount -= taken
-	if amount <= 0:
+	if amount <= 0.0:
 		queue_free()
 	else:
 		_refresh_visual()
@@ -192,7 +194,7 @@ func _refresh_visual() -> void:
 	# Cube root, because a heap is a volume: doubling its width would hold eight
 	# times the grass, so width should grow far slower than the amount. (sqrt
 	# grew it much too fast - one armful already looked like a haystack.)
-	var size := pow(float(amount), 1.0 / 3.0) * SIZE_PER_UNIT
+	var size := pow(maxf(amount, 0.0), 1.0 / 3.0) * SIZE_PER_UNIT
 	size = clampf(size, MIN_SIZE, MAX_SIZE)
 	# Squashed vertically so it reads as a heap of clippings, not a ball.
 	mesh.scale = Vector3(size, size * FLATTEN, size)

@@ -26,6 +26,9 @@ const GRASS_COUNT: int = 5000   # tufts are ~326 tris each, so ~1.6M tris total.
 								# still looks thin. NOTE: this is also the total grass
 								# (and so gold) available in the map.
 const GRASS_FIELD_SIZE: float = 38.0
+# In-game days for a blade to grow back from nothing to full height, carried over
+# from the prototype's CONFIG.grass.regrowDays.
+const GRASS_REGROW_DAYS: float = 3.0 #default 3.0 Day of Fully Growth
 
 #GRASS THINGS
 const HAND_CUT_RADIUS: float = 1.0
@@ -33,7 +36,7 @@ const COLLECT_RADIUS: float = 1.5   # reach for scooping cut grass off the groun
 const GRASS_THROW_FORCE: float = 6.0  # forward speed of a thrown armful
 const GRASS_THROW_LIFT: float = 3.5   # upward speed, i.e. how high the arc goes
 const GRASS_THROW_MOMENTUM: float = 0.8  # how much of the player's own speed the
-                                         # throw inherits (1.0 = all of it)
+										 # throw inherits (1.0 = all of it)
 
 # Colours of grass by state. Cut grass is still fresh - a lighter, yellower
 # green - not dried hay; it was standing a moment ago. Lives here because both

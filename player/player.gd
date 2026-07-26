@@ -129,7 +129,7 @@ func _physics_process(delta: float) -> void:
 		start_swing()
 
 	if Input.is_action_just_pressed("collect"):
-		var room: int = int(GameConfig.PLAYER_CARRY_CAPACITY - carried_grass)
+		var room: float = GameConfig.PLAYER_CARRY_CAPACITY - carried_grass
 		# Grass on the ground comes in two forms: blades we cut in place, and
 		# heaps we (or a future cart) put down. Scoop both.
 		var picked := grass_field.collect_near(global_position, GameConfig.COLLECT_RADIUS, room)
@@ -168,7 +168,7 @@ func _drop_grass() -> void:
 	# Toss the whole armful out in front of us - it can land anywhere, cut ground
 	# or not, and merges with whatever heap it lands next to.
 	var pile := GRASS_PILE_SCENE.instantiate()
-	pile.amount = int(carried_grass)
+	pile.amount = carried_grass
 	get_parent().add_child(pile)
 	var forward := -global_transform.basis.z
 	pile.global_position = global_position + forward * 0.6 + Vector3(0, 1.2, 0)
