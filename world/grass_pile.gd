@@ -15,6 +15,25 @@ class_name GrassPile
 ## separate objects, and the heap grows to show it.
 
 const MERGE_RADIUS := 1.2
+## A heap is built from the same blade model as the field, so cut grass looks
+## like the grass it came from. Blades are laid over at steep angles and jumbled
+## together, reading as a raked-up pile rather than something still growing.
+const CLUMP_BLADES := 32
+## The heap is a BUNDLE, not a spray: every blade lies roughly parallel along one
+## axis, packed into a rough cylinder - the shape raked-up grass actually makes,
+## and the shape a sheaf of hay has. Blades fanning out in all directions looked
+## like a firework, and carried in front of the camera they stabbed straight at
+## the viewer and blocked the whole screen.
+const BUNDLE_LENGTH := 1.7                      ## how long the bundle runs along its axis
+const BUNDLE_RADIUS := 0.4                     ## how thick the bundle is
+const BUNDLE_SPREAD_DEG := 16.0                 ## how far a blade may stray from parallel
+const CLUMP_BLADE_SCALE := Vector2(0.55, 0.95)  ## min/max size of a blade in the bundle
+const CLUMP_SHADE_VARIANCE := 0.18   ## per-blade brightness jitter, as in the field
+const SIZE_PER_UNIT := 0.28   ## overall heap size; scales the cube-root curve below
+const MIN_SIZE := 0.35
+const MAX_SIZE := 4.0         ## a full day's mowing should look like a real haystack
+const FLATTEN := 0.7          ## vertical squash; the clump's dome profile already
+							  ## keeps it low, so this only nudges it flatter
 
 @export var amount: int = 0
 
@@ -24,12 +43,63 @@ var _spin: Vector3 = Vector3.ZERO
 var _thrower_rid: RID
 var _gravity: float = ProjectSettings.get_setting("physics/3d/default_gravity")
 
-@onready var mesh: MeshInstance3D = $MeshInstance3D
+## The visual, built in code so the scene is just this node plus the script -
+## nothing to wire up or keep in sync in the editor.
+var mesh: MultiMeshInstance3D
 
 func _ready() -> void:
 	add_to_group("grass_pile")
+	mesh = build_clump(self)
 	_refresh_visual()
 	set_physics_process(is_flying)
+
+## Builds a jumbled clump of laid-over grass blades under `parent` and returns
+## the node holding it. Shared by the world heaps and the player's carried
+## armful, so the grass in your arms is the same grass that's on the ground.
+## One MultiMesh per heap, so a heap costs one draw call however many blades.
+static func build_clump(parent: Node3D) -> MultiMeshInstance3D:
+	var blade := GrassField.extract_mesh(GrassField.BLADE_MODEL)
+	var mmi := MultiMeshInstance3D.new()
+	var mm := MultiMesh.new()
+	mm.transform_format = MultiMesh.TRANSFORM_3D
+	mm.use_colors = true          # must be set before instance_count
+	mm.mesh = blade
+	mm.instance_count = CLUMP_BLADES
+
+	var spread := deg_to_rad(BUNDLE_SPREAD_DEG)
+	for i in CLUMP_BLADES:
+		# Blades grow along +Y, so lay one down along +X first - that's the
+		# bundle's axis - then let it stray a little so the bundle isn't a comb.
+		var basis := Basis(Vector3.BACK, -PI / 2.0)
+		basis = Basis(Vector3.UP, randf_range(-spread, spread)) \
+			* Basis(Vector3.RIGHT, randf_range(-spread, spread)) * basis
+		basis = basis * Basis(Vector3.UP, randf_range(0.0, TAU))   # spin each blade on its own length
+
+		# Scatter along the bundle's length, and around its axis in a disc, so the
+		# blades pack into a cylinder rather than a flat mat.
+		var along := randf_range(-0.5, 0.5) * BUNDLE_LENGTH
+		var around := randf_range(0.0, TAU)
+		var r := sqrt(randf()) * BUNDLE_RADIUS
+		# Lifted by the bundle's radius so the cylinder rests ON the ground rather
+		# than half-buried in it (the heap's own origin sits at ground level).
+		var offset := Vector3(along, BUNDLE_RADIUS + cos(around) * r, sin(around) * r)
+
+		var s := randf_range(CLUMP_BLADE_SCALE.x, CLUMP_BLADE_SCALE.y)
+		mm.set_instance_transform(i, Transform3D(basis.scaled(Vector3.ONE * s), offset))
+		# Jitter each blade's shade, same as the field does. One flat colour across
+		# the whole clump kills every bit of depth and it reads as a solid blob.
+		var shade := 1.0 + randf_range(-CLUMP_SHADE_VARIANCE, CLUMP_SHADE_VARIANCE)
+		var c := GameConfig.COLOR_GRASS_CUT
+		mm.set_instance_color(i, Color(c.r * shade, c.g * shade, c.b * shade))
+
+	mmi.multimesh = mm
+	var mat := StandardMaterial3D.new()
+	mat.albedo_color = Color.WHITE           # white base: the instance colour IS the colour
+	mat.vertex_color_use_as_albedo = true
+	mat.cull_mode = BaseMaterial3D.CULL_DISABLED
+	mmi.material_override = mat
+	parent.add_child(mmi)
+	return mmi
 
 ## Sends the heap on an arc; it settles (and merges) wherever it actually hits
 ## the ground. `thrower_rid` is excluded from the ground check so a heap tossed
@@ -70,7 +140,9 @@ func _physics_process(delta: float) -> void:
 	rotation += _spin * delta
 
 func _land() -> void:
-	rotation = Vector3.ZERO
+	# Level out, but keep a random facing: the bundle has a direction now, and
+	# every heap pointing the same way would look placed rather than dropped.
+	rotation = Vector3(0.0, randf_range(0.0, TAU), 0.0)
 	is_flying = false
 	set_physics_process(false)
 	# Merge into whatever it landed next to, so thrown grass gathers up instead
@@ -117,7 +189,10 @@ func _visual_radius() -> float:
 	return maxf(extents.x, extents.z) * 0.5
 
 func _refresh_visual() -> void:
-	# Scale on sqrt(amount): a heap of 400 reads as clearly bigger than one of
-	# 100 without being four times as wide and swallowing the player.
-	var size := sqrt(float(amount)) * 0.12
-	mesh.scale = Vector3.ONE * clampf(size, 0.4, 3.0)
+	# Cube root, because a heap is a volume: doubling its width would hold eight
+	# times the grass, so width should grow far slower than the amount. (sqrt
+	# grew it much too fast - one armful already looked like a haystack.)
+	var size := pow(float(amount), 1.0 / 3.0) * SIZE_PER_UNIT
+	size = clampf(size, MIN_SIZE, MAX_SIZE)
+	# Squashed vertically so it reads as a heap of clippings, not a ball.
+	mesh.scale = Vector3(size, size * FLATTEN, size)

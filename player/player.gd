@@ -22,7 +22,10 @@ var held_tool: ToolData
 @onready var interact_ray: RayCast3D = $Camera3D/RayCast3D
 @onready var view_model: Node3D = $Camera3D/ViewModel          # slides (position), never rotated
 @onready var swing_pivot: Node3D = $Camera3D/ViewModel/SwingPivot  # rotates (swing), axes stay camera-aligned
-@onready var carry_model: Node3D = $Camera3D/CarryModel        # the armful of grass, shown while carrying
+## The armful of grass. Parented to the BODY, not the camera: you hold it against
+## your chest, so it turns with you but doesn't rise when you look up - looking at
+## the sky shouldn't lift the load into view.
+@onready var carry_model: Node3D = $CarryModel
 const SWING_SPEED: float = 7.0   # matches the prototype's CONFIG.tools.scythe.swingSpeed
 var is_swinging: bool = false
 var swing_timer: float = 0.0
@@ -40,6 +43,8 @@ func _ready() -> void:
 	held_tool_changed.connect(_swap_view_model)
 	held_tool = knife
 	held_tool_changed.emit(held_tool)
+	# Same clump builder as the world heaps, so the armful matches what you picked up.
+	GrassPile.build_clump(carry_model)
 	_update_carry_model()   # start with empty arms: grass hidden, tool shown
 
 func _swap_view_model(tool: ToolData) -> void:
@@ -72,12 +77,20 @@ func _physics_process(delta: float) -> void:
 	stamina_changed.emit(stamina, GameConfig.STAMINA_MAX)
 
 	var current_speed := GameConfig.PLAYER_SPRINT_SPEED if is_sprinting else GameConfig.PLAYER_SPEED
-	if direction:
-		velocity.x = direction.x * current_speed
-		velocity.z = direction.z * current_speed
+	# Getting up to walking pace is near-instant, but the stretch above it ramps
+	# slowly: sprinting stays a commitment you build up to (so things that read
+	# your speed, like a thrown armful, can't be maxed out the instant you press
+	# it) without walking feeling like it has to wait to start.
+	var target := direction * current_speed
+	var rate: float
+	if not direction:
+		rate = GameConfig.PLAYER_DECELERATION
+	elif Vector2(velocity.x, velocity.z).length() < GameConfig.PLAYER_SPEED:
+		rate = GameConfig.PLAYER_WALK_ACCELERATION
 	else:
-		velocity.x = move_toward(velocity.x, 0, current_speed)
-		velocity.z = move_toward(velocity.z, 0, current_speed)
+		rate = GameConfig.PLAYER_SPRINT_ACCELERATION
+	velocity.x = move_toward(velocity.x, target.x, rate * delta)
+	velocity.z = move_toward(velocity.z, target.z, rate * delta)
 
 	#Handle Interaction
 	# Carrying an armful of grass occupies both hands: the tool is still yours,
@@ -135,8 +148,14 @@ func _drop_grass() -> void:
 	get_parent().add_child(pile)
 	var forward := -global_transform.basis.z
 	pile.global_position = global_position + forward * 0.6 + Vector3(0, 1.2, 0)
-	pile.throw(forward * GameConfig.GRASS_THROW_FORCE + Vector3(0, GameConfig.GRASS_THROW_LIFT, 0),
-		get_rid())
+	# Carry your own momentum into the throw, so sprinting flings it further - and
+	# running backwards throws it shorter. Upward motion counts too (jump-throwing
+	# sends it higher), but downward motion is dropped: being mid-fall shouldn't
+	# spike your grass into the dirt.
+	var momentum := Vector3(velocity.x, maxf(velocity.y, 0.0), velocity.z) \
+		* GameConfig.GRASS_THROW_MOMENTUM
+	pile.throw(forward * GameConfig.GRASS_THROW_FORCE
+		+ Vector3(0, GameConfig.GRASS_THROW_LIFT, 0) + momentum, get_rid())
 	carried_grass = 0.0
 	carried_grass_changed.emit(carried_grass, GameConfig.PLAYER_CARRY_CAPACITY)
 	_update_carry_model()
@@ -146,7 +165,12 @@ func _drop_grass() -> void:
 func _update_carry_model() -> void:
 	var fill := carried_grass / GameConfig.PLAYER_CARRY_CAPACITY
 	carry_model.visible = carried_grass > 0.0
-	carry_model.scale = Vector3.ONE * lerpf(0.5, 1.0, fill)
+	# Full width, half the height: squashed vertically the same way a heap on the
+	# ground is, so it spreads across the bottom of the view instead of standing
+	# up in front of the face. Position it low and far in player.tscn to control
+	# how much of the screen it takes.
+	var size := lerpf(0.6, 1.0, fill)
+	carry_model.scale = Vector3(size, size * GrassPile.FLATTEN, size)
 	# The tool is stowed while both arms are full.
 	view_model.visible = carried_grass <= 0.0
 

@@ -5,14 +5,6 @@
 
 [sub_resource type="CapsuleShape3D" id="CapsuleShape3D_5iqjx"]
 
-[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_bx8n8"]
-albedo_color = Color(0.8911433, 0.8209799, 0.6262097, 1)
-
-[sub_resource type="SphereMesh" id="SphereMesh_5h11f"]
-material = SubResource("StandardMaterial3D_bx8n8")
-radius = 0.35
-height = 0.45
-
 [sub_resource type="CapsuleMesh" id="CapsuleMesh_5h11f"]
 
 [node name="Player" type="CharacterBody3D" unique_id=799154422 groups=["player"]]
@@ -34,11 +26,8 @@ transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.3, -0.3, -0.5)
 
 [node name="SwingPivot" type="Node3D" parent="Camera3D/ViewModel" unique_id=935283409]
 
-[node name="CarryModel" type="Node3D" parent="Camera3D" unique_id=1799781259]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.45, -0.7)
-
-[node name="MeshInstance3D" type="MeshInstance3D" parent="Camera3D/CarryModel" unique_id=1433449742]
-mesh = SubResource("SphereMesh_5h11f")
+[node name="CarryModel" type="Node3D" parent="." unique_id=1799781259]
+transform = Transform3D(0.87542605, -0.23456971, 0.42261827, 0.25881904, 0.9659258, 0, -0.4082179, 0.10938165, 0.90630776, -0.25, 0.4, -0.6)
 
 [node name="MeshInstance3D" type="MeshInstance3D" parent="." unique_id=1401295645]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1, 0)
