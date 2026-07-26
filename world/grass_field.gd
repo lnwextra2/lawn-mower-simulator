@@ -15,7 +15,10 @@ const BLADE_MODEL := preload("res://assets/models/tall_grass.glb")
 
 const BLADE_BASE_Y := 0.0    ## where a blade meets the ground = the floor's top surface
 							 ## (Floor's 1-tall box sits at y=-0.5, so its top is y=0)
-const PILE_SCALE_Y := 0.35   ## flattened mound left behind by cutting
+## A cut blade falls over and lies on the ground at full length - it's the
+## harvested grass itself lying there. Keeping it upright but short made it
+## almost indistinguishable from a stub that's partway regrown.
+const CUT_FALL_DEG := 93.0
 const BLADE_SCALE := 0.7     ## overall size of one tuft; tune to taste
 ## Uniform tufts read as a planted crop (rows of rice) rather than an overgrown
 ## lawn. Randomising size, lean and shade per tuft is what makes it look unkempt.
@@ -117,14 +120,7 @@ func _process(delta: float) -> void:
 		growth[i] = minf(1.0, growth[i] + step * growth_rates[i])
 		if growth[i] >= 1.0:
 			state[i] = State.UNCUT   # back to being mowable grass
-		multimesh.set_instance_transform(i, _blade_transform(i, _height_of(i)))
-
-## Vertical scale for a blade in its current state: standing (or regrowing)
-## blades are as tall as they've grown, from stubble up to full height.
-func _height_of(i: int) -> float:
-	if state[i] == State.CUT:
-		return PILE_SCALE_Y
-	return lerpf(STUBBLE_SCALE, 1.0, growth[i])
+		multimesh.set_instance_transform(i, _blade_transform(i, lerpf(STUBBLE_SCALE, 1.0, growth[i])))
 
 ## Pulls the first mesh out of an imported model scene, so a MultiMesh can
 ## render it. Frees the temporary instance it has to build to look inside.
@@ -146,15 +142,23 @@ static func extract_mesh(model: PackedScene) -> Mesh:
 ## changes can't compound scale. The vertical offset keeps the mesh's lowest
 ## point on the ground at any scale, so a flattened pile sits on the floor
 ## instead of hovering or sinking.
-func _blade_transform(i: int, scale_y: float) -> Transform3D:
+## `fall` (radians) tips the blade over onto the ground - 0 leaves it standing.
+func _blade_transform(i: int, scale_y: float, fall: float = 0.0) -> Transform3D:
 	var s := BLADE_SCALE * scales[i]
 	var scale := Vector3(s, s * scale_y, s)
 	# Spin about Y, then lean the whole tuft over in world space so it looks
 	# wind-blown rather than planted in a row.
 	var basis := Basis(Vector3.RIGHT, tilts[i].x) * Basis(Vector3.FORWARD, tilts[i].y) \
 		* Basis(Vector3.UP, yaws[i])
+	if fall != 0.0:
+		# Topple it in the direction it happens to face, about the horizontal axis
+		# across that direction.
+		var axis := Vector3(-sin(yaws[i]), 0.0, cos(yaws[i]))
+		basis = Basis(axis, fall) * basis
 	basis = basis.scaled(scale)
-	var y := BLADE_BASE_Y - _blade_bottom * scale.y
+	# Standing blades sit on their base; as one tips over, its base swings down to
+	# the ground, so the offset fades out with the fall angle.
+	var y := BLADE_BASE_Y - _blade_bottom * scale.y * cos(fall)
 	return Transform3D(basis, Vector3(positions[i].x, y, positions[i].y))
 
 ## Cuts blades within `radius`, leaving them lying on the ground. Returns the
@@ -172,7 +176,11 @@ func cut_near(world_pos: Vector3, radius: float) -> float:
 		if positions[i].distance_squared_to(center) <= radius_sq:
 			state[i] = State.CUT
 			total += growth[i]   # growth freezes here: this is what it's worth
-			multimesh.set_instance_transform(i, _blade_transform(i, PILE_SCALE_Y))
+			# Falls at its full grown length - it IS the cut grass lying there.
+			# tilts[i].x is already a small per-blade random angle, reused here so
+			# blades don't all land at exactly the same pitch.
+			multimesh.set_instance_transform(i,
+				_blade_transform(i, growth[i], deg_to_rad(CUT_FALL_DEG) + tilts[i].x))
 			multimesh.set_instance_color(i, COLOR_CUT)
 	return total
 
