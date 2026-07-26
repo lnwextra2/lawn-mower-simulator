@@ -1,9 +1,11 @@
 [gd_resource type="Resource" script_class="ToolData" format=3 uid="uid://bbeweuac3g0j1"]
 
 [ext_resource type="Script" uid="uid://dtc13bsu3m22g" path="res://tools/tool_data.gd" id="1_mu232"]
+[ext_resource type="PackedScene" uid="uid://b4664ofh16cq8" path="res://tools/viewmodel_scythe.tscn" id="2_xo8i5"]
 
 [resource]
 script = ExtResource("1_mu232")
 tool_name = "Scythe"
 cut_radius = 2.5
+view_model_scene = ExtResource("2_xo8i5")
 metadata/_custom_type_script = "uid://dtc13bsu3m22g"

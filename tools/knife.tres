@@ -1,7 +1,9 @@
 [gd_resource type="Resource" script_class="ToolData" format=3 uid="uid://gb1dfwxfmpkr"]
 
 [ext_resource type="Script" uid="uid://dtc13bsu3m22g" path="res://tools/tool_data.gd" id="1_l8axv"]
+[ext_resource type="PackedScene" uid="uid://bne7xt05bokx5" path="res://tools/viewmodel_sickle.tscn" id="2_m6vsc"]
 
 [resource]
 script = ExtResource("1_l8axv")
+view_model_scene = ExtResource("2_m6vsc")
 metadata/_custom_type_script = "uid://dtc13bsu3m22g"

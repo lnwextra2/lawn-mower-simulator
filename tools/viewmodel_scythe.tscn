@@ -1,0 +1,8 @@
+[gd_scene format=3 uid="uid://b4664ofh16cq8"]
+
+[ext_resource type="PackedScene" uid="uid://ch3wel8xt6e6f" path="res://assets/models/scythe.glb" id="1_nuncm"]
+
+[node name="ViewModelScythe" type="Node3D" unique_id=1610838496]
+
+[node name="Root Scene" parent="." unique_id=675875990 instance=ExtResource("1_nuncm")]
+transform = Transform3D(-0.059853535, 0.16444619, 0.30310887, -0.10366933, 0.28482917, -0.175, -0.3288924, -0.119707055, -1.324931e-08, 0.2, -0.1, -0.1)

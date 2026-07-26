@@ -9,3 +9,7 @@ class_name ToolData
 
 @export var tool_name: String = "Knife"
 @export var cut_radius: float = 1.0
+## The posed first-person model shown in hand for this tool. Instanced under the
+## player's SwingPivot when the tool becomes the held one. Leave empty for no
+## view model (nothing shown).
+@export var view_model_scene: PackedScene

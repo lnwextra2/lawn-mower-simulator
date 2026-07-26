@@ -32,10 +32,19 @@ var current_target: Node3D = null
 
 func _ready() -> void:
 	Input.mouse_mode = Input.MOUSE_MODE_CAPTURED
-	held_tool = knife
-	held_tool_changed.emit(held_tool)
 	# Capture the idle slide position; the swing animates an offset from it.
 	vm_rest_pos = view_model.position
+	# Swap the in-hand model whenever the held tool changes (connect before the
+	# first emit so the starting tool's model gets spawned too).
+	held_tool_changed.connect(_swap_view_model)
+	held_tool = knife
+	held_tool_changed.emit(held_tool)
+
+func _swap_view_model(tool: ToolData) -> void:
+	for child in swing_pivot.get_children():
+		child.queue_free()
+	if tool and tool.view_model_scene:
+		swing_pivot.add_child(tool.view_model_scene.instantiate())
 
 func _unhandled_input(event: InputEvent) -> void:
 	if event is InputEventMouseMotion:

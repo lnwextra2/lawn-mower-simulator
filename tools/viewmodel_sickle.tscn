@@ -1,0 +1,8 @@
+[gd_scene format=3 uid="uid://bne7xt05bokx5"]
+
+[ext_resource type="PackedScene" uid="uid://coq8sx1jey620" path="res://assets/models/sickle.glb" id="1_fv6dp"]
+
+[node name="ViewModelSickle" type="Node3D" unique_id=1610838496]
+
+[node name="Root Scene" parent="." unique_id=1013505823 instance=ExtResource("1_fv6dp")]
+transform = Transform3D(-0.9396926, 0.34202018, 6.181724e-08, 0.24184474, 0.664463, -0.70710677, -0.24184483, -0.6644629, -0.70710677, 0.2, 0.1, 0)
