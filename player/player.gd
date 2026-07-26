@@ -80,10 +80,18 @@ func _physics_process(delta: float) -> void:
 	if Input.is_action_just_pressed("attack"):
 		# The whole point of Approach A: cut through the held tool's data, not a
 		# hardcoded radius. Swapping tools swaps the reach with zero code change.
-		var cut_count := grass_field.cut_near(global_position, held_tool.cut_radius)
-		carried_grass = min(carried_grass + cut_count, GameConfig.PLAYER_CARRY_CAPACITY)
-		carried_grass_changed.emit(carried_grass, GameConfig.PLAYER_CARRY_CAPACITY)
+		# Cut grass is left lying on the ground as piles rather than going straight
+		# into the bag, so cutting while full doesn't destroy it - you come back
+		# and pick it up.
+		grass_field.cut_near(global_position, held_tool.cut_radius)
 		start_swing()
+
+	if Input.is_action_just_pressed("collect"):
+		var room: int = int(GameConfig.PLAYER_CARRY_CAPACITY - carried_grass)
+		var picked := grass_field.collect_near(global_position, GameConfig.COLLECT_RADIUS, room)
+		if picked > 0:
+			carried_grass += picked
+			carried_grass_changed.emit(carried_grass, GameConfig.PLAYER_CARRY_CAPACITY)
 
 	if Input.is_action_just_pressed("interact"):
 		# E is context-sensitive: pick up a looked-at tool if hands are free

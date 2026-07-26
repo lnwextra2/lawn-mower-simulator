@@ -18,6 +18,7 @@ const GRASS_FIELD_SIZE: float = 38.0
 
 #GRASS THINGS
 const HAND_CUT_RADIUS: float = 1.0
+const COLLECT_RADIUS: float = 1.5   # reach for scooping cut grass off the ground
  
 #Time
 const DAY_NIGHT_CYCLE_DURATION: float = 480.0 #second / 1 Day
