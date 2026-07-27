@@ -6,4 +6,5 @@
 script = ExtResource("1_uo16k")
 tool_name = "Trimmer"
 cut_radius = 0.8
+two_handed = true
 metadata/_custom_type_script = "uid://dtc13bsu3m22g"

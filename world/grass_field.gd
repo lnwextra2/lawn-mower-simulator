@@ -166,13 +166,17 @@ func _blade_transform(i: int, scale_y: float, fall: float = 0.0) -> Transform3D:
 ## mowing a patch that's only half regrown yields half as much. Blades already
 ## cut are skipped, so holding a continuous tool over one spot does nothing after
 ## the first pass.
-func cut_near(world_pos: Vector3, radius: float) -> float:
+## `min_growth` is the shortest blade the tool can still catch - a blunt blade
+## skims over short grass instead of biting it.
+func cut_near(world_pos: Vector3, radius: float, min_growth: float = 0.0) -> float:
 	var radius_sq := radius * radius
 	var center := Vector2(world_pos.x, world_pos.z)
 	var total := 0.0
 	for i in positions.size():
 		if state[i] != State.UNCUT and state[i] != State.COLLECTED:
 			continue   # already cut and lying there
+		if growth[i] < min_growth:
+			continue   # too short for this blade to get under
 		if positions[i].distance_squared_to(center) <= radius_sq:
 			state[i] = State.CUT
 			total += growth[i]   # growth freezes here: this is what it's worth

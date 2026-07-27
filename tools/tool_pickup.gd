@@ -15,6 +15,11 @@ class_name ToolPickup
 @export var lantern_fuel: float = 0.0
 @export var lantern_lit: bool = false
 
+## How blunt this particular tool is, 0..1. Condition belongs to the item, not to
+## the shared ToolData resource, so it travels with the pickup: drop a worn
+## scythe and it's still worn when you come back for it.
+@export var tool_wear: float = 0.0
+
 @onready var placeholder: MeshInstance3D = $MeshInstance3D
 @onready var placeholder_collision: CollisionShape3D = $CollisionShape3D
 

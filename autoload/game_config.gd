@@ -30,6 +30,13 @@ const GRASS_FIELD_SIZE: float = 38.0
 # from the prototype's CONFIG.grass.regrowDays.
 const GRASS_REGROW_DAYS: float = 3.0 #default 3.0 Day of Fully Growth
 
+# How a fully blunt hand tool performs. It never stops working - a worn tool is
+# a decision (repair, or work around it), never a dead stop in the field.
+const TOOL_WORN_RADIUS_FACTOR: float = 0.55   # reach at full wear, vs sharp
+const TOOL_WORN_MIN_GROWTH: float = 0.55      # at full wear, only grass at least
+											  # this grown can be caught at all -
+											  # a blunt blade can't bite short grass
+
 #GRASS THINGS
 const HAND_CUT_RADIUS: float = 1.0
 const COLLECT_RADIUS: float = 1.5   # reach for scooping cut grass off the ground

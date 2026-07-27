@@ -8,6 +8,7 @@
 script = ExtResource("1_mu232")
 tool_name = "Scythe"
 cut_radius = 2.5
+two_handed = true
 view_model_scene = ExtResource("2_xo8i5")
 world_model_scene = ExtResource("3_mcqu1")
 metadata/_custom_type_script = "uid://dtc13bsu3m22g"

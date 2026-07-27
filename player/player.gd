@@ -4,6 +4,7 @@ signal stamina_changed(current: float, max_value: float)
 signal carried_grass_changed(current: float, max_value: float)
 signal look_target_changed(target: Node3D)
 signal held_tool_changed(tool: ToolData)
+signal tool_wear_changed(wear: float)
 signal lantern_changed(lantern: LanternData, lit: bool, fuel: float)
 
 const TOOL_PICKUP_SCENE := preload("res://tools/tool_pickup.tscn")
@@ -18,6 +19,11 @@ var gravity: float = ProjectSettings.get_setting("physics/3d/default_gravity")
 var stamina: float = GameConfig.STAMINA_MAX
 var carried_grass: float = 0.0
 var held_tool: ToolData
+## Condition of the tool in hand, 0 sharp .. 1 fully blunt. Per-item, not on the
+## shared ToolData resource. The sickle never goes into the world as a pickup, so
+## its wear has nowhere else to live and is kept aside while another tool is out.
+var held_wear: float = 0.0
+var knife_wear: float = 0.0
 ## The lantern occupies the off hand, a slot of its own alongside the tool.
 var lantern: LanternData = null
 var lantern_lit: bool = false
@@ -42,8 +48,16 @@ var lantern_hipped: bool = false
 @onready var lantern_hip: Node3D = $LanternHip
 @onready var hip_light: OmniLight3D = $LanternHip/HipLight
 const SWING_SPEED: float = 7.0   # matches the prototype's CONFIG.tools.scythe.swingSpeed
+## How far into the swing (of its 0..PI arc) the blade bites. A quarter in, while
+## it's sweeping across - matching the prototype.
+const SWING_CUT_AT: float = PI / 4.0
 var is_swinging: bool = false
 var swing_timer: float = 0.0
+var has_cut_this_swing: bool = false
+## A click that arrived mid-swing, held until the swing ends so it isn't simply
+## dropped. Deliberately a flag, not a queue: mashing shouldn't stack up swings
+## that keep firing after you stop.
+var swing_buffered: bool = false
 var vm_rest_pos: Vector3
 var current_target: Node3D = null
 @onready var grass_field: GrassField = get_tree().get_first_node_in_group("grass_field")
@@ -67,6 +81,11 @@ func _swap_view_model(tool: ToolData) -> void:
 		child.queue_free()
 	if tool and tool.view_model_scene:
 		swing_pivot.add_child(tool.view_model_scene.instantiate())
+	# A two-handed tool has to push the lantern off to the hip, so the lantern's
+	# position is re-evaluated whenever what's in your hands changes.
+	if is_node_ready():
+		_rebuild_lantern_model()
+		_refresh_lantern()
 
 ## True while the mouse is locked to the game. When it isn't, the player has
 ## stepped out (Esc) and neither looking nor gameplay input should register.
@@ -135,12 +154,9 @@ func _physics_process(delta: float) -> void:
 	# Carrying an armful of grass occupies both hands: the tool is still yours,
 	# it just can't be used until you put the grass down (drop key).
 	if Input.is_action_just_pressed("attack") and carried_grass <= 0.0:
-		# The whole point of Approach A: cut through the held tool's data, not a
-		# hardcoded radius. Swapping tools swaps the reach with zero code change.
-		# Cut grass is left lying on the ground as piles rather than going straight
-		# into the bag, so cutting while full doesn't destroy it - you come back
-		# and pick it up.
-		grass_field.cut_near(global_position, held_tool.cut_radius)
+		# Only asks for a swing. The cut itself fires mid-swing (see
+		# _update_swing), so a swing already in progress swallows the click and
+		# the animation is its own cooldown - no separate timer to keep in sync.
 		start_swing()
 
 	if Input.is_action_just_pressed("collect"):
@@ -163,6 +179,7 @@ func _physics_process(delta: float) -> void:
 			# a tool or push the cart, and both want the hand free. Springing back
 			# would mean re-clipping it nearly every trip.
 			lantern_hipped = true
+			swing_buffered = false   # arms are full now; don't swing once they're free
 			_update_carry_model()
 	
 	if Input.is_action_just_pressed("interact"):
@@ -181,15 +198,15 @@ func _physics_process(delta: float) -> void:
 
 	if Input.is_action_just_pressed("drop"):
 		# Grass first: it's what's blocking the tool, so the same key that frees
-		# your hands shouldn't also throw away what you're holding. The lantern
-		# goes before the tool because the tool falls back to the undroppable
-		# knife anyway - dropping that is usually not what you meant.
+		# your hands shouldn't also throw away what you're holding. Then the tool,
+		# then the lantern - the lantern is the thing you least often want to put
+		# down at night, so it's last in line.
 		if carried_grass > 0.0:
 			_drop_grass()
-		elif lantern:
-			_drop_lantern()
 		elif held_tool != knife:
 			_drop_tool()
+		elif lantern:
+			_drop_lantern()
 
 	_update_look_target()
 	move_and_slide()
@@ -247,6 +264,15 @@ func _can_pick_up(pickup: Node) -> bool:
 		return lantern == null
 	return held_tool == knife
 
+## Blunts the tool in proportion to how much grass it actually bit through, so a
+## swing at nothing costs nothing. Powered tools set wear_per_grass to 0 and are
+## simply unaffected - they run at full power until they run dry instead.
+func _wear_tool(grass_cut: float) -> void:
+	if held_tool.wear_per_grass <= 0.0 or grass_cut <= 0.0:
+		return
+	held_wear = minf(1.0, held_wear + held_tool.wear_per_grass * grass_cut)
+	tool_wear_changed.emit(held_wear)
+
 func _pick_up_item(pickup: Node) -> void:
 	var data: ToolData = pickup.tool_data
 	if data is LanternData:
@@ -256,8 +282,14 @@ func _pick_up_item(pickup: Node) -> void:
 		_rebuild_lantern_model()
 		_refresh_lantern()
 	else:
+		# Park the sickle's condition before swapping it out - it has no pickup in
+		# the world to carry its wear for it.
+		if held_tool == knife:
+			knife_wear = held_wear
 		held_tool = data
+		held_wear = pickup.tool_wear   # a tool keeps the condition it was left in
 		held_tool_changed.emit(held_tool)
+		tool_wear_changed.emit(held_wear)
 	pickup.queue_free()
 	# The looked-at node is gone now; clear the prompt this frame.
 	current_target = null
@@ -293,10 +325,10 @@ func _swap_lantern_position() -> void:
 	_refresh_lantern()
 
 ## Where the lantern actually is. Picking grass up sets lantern_hipped, so it
-## stays clipped after you set the grass down; the carried_grass term on top of
-## that stops Tab from pulling it back into hands that are still full.
+## stays clipped after you set the grass down; the other two terms are hard
+## constraints Tab can't override - full arms, or a tool that needs both hands.
 func _lantern_at_hip() -> bool:
-	return lantern_hipped or carried_grass > 0.0
+	return lantern_hipped or carried_grass > 0.0 or (held_tool and held_tool.two_handed)
 
 func _update_lantern(delta: float) -> void:
 	if lantern == null or not lantern_lit:
@@ -340,14 +372,16 @@ func _refresh_lantern() -> void:
 	lantern_changed.emit(lantern, lantern_lit, lantern_fuel)
 
 func _drop_tool() -> void:
-	_spawn_pickup(held_tool)
+	_spawn_pickup(held_tool, 0.0, false, held_wear)
 	held_tool = knife
+	held_wear = knife_wear   # back to the sickle, in whatever state you left it
 	held_tool_changed.emit(held_tool)
+	tool_wear_changed.emit(held_wear)
 
 ## Tosses `data` out into the world as a pickup, like a CS weapon drop: spawned
 ## at hand height with a forward+up impulse and a little spin, then left to
 ## RigidBody physics. Shared by dropping a tool and dropping the lantern.
-func _spawn_pickup(data: ToolData, fuel: float = 0.0, lit: bool = false) -> Node:
+func _spawn_pickup(data: ToolData, fuel: float = 0.0, lit: bool = false, wear: float = 0.0) -> Node:
 	var pickup := TOOL_PICKUP_SCENE.instantiate()
 	# Everything the pickup reads in _ready must be set BEFORE add_child, because
 	# add_child runs _ready immediately - assigning afterwards is too late and the
@@ -355,6 +389,7 @@ func _spawn_pickup(data: ToolData, fuel: float = 0.0, lit: bool = false) -> Node
 	pickup.tool_data = data
 	pickup.lantern_fuel = fuel
 	pickup.lantern_lit = lit
+	pickup.tool_wear = wear
 	get_parent().add_child(pickup)
 	var forward := -global_transform.basis.z
 	pickup.global_position = global_position + forward * 0.6 + Vector3(0, 1.3, 0)
@@ -378,12 +413,25 @@ func _process(delta: float) -> void:
 	_update_lantern(delta)
 
 func start_swing() -> void:
-	# Edge-trigger guard: ignore new clicks mid-swing so they don't chain,
-	# matching the prototype's consumeAttack() one-shot.
+	# A click during a swing is remembered rather than thrown away, and fires the
+	# moment the swing ends. Without this, clicking a fraction early does nothing
+	# at all and mowing feels like it keeps catching on something.
 	if is_swinging:
+		swing_buffered = true
 		return
 	is_swinging = true
 	swing_timer = 0.0
+	has_cut_this_swing = false
+
+## Does the actual cutting, once per swing, at the point the blade is sweeping
+## through the grass. A blunt tool reaches less far and can't get under short
+## grass, so wear is felt as "I clear less per swing" - never as a swing that
+## randomly failed.
+func _cut_with_tool() -> void:
+	var cut := grass_field.cut_near(global_position,
+		held_tool.cut_radius * lerpf(1.0, GameConfig.TOOL_WORN_RADIUS_FACTOR, held_wear),
+		lerpf(0.0, GameConfig.TOOL_WORN_MIN_GROWTH, held_wear))
+	_wear_tool(cut)
 
 func _update_swing(delta: float) -> void:
 	# Port of the prototype's sin-driven scythe swing. One sin() ramps 0->1->0
@@ -395,6 +443,11 @@ func _update_swing(delta: float) -> void:
 	swing_timer += delta * SWING_SPEED
 	var sf := sin(swing_timer)
 	var progress := swing_timer / PI   # 0 -> 1 across the swing (monotonic)
+	# Cut when the blade is actually sweeping through, not on the button press,
+	# so the grass falls in time with the swing you can see.
+	if not has_cut_this_swing and swing_timer > SWING_CUT_AT:
+		_cut_with_tool()
+		has_cut_this_swing = true
 	# SLIDE on view_model (camera space, un-rotated) -> always screen-aligned no
 	# matter how the sickle model is oriented. -X = screen-left, small -Y dip.
 	# Z: +Z is toward the camera (player). Using sf*progress makes the pull-in
@@ -408,6 +461,12 @@ func _update_swing(delta: float) -> void:
 		is_swinging = false
 		view_model.position = vm_rest_pos
 		swing_pivot.rotation_degrees = Vector3.ZERO
+		# Chain straight into a click that landed mid-swing. The next swing starts
+		# from sin(0), which is the rest pose we just restored, so there's no
+		# visible snap between the two.
+		if swing_buffered:
+			swing_buffered = false
+			start_swing()
 
 func _update_look_target() -> void:
 	var target: Node3D = null
