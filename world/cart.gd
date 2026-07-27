@@ -40,8 +40,6 @@ var tower: Node3D = null
 var _sweep_timer: float = 0.0
 var _gravity: float = ProjectSettings.get_setting("physics/3d/default_gravity")
 
-@onready var _grass_field: GrassField = get_tree().get_first_node_in_group("grass_field")
-
 func _ready() -> void:
 	add_to_group("interactable")
 	add_to_group("cart")
@@ -102,8 +100,10 @@ func _sweep(delta: float) -> void:
 
 	var room := capacity - cargo
 	var picked := 0.0
-	if _grass_field:
-		picked += _grass_field.collect_near(global_position, GameConfig.CART_COLLECT_RADIUS, room)
+	for field in get_tree().get_nodes_in_group("grass_field"):
+		if picked >= room:
+			break
+		picked += field.collect_near(global_position, GameConfig.CART_COLLECT_RADIUS, room - picked)
 	for pile in get_tree().get_nodes_in_group("grass_pile"):
 		if picked >= room:
 			break

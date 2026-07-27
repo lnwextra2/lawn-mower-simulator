@@ -76,7 +76,6 @@ var has_cut_this_swing: bool = false
 var swing_buffered: bool = false
 var vm_rest_pos: Vector3
 var current_target: Node3D = null
-@onready var grass_field: GrassField = get_tree().get_first_node_in_group("grass_field")
 
 func _ready() -> void:
 	Input.mouse_mode = Input.MOUSE_MODE_CAPTURED
@@ -196,8 +195,12 @@ func _physics_process(delta: float) -> void:
 	if Input.is_action_just_pressed("collect"):
 		var room: float = GameConfig.PLAYER_CARRY_CAPACITY - carried_grass
 		# Grass on the ground comes in two forms: blades we cut in place, and
-		# heaps we (or a future cart) put down. Scoop both.
-		var picked := grass_field.collect_near(global_position, GameConfig.COLLECT_RADIUS, room)
+		# heaps we (or a future cart) put down. Scoop both, across every field.
+		var picked := 0.0
+		for field in get_tree().get_nodes_in_group("grass_field"):
+			if picked >= room:
+				break
+			picked += field.collect_near(global_position, GameConfig.COLLECT_RADIUS, room - picked)
 		for pile in get_tree().get_nodes_in_group("grass_pile"):
 			if picked >= room:
 				break
@@ -597,9 +600,13 @@ func _cut_with_tool() -> void:
 	var at := global_position
 	if held_tool.cut_offset > 0.0:
 		at += -global_transform.basis.z * held_tool.cut_offset
-	var cut := grass_field.cut_near(at,
-		held_tool.cut_radius * lerpf(1.0, GameConfig.TOOL_WORN_RADIUS_FACTOR, held_wear),
-		lerpf(0.0, GameConfig.TOOL_WORN_MIN_GROWTH, held_wear))
+	var radius := held_tool.cut_radius * lerpf(1.0, GameConfig.TOOL_WORN_RADIUS_FACTOR, held_wear)
+	var min_growth := lerpf(0.0, GameConfig.TOOL_WORN_MIN_GROWTH, held_wear)
+	# Every field, not just the first: the map now has several, and only the one
+	# you're standing in has blades in reach - the rest return 0.
+	var cut := 0.0
+	for field in get_tree().get_nodes_in_group("grass_field"):
+		cut += field.cut_near(at, radius, min_growth)
 	_wear_tool(cut)
 
 func _update_swing(delta: float) -> void:

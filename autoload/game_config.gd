@@ -21,11 +21,13 @@ const DROPOFF_RADIUS: float = 2.0
 const SELL_RATE: float = 1.0
 
 #GRASS
-const GRASS_COUNT: int = 5000   # tufts are ~326 tris each, so ~1.6M tris total.
-								# Dial down if the framerate suffers, up if the field
-								# still looks thin. NOTE: this is also the total grass
-								# (and so gold) available in the map.
-const GRASS_FIELD_SIZE: float = 38.0
+# Field size and blade count are per-field now (GrassField.field_size /
+# blade_count), so the map can hold several fields of different sizes.
+# The yard: a rectangle (in X/Z) kept clear of grass, where the base buildings
+# stand. Without it the shop and the repair bay sit in the middle of the meadow
+# with grass growing up through the floor. Given as opposite corners.
+const YARD_MIN := Vector2(4.0, 4.0)
+const YARD_MAX := Vector2(20.0, 20.0)
 # In-game days for a blade to grow back from nothing to full height, carried over
 # from the prototype's CONFIG.grass.regrowDays.
 const GRASS_REGROW_DAYS: float = 3.0 #default 3.0 Day of Fully Growth

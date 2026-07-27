@@ -11,6 +11,13 @@ class_name GrassField
 ## of blades still cost one draw call no matter how much has been cut.
 enum State { UNCUT, CUT, COLLECTED }
 
+## Per-field, so the map can hold several fields of different sizes - the
+## T-shaped layout: a starting field by the base, plus unlockable arms left,
+## right and up. These were global in GameConfig, which only ever allowed one
+## field.
+@export var field_size: float = 38.0
+@export var blade_count: int = 5000
+
 const BLADE_MODEL := preload("res://assets/models/tall_grass.glb")
 
 const BLADE_BASE_Y := 0.0    ## where a blade meets the ground = the floor's top surface
@@ -53,8 +60,13 @@ var _grow_cursor: int = 0
 ## an imported model's pivot isn't necessarily at its base, so read it rather
 ## than assume it.
 var _blade_bottom: float = 0.0
+## Blade positions are local to this node; the yard is in world space. This
+## offset converts between them, so the yard is dodged correctly no matter where
+## the field node is placed.
+var _world_origin: Vector2 = Vector2.ZERO
 
 func _ready() -> void:
+	add_to_group("grass_field")   # so every placed field is found, however it's instanced
 	var blade_mesh := extract_mesh(BLADE_MODEL)
 	if blade_mesh == null:
 		push_error("GrassField: no mesh found in %s" % BLADE_MODEL.resource_path)
@@ -72,24 +84,26 @@ func _ready() -> void:
 	material.cull_mode = BaseMaterial3D.CULL_DISABLED
 	material_override = material
 
+	_world_origin = Vector2(global_position.x, global_position.z)
+
 	multimesh = MultiMesh.new()
 	multimesh.transform_format = MultiMesh.TRANSFORM_3D
 	multimesh.use_colors = true          # must be set before instance_count
 	multimesh.mesh = blade_mesh
-	multimesh.instance_count = GameConfig.GRASS_COUNT
+	multimesh.instance_count = blade_count
 
-	positions.resize(GameConfig.GRASS_COUNT)
-	yaws.resize(GameConfig.GRASS_COUNT)
-	scales.resize(GameConfig.GRASS_COUNT)
-	tilts.resize(GameConfig.GRASS_COUNT)
-	state.resize(GameConfig.GRASS_COUNT)
-	growth.resize(GameConfig.GRASS_COUNT)
-	growth_rates.resize(GameConfig.GRASS_COUNT)
+	positions.resize(blade_count)
+	yaws.resize(blade_count)
+	scales.resize(blade_count)
+	tilts.resize(blade_count)
+	state.resize(blade_count)
+	growth.resize(blade_count)
+	growth_rates.resize(blade_count)
 
-	var half := GameConfig.GRASS_FIELD_SIZE / 2.0
+	var half := field_size / 2.0
 	var max_tilt := deg_to_rad(MAX_TILT_DEG)
-	for i in GameConfig.GRASS_COUNT:
-		positions[i] = Vector2(randf_range(-half, half), randf_range(-half, half))
+	for i in blade_count:
+		positions[i] = _scatter_outside_yard(half)
 		yaws[i] = randf_range(0.0, TAU)
 		scales[i] = randf_range(SCALE_VARIANCE.x, SCALE_VARIANCE.y)
 		tilts[i] = Vector2(randf_range(-max_tilt, max_tilt), randf_range(-max_tilt, max_tilt))
@@ -121,6 +135,22 @@ func _process(delta: float) -> void:
 		if growth[i] >= 1.0:
 			state[i] = State.UNCUT   # back to being mowable grass
 		multimesh.set_instance_transform(i, _blade_transform(i, lerpf(STUBBLE_SCALE, 1.0, growth[i])))
+
+## Picks a spot in the field that isn't inside the yard, so no grass grows up
+## through the base buildings. Rejection sampling: the yard is a small part of
+## the field, so a retry is rare and the loop is bounded anyway. Checks in world
+## space (local + this field's origin), so a field placed away from the base
+## simply never lands in the yard.
+func _scatter_outside_yard(half: float) -> Vector2:
+	for _attempt in 16:
+		var p := Vector2(randf_range(-half, half), randf_range(-half, half))
+		var w := p + _world_origin
+		var inside := w.x >= GameConfig.YARD_MIN.x and w.x <= GameConfig.YARD_MAX.x \
+			and w.y >= GameConfig.YARD_MIN.y and w.y <= GameConfig.YARD_MAX.y
+		if not inside:
+			return p
+	# Gave up: push it to the field edge rather than leave a blade in the yard.
+	return Vector2(-half, -half)
 
 ## Pulls the first mesh out of an imported model scene, so a MultiMesh can
 ## render it. Frees the temporary instance it has to build to look inside.
@@ -170,7 +200,9 @@ func _blade_transform(i: int, scale_y: float, fall: float = 0.0) -> Transform3D:
 ## skims over short grass instead of biting it.
 func cut_near(world_pos: Vector3, radius: float, min_growth: float = 0.0) -> float:
 	var radius_sq := radius * radius
-	var center := Vector2(world_pos.x, world_pos.z)
+	# Blade positions are local to this node; bring the query into the same space
+	# (assumes fields are only translated, never rotated or scaled).
+	var center := Vector2(world_pos.x, world_pos.z) - _world_origin
 	var total := 0.0
 	for i in positions.size():
 		if state[i] != State.UNCUT and state[i] != State.COLLECTED:
@@ -195,7 +227,7 @@ func collect_near(world_pos: Vector3, radius: float, max_amount: float) -> float
 	if max_amount <= 0.0:
 		return 0.0
 	var radius_sq := radius * radius
-	var center := Vector2(world_pos.x, world_pos.z)
+	var center := Vector2(world_pos.x, world_pos.z) - _world_origin   # into local space
 	var collected := 0.0
 	for i in positions.size():
 		if collected >= max_amount:
