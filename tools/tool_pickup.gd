@@ -24,9 +24,12 @@ class_name ToolPickup
 @onready var placeholder: MeshInstance3D = $MeshInstance3D
 @onready var placeholder_collision: CollisionShape3D = $CollisionShape3D
 
+var _light: OmniLight3D = null
+
 func _ready() -> void:
 	add_to_group("interactable")
 	add_to_group("tool_pickup")
+	set_process(false)   # only a burning lantern needs a per-frame tick
 	# Show the tool's own ground model if it has one; otherwise keep the
 	# placeholder box (e.g. tools without a model yet, like the trimmer).
 	if tool_data and tool_data.world_model_scene:
@@ -47,13 +50,25 @@ func _ready() -> void:
 ## that's the point of being able to set it down.
 func _light_up() -> void:
 	var data: LanternData = tool_data
-	var light := OmniLight3D.new()
-	light.light_color = data.light_color
-	light.light_energy = data.held_energy
-	light.omni_range = data.held_range
-	light.position = Vector3(0, 0.25, 0)
-	light.visible = lantern_lit and fuel > 0.0
-	add_child(light)
+	_light = OmniLight3D.new()
+	_light.light_color = data.light_color
+	_light.light_energy = data.held_energy
+	_light.omni_range = data.held_range
+	_light.position = Vector3(0, 0.25, 0)
+	_light.visible = lantern_lit and fuel > 0.0
+	add_child(_light)
+	set_process(true)
+
+## A lantern burns its own oil wherever it is, not just in the player's hands.
+## Without this, setting one down turned it into a free permanent light and the
+## whole fuel economy could be sidestepped by never picking it up again.
+func _process(delta: float) -> void:
+	if not lantern_lit or fuel <= 0.0:
+		return
+	fuel = maxf(0.0, fuel - delta * tool_data.fuel_per_second)
+	if fuel <= 0.0:
+		lantern_lit = false   # burnt out where it stands
+		_light.visible = false
 
 func _lift_collisions_from(node: Node) -> int:
 	# Collect first, then reparent - mutating get_children() mid-loop skips nodes.
