@@ -14,6 +14,7 @@
 [ext_resource type="PackedScene" uid="uid://dtpkpvd4aeg7d" path="res://world/repair_box.tscn" id="11_nd4t6"]
 [ext_resource type="PackedScene" uid="uid://c35e460tw5qil" path="res://world/shop_stand.tscn" id="12_q2g7m"]
 [ext_resource type="PackedScene" uid="uid://bd0d34j2nja7w" path="res://world/cart.tscn" id="14_gi17s"]
+[ext_resource type="PackedScene" uid="uid://cvfs65iaql7xh" path="res://world/display_cart.tscn" id="15_sp42q"]
 
 [sub_resource type="BoxShape3D" id="BoxShape3D_5h11f"]
 size = Vector3(50, 1, 50)
@@ -151,3 +152,10 @@ unique = true
 
 [node name="Cart" parent="." unique_id=1380027441 instance=ExtResource("14_gi17s")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 22, 0, -9)
+
+[node name="ShopStand" parent="." unique_id=1064033044 instance=ExtResource("12_q2g7m")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 22, 0, -3)
+product_scene = ExtResource("14_gi17s")
+display_scene = ExtResource("15_sp42q")
+product_name = "Cart"
+price = 10
