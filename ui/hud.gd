@@ -36,7 +36,10 @@ func _on_carried_changed(current: float, max_value: float) -> void:
 func _on_gold_changed(current: int) -> void:
 	gold_label.text = "Gold: %d" % current
 
+var _looked_at: Node3D = null
+
 func _on_look_target_changed(target: Node3D) -> void:
+	_looked_at = target
 	if target == null:
 		interact_prompt.visible = false
 	elif target.is_in_group("tool_pickup"):
@@ -44,6 +47,9 @@ func _on_look_target_changed(target: Node3D) -> void:
 		interact_prompt.visible = true
 	elif target.is_in_group("fuel_station"):
 		interact_prompt.text = "[กด E ค้าง] เติม%s" % target.label()
+		interact_prompt.visible = true
+	elif target.is_in_group("repair_box"):
+		interact_prompt.text = target.prompt()
 		interact_prompt.visible = true
 	else:
 		interact_prompt.text = "[E] โต้ตอบ"
@@ -69,6 +75,13 @@ func _on_tool_wear_changed(wear: float) -> void:
 func _on_tool_fuel_changed(fuel: float, capacity: float) -> void:
 	_tool_fuel_pct = int(round(fuel / capacity * 100.0)) if capacity > 0.0 else 0
 	_refresh_tool_label()
+
+## The repair bay's line changes without the look target changing - a countdown
+## ticking, or a tool landing in the bay and moving the price - so it's rebuilt
+## every frame while you're looking at one. Cheap, and never shows a stale quote.
+func _process(_delta: float) -> void:
+	if _looked_at and _looked_at.is_in_group("repair_box"):
+		interact_prompt.text = _looked_at.prompt()
 
 ## Hidden entirely when you have no lantern - an empty readout for something
 ## you aren't carrying is just noise.

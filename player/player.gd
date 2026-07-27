@@ -212,9 +212,11 @@ func _physics_process(delta: float) -> void:
 			_refuel_from(current_target, delta)
 	elif Input.is_action_just_pressed("interact"):
 		# E is context-sensitive: pick up a looked-at tool if hands are free
-		# (holding only the knife); otherwise fall back to selling grass.
+		# (holding only the knife); start the repair box; otherwise sell grass.
 		if current_target and current_target.is_in_group("tool_pickup") and _can_pick_up(current_target):
 			_pick_up_item(current_target)
+		elif current_target and current_target.is_in_group("repair_box"):
+			current_target.start()
 		elif carried_grass > 0.0:
 			_try_sell()
 

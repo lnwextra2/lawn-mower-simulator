@@ -10,6 +10,7 @@
 [ext_resource type="Resource" uid="uid://bbeweuac3g0j1" path="res://tools/scythe.tres" id="8_dnf1e"]
 [ext_resource type="Resource" uid="uid://cv3kjy337r4uu" path="res://tools/Lantern.tres" id="9_3e8q6"]
 [ext_resource type="PackedScene" uid="uid://nl38p2c72r4" path="res://world/fuel_station.tscn" id="10_qpyc1"]
+[ext_resource type="PackedScene" uid="uid://dtpkpvd4aeg7d" path="res://world/repair_box.tscn" id="11_nd4t6"]
 
 [sub_resource type="BoxShape3D" id="BoxShape3D_5h11f"]
 size = Vector3(50, 1, 50)
@@ -117,3 +118,6 @@ kind = 0
 
 [node name="FuelStation_Engine" parent="." unique_id=1599333905 instance=ExtResource("10_qpyc1")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 20, 0, 17)
+
+[node name="RepairBox" parent="." unique_id=1752753685 instance=ExtResource("11_nd4t6")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 17, 0, 20)
