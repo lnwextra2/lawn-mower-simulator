@@ -51,11 +51,14 @@ buy upgrades/unlocks → survive the night → repeat.
   never obsoletes it: scythe knocks wild ground down, the mower then keeps
   that ground cropped, and ground left to regrow too long needs the scythe
   again.
-- **The mower is the end-game rig.** It cuts *and* collects, and tows the
-  cart (which stays meaningful as its capacity — the prototype pointedly gave
-  the mower no cargo to protect the cart; this replaces that). It is loud, and
-  noise draws monsters: late game buys speed and money at the cost of danger,
-  rather than buying safety.
+- **The mower is the end-game rig, but only by towing the cart.** The mower
+  cuts — fast and wide — and tows; it does *not* pick grass up. Collecting
+  stays the cart's job, which it already had ("faster cart auto-collect" was
+  always a listed upgrade). Mower alone leaves cut grass on the ground, so the
+  cart is a further step to buy rather than something the mower obsoletes, and
+  both cart upgrades keep their point. The mower is loud and noise draws
+  monsters: late game buys speed and money at the cost of danger, rather than
+  buying safety.
 - **Refuelling happens at base.** A fuel tank there, hold-to-fill: fuel flows
   in while gold drains, and releasing stops it, so "fill as much as you can
   afford" is the player's call, not a calculation. Forcing the trip home
