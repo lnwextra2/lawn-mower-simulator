@@ -22,6 +22,9 @@ var held_tool: ToolData
 var lantern: LanternData = null
 var lantern_lit: bool = false
 var lantern_fuel: float = 0.0
+## Clipped at the hip instead of held: a dim pool around your feet rather than a
+## beam you can aim, but it leaves the hand free. The trade is the point.
+var lantern_hipped: bool = false
 
 @onready var camera: Camera3D = $Camera3D
 @onready var interact_ray: RayCast3D = $Camera3D/RayCast3D
@@ -31,8 +34,13 @@ var lantern_fuel: float = 0.0
 ## your chest, so it turns with you but doesn't rise when you look up - looking at
 ## the sky shouldn't lift the load into view.
 @onready var carry_model: Node3D = $CarryModel
-@onready var lantern_model: Node3D = $Camera3D/LanternModel   # in the off hand, follows the view
+## Two mounts for the one lantern. Held hangs off the camera so it lights where
+## you look; hipped hangs off the body, so it stays at your waist and you only
+## see it by looking down - the same split as the carried grass.
+@onready var lantern_model: Node3D = $Camera3D/LanternModel
 @onready var lantern_light: OmniLight3D = $Camera3D/LanternModel/LanternLight
+@onready var lantern_hip: Node3D = $LanternHip
+@onready var hip_light: OmniLight3D = $LanternHip/HipLight
 const SWING_SPEED: float = 7.0   # matches the prototype's CONFIG.tools.scythe.swingSpeed
 var is_swinging: bool = false
 var swing_timer: float = 0.0
@@ -150,6 +158,11 @@ func _physics_process(delta: float) -> void:
 		if picked > 0:
 			carried_grass += picked
 			carried_grass_changed.emit(carried_grass, GameConfig.PLAYER_CARRY_CAPACITY)
+			# Filling your arms clips the lantern to your hip for good, not just
+			# until you set the grass down: what you do next is almost always swing
+			# a tool or push the cart, and both want the hand free. Springing back
+			# would mean re-clipping it nearly every trip.
+			lantern_hipped = true
 			_update_carry_model()
 	
 	if Input.is_action_just_pressed("interact"):
@@ -162,6 +175,9 @@ func _physics_process(delta: float) -> void:
 
 	if Input.is_action_just_pressed("toggle_lantern"):
 		_toggle_lantern()
+
+	if Input.is_action_just_pressed("swap_lantern"):
+		_swap_lantern_position()
 
 	if Input.is_action_just_pressed("drop"):
 		# Grass first: it's what's blocking the tool, so the same key that frees
@@ -209,8 +225,11 @@ func _update_carry_model() -> void:
 	# how much of the screen it takes.
 	var size := lerpf(0.6, 1.0, fill)
 	carry_model.scale = Vector3(size, size * GrassPile.FLATTEN, size)
-	# The tool is stowed while both arms are full.
+	# The tool is stowed while both arms are full, and the lantern moves to the
+	# hip - you can't hold a light and an armful of grass in the same hands.
 	view_model.visible = carried_grass <= 0.0
+	_rebuild_lantern_model()
+	_refresh_lantern()
 
 func _try_sell() -> void:
 	var flat_player := Vector2(global_position.x, global_position.z)
@@ -251,6 +270,7 @@ func _drop_lantern() -> void:
 	lantern = null
 	lantern_lit = false
 	lantern_fuel = 0.0
+	lantern_hipped = false   # the next one you pick up starts in hand
 	_rebuild_lantern_model()
 	_refresh_lantern()
 
@@ -261,6 +281,22 @@ func _toggle_lantern() -> void:
 		return
 	lantern_lit = not lantern_lit
 	_refresh_lantern()
+
+## Moves the lantern between hand and hip. The flame stays as it was - moving it
+## doesn't put it out. Pressing this with your arms full of grass still sets your
+## preference; it just doesn't take effect until your hands are free again.
+func _swap_lantern_position() -> void:
+	if lantern == null:
+		return
+	lantern_hipped = not lantern_hipped
+	_rebuild_lantern_model()
+	_refresh_lantern()
+
+## Where the lantern actually is. Picking grass up sets lantern_hipped, so it
+## stays clipped after you set the grass down; the carried_grass term on top of
+## that stops Tab from pulling it back into hands that are still full.
+func _lantern_at_hip() -> bool:
+	return lantern_hipped or carried_grass > 0.0
 
 func _update_lantern(delta: float) -> void:
 	if lantern == null or not lantern_lit:
@@ -275,21 +311,32 @@ func _update_lantern(delta: float) -> void:
 ## second would be silly. Only picking one up or putting it down changes what's
 ## in your hand.
 func _rebuild_lantern_model() -> void:
-	for child in lantern_model.get_children():
-		if child != lantern_light:
+	for mount in [lantern_model, lantern_hip]:
+		for child in mount.get_children():
+			if child is OmniLight3D:
+				continue   # the mount's light belongs to the mount, not the lantern
 			child.queue_free()
 	if lantern and lantern.view_model_scene:
-		lantern_model.add_child(lantern.view_model_scene.instantiate())
+		var mount: Node3D = lantern_hip if _lantern_at_hip() else lantern_model
+		mount.add_child(lantern.view_model_scene.instantiate())
 
-## Pushes the lantern's state onto the visuals: the model shows only while you
-## have it, the light only while it's actually lit.
+## Pushes the lantern's state onto the visuals. Hiding a mount hides its light
+## too, so only the mount the lantern is actually on can shine.
 func _refresh_lantern() -> void:
-	lantern_model.visible = lantern != null
-	lantern_light.visible = lantern != null and lantern_lit
+	var carried := lantern != null
+	var at_hip := _lantern_at_hip()
+	lantern_model.visible = carried and not at_hip
+	lantern_hip.visible = carried and at_hip
+	lantern_light.visible = lantern_lit
+	hip_light.visible = lantern_lit
 	if lantern:
 		lantern_light.light_energy = lantern.held_energy
 		lantern_light.omni_range = lantern.held_range
 		lantern_light.light_color = lantern.light_color
+		# At the hip it's a dim pool around you, not a beam you can aim.
+		hip_light.light_energy = lantern.hung_energy
+		hip_light.omni_range = lantern.hung_range
+		hip_light.light_color = lantern.light_color
 	lantern_changed.emit(lantern, lantern_lit, lantern_fuel)
 
 func _drop_tool() -> void:

@@ -38,3 +38,8 @@ transform = Transform3D(0.87542605, -0.23456971, 0.42261827, 0.25881904, 0.96592
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1, 0)
 cast_shadow = 3
 mesh = SubResource("CapsuleMesh_5h11f")
+
+[node name="LanternHip" type="Node3D" parent="." unique_id=1924710928]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.6, 0.4, 0)
+
+[node name="HipLight" type="OmniLight3D" parent="LanternHip" unique_id=807289160]
