@@ -47,6 +47,22 @@ const TOOL_THROW_SPIN: float = 0.06
 # player decides how much to afford instead of the game calculating it.
 const FUEL_FILL_RATE: float = 25.0        # fuel units per second
 const FUEL_PRICE_PER_UNIT: float = 0.5    # gold per fuel unit
+# The cart sweeps a wider path than you can reach by hand - it's doing the job
+# for you, which is what it's for.
+const CART_COLLECT_RADIUS: float = 2.2
+
+# Collision layers. Layer 1 is the solid world; things on LAYER_LOOK_ONLY can be
+# aimed at by the interact ray but are walked and driven straight through - for
+# flat markers like the sale pad, which you're meant to stand and park on.
+const LAYER_WORLD: int = 1
+const LAYER_LOOK_ONLY: int = 1 << 2
+# Loose items lying about - dropped tools. They fall and rest on the world, and
+# can be aimed at, but they are not walls: the cart drives over them rather than
+# being stopped dead by a scythe in the grass. (Shoving them aside with physics
+# was tried first and fought the movement code, since a CharacterBody is stopped
+# by the collision before any push it applies can take effect.)
+const LAYER_LOOSE_ITEM: int = 1 << 3
+const INTERACT_RAY_MASK: int = LAYER_WORLD | LAYER_LOOK_ONLY | LAYER_LOOSE_ITEM
 
 #GRASS THINGS
 const HAND_CUT_RADIUS: float = 1.0

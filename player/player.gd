@@ -42,6 +42,11 @@ var lantern_fuel: float = 0.0
 ## Clipped at the hip instead of held: a dim pool around your feet rather than a
 ## beam you can aim, but it leaves the hand free. The trade is the point.
 var lantern_hipped: bool = false
+## The cart you're pulling, if any. Hauling it takes your hands, exactly as an
+## armful of grass does - which is what stops the cart from turning into a
+## one-pass cut-and-collect rig. That combination is the mower's whole selling
+## point, and the mower earns it by pulling with an engine instead of your arms.
+var towed_cart: Node3D = null
 
 @onready var camera: Camera3D = $Camera3D
 @onready var interact_ray: RayCast3D = $Camera3D/RayCast3D
@@ -75,6 +80,9 @@ var current_target: Node3D = null
 
 func _ready() -> void:
 	Input.mouse_mode = Input.MOUSE_MODE_CAPTURED
+	# The look-at ray has to see more than the solid world: flat markers like the
+	# sale pad are deliberately non-blocking but still need to be aimable at.
+	interact_ray.collision_mask = GameConfig.INTERACT_RAY_MASK
 	# Capture the idle slide position; the swing animates an offset from it.
 	vm_rest_pos = view_model.position
 	# Swap the in-hand model whenever the held tool changes (connect before the
@@ -132,7 +140,12 @@ func _physics_process(delta: float) -> void:
 	var active := has_mouse_focus()
 
 	if active and Input.is_action_just_pressed("jump") and is_on_floor():
-		velocity.y = GameConfig.PLAYER_JUMP_VELOCITY
+		# You can't jump while hauling a cart - so jumping is how you let go of
+		# it. It doubles as the get-out when the cart has snagged on something.
+		if towed_cart:
+			_toggle_cart(towed_cart)
+		else:
+			velocity.y = GameConfig.PLAYER_JUMP_VELOCITY
 
 	var input_dir := Input.get_vector("move_left", "move_right", "move_forward", "move_back") if active else Vector2.ZERO
 	var direction := (transform.basis * Vector3(input_dir.x, 0, input_dir.y)).normalized()
@@ -159,6 +172,7 @@ func _physics_process(delta: float) -> void:
 		rate = GameConfig.PLAYER_SPRINT_ACCELERATION
 	velocity.x = move_toward(velocity.x, target.x, rate * delta)
 	velocity.z = move_toward(velocity.z, target.z, rate * delta)
+	_apply_cart_leash()
 
 	#Handle Interaction
 	if not active:
@@ -166,9 +180,9 @@ func _physics_process(delta: float) -> void:
 		move_and_slide()
 		return
 
-	# Carrying an armful of grass occupies both hands: the tool is still yours,
-	# it just can't be used until you put the grass down (drop key).
-	if carried_grass <= 0.0:
+	# Both hands are busy while carrying grass or hauling the cart: the tool is
+	# still yours, it just can't be used until they're free.
+	if _hands_free():
 		if held_tool.continuous:
 			# A powered tool runs while the trigger is held, burning fuel only
 			# while it's actually working - so how much you spend is your call.
@@ -217,8 +231,14 @@ func _physics_process(delta: float) -> void:
 			current_target.start()
 		elif current_target and current_target.is_in_group("shop_stand"):
 			current_target.buy()
+		elif current_target and current_target.is_in_group("cart"):
+			_toggle_cart(current_target)
 		elif current_target and current_target.is_in_group("drop_off"):
 			current_target.sell_all()
+		elif towed_cart:
+			# Last resort, because a cart under tow is behind you and can't be
+			# looked at: E with nothing else in view lets go of it.
+			_toggle_cart(towed_cart)
 
 	if Input.is_action_just_pressed("toggle_lantern"):
 		_toggle_lantern()
@@ -275,9 +295,9 @@ func _update_carry_model() -> void:
 	# how much of the screen it takes.
 	var size := lerpf(0.6, 1.0, fill)
 	carry_model.scale = Vector3(size, size * GrassPile.FLATTEN, size)
-	# The tool is stowed while both arms are full, and the lantern moves to the
-	# hip - you can't hold a light and an armful of grass in the same hands.
-	view_model.visible = carried_grass <= 0.0
+	# The tool is stowed while your arms are busy - an armful of grass or the
+	# cart's handles - and the lantern moves to the hip.
+	view_model.visible = _hands_free()
 	_rebuild_lantern_model()
 	_refresh_lantern()
 
@@ -313,6 +333,46 @@ func _refuel_from(station: Node, delta: float) -> void:
 	else:
 		held_fuel += poured
 		tool_fuel_changed.emit(held_fuel, held_tool.fuel_capacity)
+
+## The rope pulls both ways. Once it's taut you can still move around or toward
+## the cart, but not further from it - so a snagged cart stops you dead instead
+## of quietly detaching and leaving you to walk back and find it. That resistance
+## is also what makes hauling feel like hauling.
+func _apply_cart_leash() -> void:
+	if towed_cart == null:
+		return
+	var to_cart := towed_cart.global_position - global_position
+	to_cart.y = 0.0
+	var dist := to_cart.length()
+	if dist <= Cart.LEASH_LENGTH:
+		return
+	# Resistance comes on gradually across the stretch rather than snapping on at
+	# a threshold. A hard cut-off oscillated: blocked, cart catches up, released,
+	# blocked again, every frame. Easing it also reads as the weight of the thing.
+	var strain: float = clampf((dist - Cart.LEASH_LENGTH)
+		/ (Cart.LEASH_LIMIT - Cart.LEASH_LENGTH), 0.0, 1.0)
+	var away := -to_cart.normalized()
+	var flat := Vector3(velocity.x, 0.0, velocity.z)
+	var pulling_away := flat.dot(away)
+	if pulling_away > 0.0:
+		flat -= away * pulling_away * strain
+		velocity.x = flat.x
+		velocity.z = flat.z
+
+## True when nothing has taken over your arms. Carrying grass and hauling the
+## cart both do; the lantern doesn't, since it only takes the off hand.
+func _hands_free() -> bool:
+	return carried_grass <= 0.0 and towed_cart == null
+
+func _toggle_cart(cart: Node3D) -> void:
+	if towed_cart == cart:
+		cart.toggle_tow(self)
+		towed_cart = null
+	elif towed_cart == null:
+		cart.toggle_tow(self)
+		towed_cart = cart
+	swing_buffered = false
+	_update_carry_model()   # stows or restores the tool and the lantern
 
 ## A lantern goes in the off hand, so it can be picked up while holding a tool.
 ## A tool needs the main hand free, i.e. nothing but the default knife in it.
@@ -388,7 +448,7 @@ func _swap_lantern_position() -> void:
 ## stays clipped after you set the grass down; the other two terms are hard
 ## constraints Tab can't override - full arms, or a tool that needs both hands.
 func _lantern_at_hip() -> bool:
-	return lantern_hipped or carried_grass > 0.0 or (held_tool and held_tool.two_handed)
+	return lantern_hipped or not _hands_free() or (held_tool and held_tool.two_handed)
 
 func _update_lantern(delta: float) -> void:
 	if lantern == null or not lantern_lit:

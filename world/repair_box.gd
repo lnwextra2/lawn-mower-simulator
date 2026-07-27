@@ -41,6 +41,9 @@ var seconds_left: float = 0.0
 func _ready() -> void:
 	add_to_group("interactable")
 	add_to_group("repair_box")
+	# Tools live on the loose-item layer, so the bay has to watch that layer or it
+	# would never see anything thrown into it.
+	bay.collision_mask = GameConfig.LAYER_LOOSE_ITEM
 	set_process(false)
 
 ## Everything currently sitting in the bay that there's any point servicing.

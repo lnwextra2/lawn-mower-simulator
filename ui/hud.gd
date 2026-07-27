@@ -7,8 +7,11 @@ extends CanvasLayer
 @onready var tool_label: Label = $ToolLabel
 @onready var lantern_label: Label = $LanternLabel
 
+var _player: Node = null
+
 func _ready() -> void:
 	var player := get_tree().get_first_node_in_group("player")
+	_player = player
 	player.stamina_changed.connect(_on_stamina_changed)
 	player.carried_grass_changed.connect(_on_carried_changed)
 	Economy.gold_changed.connect(_on_gold_changed)
@@ -41,7 +44,13 @@ var _looked_at: Node3D = null
 func _on_look_target_changed(target: Node3D) -> void:
 	_looked_at = target
 	if target == null:
-		interact_prompt.visible = false
+		# A cart under tow trails behind you and can never be looked at, so the
+		# only place to advertise letting go of it is here, with nothing in view.
+		if _player and _player.towed_cart:
+			interact_prompt.text = "[E] ปล่อยเกวียน"
+			interact_prompt.visible = true
+		else:
+			interact_prompt.visible = false
 	elif target.is_in_group("tool_pickup"):
 		interact_prompt.text = "[E] เก็บ %s" % target.tool_data.tool_name
 		interact_prompt.visible = true
@@ -49,7 +58,7 @@ func _on_look_target_changed(target: Node3D) -> void:
 		interact_prompt.text = "[กด E ค้าง] เติม%s" % target.label()
 		interact_prompt.visible = true
 	elif target.is_in_group("repair_box") or target.is_in_group("shop_stand") \
-			or target.is_in_group("drop_off"):
+			or target.is_in_group("drop_off") or target.is_in_group("cart"):
 		interact_prompt.text = target.prompt()
 		interact_prompt.visible = true
 	else:
@@ -81,8 +90,13 @@ func _on_tool_fuel_changed(fuel: float, capacity: float) -> void:
 ## ticking, or a tool landing in the bay and moving the price - so it's rebuilt
 ## every frame while you're looking at one. Cheap, and never shows a stale quote.
 func _process(_delta: float) -> void:
-	if _looked_at and (_looked_at.is_in_group("repair_box") or _looked_at.is_in_group("drop_off")):
+	if _looked_at and (_looked_at.is_in_group("repair_box") or _looked_at.is_in_group("drop_off") \
+			or _looked_at.is_in_group("cart")):
 		interact_prompt.text = _looked_at.prompt()
+	elif _looked_at == null and _player:
+		# Grabbing or letting go of the cart changes this line without the look
+		# target changing, so it's re-evaluated here rather than only on change.
+		_on_look_target_changed(null)
 
 ## Hidden entirely when you have no lantern - an empty readout for something
 ## you aren't carrying is just noise.

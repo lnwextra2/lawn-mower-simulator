@@ -1,0 +1,24 @@
+[gd_scene format=3 uid="uid://bd0d34j2nja7w"]
+
+[ext_resource type="Script" uid="uid://bs5sakllhdr5e" path="res://world/cart.gd" id="1_ocrbd"]
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_ocrbd"]
+size = Vector3(1.2, 0.9, 1.6)
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_ocrbd"]
+albedo_color = Color(0.58175874, 0.38297567, 0.13582891, 1)
+
+[sub_resource type="BoxMesh" id="BoxMesh_5h11f"]
+material = SubResource("StandardMaterial3D_ocrbd")
+size = Vector3(1.2, 0.9, 1.6)
+
+[node name="Cart" type="CharacterBody3D" unique_id=1380027441]
+script = ExtResource("1_ocrbd")
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="." unique_id=1948881287]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.45, 0)
+shape = SubResource("BoxShape3D_ocrbd")
+
+[node name="MeshInstance3D" type="MeshInstance3D" parent="." unique_id=2095646278]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.45, 0)
+mesh = SubResource("BoxMesh_5h11f")

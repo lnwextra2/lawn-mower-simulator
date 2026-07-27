@@ -30,6 +30,10 @@ func _ready() -> void:
 	add_to_group("interactable")
 	add_to_group("tool_pickup")
 	set_process(false)   # only a burning lantern needs a per-frame tick
+	# Sits on the loose-item layer: still falls onto the world and is still
+	# aimable, but isn't a wall to anything driving past.
+	collision_layer = GameConfig.LAYER_LOOSE_ITEM
+	collision_mask = GameConfig.LAYER_WORLD
 	# Show the tool's own ground model if it has one; otherwise keep the
 	# placeholder box (e.g. tools without a model yet, like the trimmer).
 	if tool_data and tool_data.world_model_scene:
