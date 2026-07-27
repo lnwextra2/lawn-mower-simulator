@@ -72,7 +72,6 @@ var swing_buffered: bool = false
 var vm_rest_pos: Vector3
 var current_target: Node3D = null
 @onready var grass_field: GrassField = get_tree().get_first_node_in_group("grass_field")
-@onready var drop_off: Node3D = get_tree().get_first_node_in_group("drop_off")
 
 func _ready() -> void:
 	Input.mouse_mode = Input.MOUSE_MODE_CAPTURED
@@ -211,14 +210,15 @@ func _physics_process(delta: float) -> void:
 		if Input.is_action_pressed("interact"):
 			_refuel_from(current_target, delta)
 	elif Input.is_action_just_pressed("interact"):
-		# E is context-sensitive: pick up a looked-at tool if hands are free
-		# (holding only the knife); start the repair box; otherwise sell grass.
+		# E is context-sensitive: whatever you're looking at decides what it does.
 		if current_target and current_target.is_in_group("tool_pickup") and _can_pick_up(current_target):
 			_pick_up_item(current_target)
 		elif current_target and current_target.is_in_group("repair_box"):
 			current_target.start()
-		elif carried_grass > 0.0:
-			_try_sell()
+		elif current_target and current_target.is_in_group("shop_stand"):
+			current_target.buy()
+		elif current_target and current_target.is_in_group("drop_off"):
+			current_target.sell_all()
 
 	if Input.is_action_just_pressed("toggle_lantern"):
 		_toggle_lantern()
@@ -247,7 +247,10 @@ func _drop_grass() -> void:
 	var pile := GRASS_PILE_SCENE.instantiate()
 	pile.amount = carried_grass
 	get_parent().add_child(pile)
-	var forward := -global_transform.basis.z
+	# Aimed with the camera, not the body: the body only ever yaws, so throwing
+	# along it meant a fixed arc you couldn't aim - no dropping a load at your own
+	# feet, and no lobbing anything into the repair bay or onto the sale pad.
+	var forward := -camera.global_transform.basis.z
 	pile.global_position = global_position + forward * 0.6 + Vector3(0, 1.2, 0)
 	# Carry your own momentum into the throw, so sprinting flings it further - and
 	# running backwards throws it shorter. Upward motion counts too (jump-throwing
@@ -310,15 +313,6 @@ func _refuel_from(station: Node, delta: float) -> void:
 	else:
 		held_fuel += poured
 		tool_fuel_changed.emit(held_fuel, held_tool.fuel_capacity)
-
-func _try_sell() -> void:
-	var flat_player := Vector2(global_position.x, global_position.z)
-	var flat_dropoff := Vector2(drop_off.global_position.x, drop_off.global_position.z)
-	if flat_player.distance_to(flat_dropoff) <= GameConfig.DROPOFF_RADIUS:
-		Economy.sell(carried_grass)
-		carried_grass = 0.0
-		carried_grass_changed.emit(carried_grass, GameConfig.PLAYER_CARRY_CAPACITY)
-		_update_carry_model()
 
 ## A lantern goes in the off hand, so it can be picked up while holding a tool.
 ## A tool needs the main hand free, i.e. nothing but the default knife in it.
@@ -459,7 +453,10 @@ func _spawn_pickup(data: ToolData, fuel: float = 0.0, lit: bool = false, wear: f
 	pickup.lantern_lit = lit
 	pickup.tool_wear = wear
 	get_parent().add_child(pickup)
-	var forward := -global_transform.basis.z
+	# Thrown where you're looking, so a tool can actually be lobbed into the
+	# repair bay. Its facing and spin stay body-relative though (below) - those
+	# are about how the item sits in your hands, not where you're aiming.
+	var forward := -camera.global_transform.basis.z
 	pickup.global_position = global_position + forward * 0.6 + Vector3(0, 1.3, 0)
 	# Thrown in your own frame, not the world's: the item leaves your hands at the
 	# same angle relative to you every time, whichever way you happen to be facing.

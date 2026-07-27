@@ -6,11 +6,13 @@
 [ext_resource type="PackedScene" uid="uid://cag4mjiiu3xxj" path="res://world/grass_field.tscn" id="3_434qw"]
 [ext_resource type="Script" uid="uid://bm86i0uuq3hvr" path="res://world/lighting_controller.gd" id="4_x27he"]
 [ext_resource type="PackedScene" uid="uid://c32btr4mcljm2" path="res://tools/tool_pickup.tscn" id="6_mmx4b"]
+[ext_resource type="Script" uid="uid://dxnp5sfbjdcre" path="res://world/drop_off.gd" id="6_v3fn7"]
 [ext_resource type="Resource" uid="uid://b0wxx3k06huub" path="res://tools/trimmer.tres" id="7_yi58r"]
 [ext_resource type="Resource" uid="uid://bbeweuac3g0j1" path="res://tools/scythe.tres" id="8_dnf1e"]
 [ext_resource type="Resource" uid="uid://cv3kjy337r4uu" path="res://tools/Lantern.tres" id="9_3e8q6"]
 [ext_resource type="PackedScene" uid="uid://nl38p2c72r4" path="res://world/fuel_station.tscn" id="10_qpyc1"]
 [ext_resource type="PackedScene" uid="uid://dtpkpvd4aeg7d" path="res://world/repair_box.tscn" id="11_nd4t6"]
+[ext_resource type="PackedScene" uid="uid://c35e460tw5qil" path="res://world/shop_stand.tscn" id="12_q2g7m"]
 
 [sub_resource type="BoxShape3D" id="BoxShape3D_5h11f"]
 size = Vector3(50, 1, 50)
@@ -42,6 +44,10 @@ material = SubResource("StandardMaterial3D_mmx4b")
 top_radius = 2.0
 bottom_radius = 2.0
 height = 0.05
+
+[sub_resource type="CylinderShape3D" id="CylinderShape3D_5h11f"]
+height = 0.3
+radius = 2.5
 
 [node name="TestLevel" type="Node3D" unique_id=1935669822]
 
@@ -92,11 +98,15 @@ script = ExtResource("4_x27he")
 
 [node name="GrassField" parent="." unique_id=825723574 instance=ExtResource("3_434qw")]
 
-[node name="DropOff" type="Node3D" parent="." unique_id=1248243609 groups=["drop_off"]]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 15, 0.05, 15)
+[node name="DropOff" type="StaticBody3D" parent="." unique_id=2142596691 groups=["drop_off"]]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 20, 0.05, 10)
+script = ExtResource("6_v3fn7")
 
 [node name="MeshInstance3D" type="MeshInstance3D" parent="DropOff" unique_id=1187613514]
 mesh = SubResource("CylinderMesh_kfa7i")
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="DropOff" unique_id=1997864424]
+shape = SubResource("CylinderShape3D_5h11f")
 
 [node name="ToolPickup_PoleSaw" parent="." unique_id=223509862 instance=ExtResource("6_mmx4b")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 3, 0, 3)
@@ -121,3 +131,19 @@ transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 20, 0, 17)
 
 [node name="RepairBox" parent="." unique_id=1752753685 instance=ExtResource("11_nd4t6")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 17, 0, 20)
+
+[node name="ShopCounter" type="Node3D" parent="." unique_id=1227730286 groups=["shop_collect"]]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 22, 0, -6)
+
+[node name="ShopStand1" parent="." unique_id=58590521 instance=ExtResource("12_q2g7m")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 22, 0, 0)
+item = ExtResource("9_3e8q6")
+
+[node name="ShopStand2" parent="." unique_id=1477591519 instance=ExtResource("12_q2g7m")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 22, 0, 3)
+item = ExtResource("8_dnf1e")
+
+[node name="ShopStand3" parent="." unique_id=420269588 instance=ExtResource("12_q2g7m")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 22, 0, 6)
+item = ExtResource("7_yi58r")
+unique = true

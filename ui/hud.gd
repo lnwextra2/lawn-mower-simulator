@@ -48,7 +48,8 @@ func _on_look_target_changed(target: Node3D) -> void:
 	elif target.is_in_group("fuel_station"):
 		interact_prompt.text = "[กด E ค้าง] เติม%s" % target.label()
 		interact_prompt.visible = true
-	elif target.is_in_group("repair_box"):
+	elif target.is_in_group("repair_box") or target.is_in_group("shop_stand") \
+			or target.is_in_group("drop_off"):
 		interact_prompt.text = target.prompt()
 		interact_prompt.visible = true
 	else:
@@ -80,7 +81,7 @@ func _on_tool_fuel_changed(fuel: float, capacity: float) -> void:
 ## ticking, or a tool landing in the bay and moving the price - so it's rebuilt
 ## every frame while you're looking at one. Cheap, and never shows a stale quote.
 func _process(_delta: float) -> void:
-	if _looked_at and _looked_at.is_in_group("repair_box"):
+	if _looked_at and (_looked_at.is_in_group("repair_box") or _looked_at.is_in_group("drop_off")):
 		interact_prompt.text = _looked_at.prompt()
 
 ## Hidden entirely when you have no lantern - an empty readout for something

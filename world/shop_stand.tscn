@@ -1,0 +1,33 @@
+[gd_scene format=3 uid="uid://c35e460tw5qil"]
+
+[ext_resource type="Script" uid="uid://3a8rmr86jlsf" path="res://world/shop_stand.gd" id="1_gwx7g"]
+[ext_resource type="Texture2D" uid="uid://bsk87y1b3qidn" path="res://assets/textures/ground048/Ground048_1K-JPG_NormalGL.jpg" id="2_fgauq"]
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_5h11f"]
+size = Vector3(0.9, 1, 0.9)
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_swfl6"]
+albedo_texture = ExtResource("2_fgauq")
+
+[sub_resource type="BoxMesh" id="BoxMesh_5h11f"]
+material = SubResource("StandardMaterial3D_swfl6")
+size = Vector3(0.9, 1, 0.9)
+
+[node name="ShopStand" type="StaticBody3D" unique_id=58590521]
+script = ExtResource("1_gwx7g")
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="." unique_id=1000508531]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.5, 0)
+shape = SubResource("BoxShape3D_5h11f")
+
+[node name="MeshInstance3D" type="MeshInstance3D" parent="." unique_id=152043361]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.5, 0)
+mesh = SubResource("BoxMesh_5h11f")
+
+[node name="Display" type="Node3D" parent="." unique_id=1981204277]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.1, 0)
+
+[node name="PriceLabel" type="Label3D" parent="." unique_id=1205596912]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 2, 0)
+billboard = 1
+font_size = 48
