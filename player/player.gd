@@ -5,6 +5,7 @@ signal carried_grass_changed(current: float, max_value: float)
 signal look_target_changed(target: Node3D)
 signal held_tool_changed(tool: ToolData)
 signal tool_wear_changed(wear: float)
+signal tool_fuel_changed(fuel: float, capacity: float)
 signal lantern_changed(lantern: LanternData, lit: bool, fuel: float)
 
 const TOOL_PICKUP_SCENE := preload("res://tools/tool_pickup.tscn")
@@ -24,6 +25,15 @@ var held_tool: ToolData
 ## its wear has nowhere else to live and is kept aside while another tool is out.
 var held_wear: float = 0.0
 var knife_wear: float = 0.0
+## Fuel in the held tool, for powered ones. Hand tools leave it at 0 and ignore
+## it - they dull instead. Per-item, same as wear.
+var held_fuel: float = 0.0
+var _cut_accum: float = 0.0   # paces a continuous tool's bites
+## How far a continuous tool has swung down from shouldered (0) to working (1).
+## Eased rather than snapped, so raising and lowering the saw reads as a motion.
+var deploy_amount: float = 0.0
+var _powered_running: bool = false
+const DEPLOY_SPEED: float = 6.0
 ## The lantern occupies the off hand, a slot of its own alongside the tool.
 var lantern: LanternData = null
 var lantern_lit: bool = false
@@ -81,6 +91,11 @@ func _swap_view_model(tool: ToolData) -> void:
 		child.queue_free()
 	if tool and tool.view_model_scene:
 		swing_pivot.add_child(tool.view_model_scene.instantiate())
+	# Clear any pose the last tool left on the pivot, or a saw put away mid-cut
+	# would hand its angle to whatever comes next.
+	_powered_running = false
+	deploy_amount = 0.0
+	swing_pivot.rotation_degrees = Vector3.ZERO
 	# A two-handed tool has to push the lantern off to the hip, so the lantern's
 	# position is re-evaluated whenever what's in your hands changes.
 	if is_node_ready():
@@ -153,11 +168,16 @@ func _physics_process(delta: float) -> void:
 
 	# Carrying an armful of grass occupies both hands: the tool is still yours,
 	# it just can't be used until you put the grass down (drop key).
-	if Input.is_action_just_pressed("attack") and carried_grass <= 0.0:
-		# Only asks for a swing. The cut itself fires mid-swing (see
-		# _update_swing), so a swing already in progress swallows the click and
-		# the animation is its own cooldown - no separate timer to keep in sync.
-		start_swing()
+	if carried_grass <= 0.0:
+		if held_tool.continuous:
+			# A powered tool runs while the trigger is held, burning fuel only
+			# while it's actually working - so how much you spend is your call.
+			_run_powered_tool(delta, Input.is_action_pressed("attack"))
+		elif Input.is_action_just_pressed("attack"):
+			# Only asks for a swing. The cut itself fires mid-swing (see
+			# _update_swing), so a swing already in progress swallows the click and
+			# the animation is its own cooldown - no separate timer to keep in sync.
+			start_swing()
 
 	if Input.is_action_just_pressed("collect"):
 		var room: float = GameConfig.PLAYER_CARRY_CAPACITY - carried_grass
@@ -277,7 +297,7 @@ func _pick_up_item(pickup: Node) -> void:
 	var data: ToolData = pickup.tool_data
 	if data is LanternData:
 		lantern = data
-		lantern_fuel = pickup.lantern_fuel   # a lantern keeps the fuel it was left with
+		lantern_fuel = pickup.fuel   # a lantern keeps the fuel it was left with
 		lantern_lit = pickup.lantern_lit
 		_rebuild_lantern_model()
 		_refresh_lantern()
@@ -288,8 +308,11 @@ func _pick_up_item(pickup: Node) -> void:
 			knife_wear = held_wear
 		held_tool = data
 		held_wear = pickup.tool_wear   # a tool keeps the condition it was left in
+		held_fuel = pickup.fuel        # and whatever was left in its tank
+		_cut_accum = 0.0
 		held_tool_changed.emit(held_tool)
 		tool_wear_changed.emit(held_wear)
+		tool_fuel_changed.emit(held_fuel, held_tool.fuel_capacity)
 	pickup.queue_free()
 	# The looked-at node is gone now; clear the prompt this frame.
 	current_target = null
@@ -333,7 +356,7 @@ func _lantern_at_hip() -> bool:
 func _update_lantern(delta: float) -> void:
 	if lantern == null or not lantern_lit:
 		return
-	lantern_fuel = maxf(0.0, lantern_fuel - delta)
+	lantern_fuel = maxf(0.0, lantern_fuel - delta * lantern.fuel_per_second)
 	if lantern_fuel <= 0.0:
 		lantern_lit = false   # burnt out
 	_refresh_lantern()
@@ -372,11 +395,13 @@ func _refresh_lantern() -> void:
 	lantern_changed.emit(lantern, lantern_lit, lantern_fuel)
 
 func _drop_tool() -> void:
-	_spawn_pickup(held_tool, 0.0, false, held_wear)
+	_spawn_pickup(held_tool, held_fuel, false, held_wear)
 	held_tool = knife
 	held_wear = knife_wear   # back to the sickle, in whatever state you left it
+	held_fuel = 0.0          # the sickle has no tank
 	held_tool_changed.emit(held_tool)
 	tool_wear_changed.emit(held_wear)
+	tool_fuel_changed.emit(held_fuel, held_tool.fuel_capacity)
 
 ## Tosses `data` out into the world as a pickup, like a CS weapon drop: spawned
 ## at hand height with a forward+up impulse and a little spin, then left to
@@ -387,13 +412,17 @@ func _spawn_pickup(data: ToolData, fuel: float = 0.0, lit: bool = false, wear: f
 	# add_child runs _ready immediately - assigning afterwards is too late and the
 	# pickup would come up with defaults (an unlit, empty lantern).
 	pickup.tool_data = data
-	pickup.lantern_fuel = fuel
+	pickup.fuel = fuel
 	pickup.lantern_lit = lit
 	pickup.tool_wear = wear
 	get_parent().add_child(pickup)
 	var forward := -global_transform.basis.z
 	pickup.global_position = global_position + forward * 0.6 + Vector3(0, 1.3, 0)
-	pickup.rotation.y = randf_range(0.0, TAU)   # vary facing so it doesn't always land the same way
+	# Thrown in your own frame, not the world's: the item leaves your hands at the
+	# same angle relative to you every time, whichever way you happen to be facing.
+	# Which way that is (head to the right, say) is set by the world model scene's
+	# own pose, so it's adjustable without touching this.
+	pickup.global_rotation.y = global_rotation.y
 	# It spawns right on top of us, so a long item (the scythe) would jam into
 	# the player's body and spike the physics. Ignore player<->pickup collision
 	# while it's thrown, then restore it a moment later so we can still bump the
@@ -401,7 +430,12 @@ func _spawn_pickup(data: ToolData, fuel: float = 0.0, lit: bool = false, wear: f
 	pickup.add_collision_exception_with(self)
 	get_tree().create_timer(0.5).timeout.connect(_restore_pickup_collision.bind(pickup))
 	pickup.apply_central_impulse(forward * 4.0 + Vector3(0, 2.5, 0))
-	pickup.apply_torque_impulse(Vector3(randf_range(-1.0, 1.0), randf_range(-1.0, 1.0), randf_range(-1.0, 1.0)) * 0.2)
+	# Tumble about ONE axis - your right, so it turns end over end along the arc
+	# it's already travelling. The old version torqued all three axes at random,
+	# and a long item has so little inertia about its short axes that it just
+	# whirled. A little randomness on top keeps two throws from looking identical.
+	pickup.apply_torque_impulse(global_transform.basis.x
+		* GameConfig.TOOL_THROW_SPIN * randf_range(0.75, 1.25))
 	return pickup
 
 func _restore_pickup_collision(pickup: Node) -> void:
@@ -411,6 +445,16 @@ func _restore_pickup_collision(pickup: Node) -> void:
 func _process(delta: float) -> void:
 	_update_swing(delta)
 	_update_lantern(delta)
+	_update_deploy(delta)
+
+## Eases a continuous tool between shouldered and levelled-at-the-grass. Safe to
+## share SwingPivot with the swing animation: a continuous tool never swings, so
+## the two never drive this rotation at the same time.
+func _update_deploy(delta: float) -> void:
+	if held_tool == null or not held_tool.continuous:
+		return
+	deploy_amount = move_toward(deploy_amount, 1.0 if _powered_running else 0.0, delta * DEPLOY_SPEED)
+	swing_pivot.rotation_degrees.x = held_tool.deploy_angle_deg * deploy_amount
 
 func start_swing() -> void:
 	# A click during a swing is remembered rather than thrown away, and fires the
@@ -423,12 +467,37 @@ func start_swing() -> void:
 	swing_timer = 0.0
 	has_cut_this_swing = false
 
+## Runs a powered cutting tool while its trigger is held: burns fuel, and bites
+## at a fixed rate out at the end of its reach.
+func _run_powered_tool(delta: float, trigger_held: bool) -> void:
+	_powered_running = trigger_held and held_fuel > 0.0
+	if not _powered_running:
+		_cut_accum = 0.0
+		return
+	held_fuel = maxf(0.0, held_fuel - delta * held_tool.fuel_per_second)
+	# Running low doesn't fail randomly - it bites at half speed, a steady
+	# stutter you can hear coming, so running dry is a decision (push on, or
+	# start walking back) rather than an ambush.
+	var rate := held_tool.cuts_per_second
+	if held_fuel < held_tool.fuel_capacity * GameConfig.TOOL_LOW_FUEL_FRACTION:
+		rate *= 0.5
+	_cut_accum += delta * rate
+	while _cut_accum >= 1.0:
+		_cut_accum -= 1.0
+		_cut_with_tool()
+	tool_fuel_changed.emit(held_fuel, held_tool.fuel_capacity)
+
 ## Does the actual cutting, once per swing, at the point the blade is sweeping
 ## through the grass. A blunt tool reaches less far and can't get under short
 ## grass, so wear is felt as "I clear less per swing" - never as a swing that
 ## randomly failed.
 func _cut_with_tool() -> void:
-	var cut := grass_field.cut_near(global_position,
+	# A long-handled tool bites out ahead of you rather than around you, which is
+	# what lets you clear ground before walking into it.
+	var at := global_position
+	if held_tool.cut_offset > 0.0:
+		at += -global_transform.basis.z * held_tool.cut_offset
+	var cut := grass_field.cut_near(at,
 		held_tool.cut_radius * lerpf(1.0, GameConfig.TOOL_WORN_RADIUS_FACTOR, held_wear),
 		lerpf(0.0, GameConfig.TOOL_WORN_MIN_GROWTH, held_wear))
 	_wear_tool(cut)

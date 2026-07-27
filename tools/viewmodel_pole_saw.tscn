@@ -1,0 +1,8 @@
+[gd_scene format=3 uid="uid://efukp1ihkn8e"]
+
+[ext_resource type="PackedScene" uid="uid://d3mvhsbwbrfcm" path="res://assets/models/pole_saw.glb" id="1_esn8m"]
+
+[node name="ViewModelPoleSaw" type="Node3D" unique_id=1913417641]
+
+[node name="Root Scene" parent="." unique_id=1838946162 instance=ExtResource("1_esn8m")]
+transform = Transform3D(0.13054071, 0.047512975, 0.7878462, 0.74033326, 0.26945928, -0.13891855, -0.27361614, 0.7517541, -3.443785e-08, 0.6, 0.6, -0.6)

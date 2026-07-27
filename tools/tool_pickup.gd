@@ -9,10 +9,11 @@ class_name ToolPickup
 
 @export var tool_data: ToolData
 
-## Only meaningful when tool_data is a LanternData: a lantern set down keeps
-## burning where it lies, so its fuel and flame travel with the pickup rather
-## than resetting every time it changes hands.
-@export var lantern_fuel: float = 0.0
+## Fuel left in this particular item - a lantern's oil or a saw's petrol. Like
+## wear, it belongs to the item and not to the shared ToolData, so an item you
+## put down still has what was in it when you come back.
+@export var fuel: float = 0.0
+## Lantern only: a lantern set down keeps burning where it lies.
 @export var lantern_lit: bool = false
 
 ## How blunt this particular tool is, 0..1. Condition belongs to the item, not to
@@ -51,7 +52,7 @@ func _light_up() -> void:
 	light.light_energy = data.held_energy
 	light.omni_range = data.held_range
 	light.position = Vector3(0, 0.25, 0)
-	light.visible = lantern_lit and lantern_fuel > 0.0
+	light.visible = lantern_lit and fuel > 0.0
 	add_child(light)
 
 func _lift_collisions_from(node: Node) -> int:

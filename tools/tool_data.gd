@@ -26,6 +26,34 @@ class_name ToolData
 ## tool, so per-item condition lives on whoever is holding it (see the player's
 ## held_wear and ToolPickup.tool_wear), exactly as lantern fuel does.
 @export var wear_per_grass: float = 0.0005
+
+## --- Powered tools ---
+## A full tank, in seconds of running. 0 means this tool has no engine: it's
+## hand-powered, dulls with use, and never runs out. Anything above 0 flips the
+## tool to the other half of the rule - full power to the last drop, then it
+## simply stops. Like wear, the actual fuel level is per-item and lives on the
+## holder, not on this shared resource.
+@export var fuel_capacity: float = 0.0
+## Fuel burned per second while running. Kept separate from the tank size so a
+## thirsty machine (the mower) and a frugal one can share a tank of the same
+## fuel: running time is capacity / fuel_per_second.
+@export var fuel_per_second: float = 1.0
+## Cuts while the trigger is held instead of on a swing, so it eats whatever its
+## head is touching rather than landing one blow at a time.
+@export var continuous: bool = false
+## How far in front of the player the cut lands. 0 cuts around the player (a
+## swung blade); a long-handled tool reaches out ahead, which is the whole point
+## of it - you clear ground before stepping into it.
+@export var cut_offset: float = 0.0
+## How many times a second a continuous tool bites. Cutting every frame would
+## scan the whole field 60x a second for no visible gain.
+@export var cuts_per_second: float = 10.0
+## Pitch (degrees about X) the tool swings down to while running. At rest it sits
+## in whatever pose its view model scene defines - shouldered, like every other
+## tool - and only levels out at the grass when you pull the trigger, so idle and
+## working read differently at a glance. Negative flips which way it tips.
+@export var deploy_angle_deg: float = 0.0
+
 ## The posed first-person model shown in hand for this tool. Instanced under the
 ## player's SwingPivot when the tool becomes the held one. Leave empty for no
 ## view model (nothing shown).

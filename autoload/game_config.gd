@@ -36,6 +36,13 @@ const TOOL_WORN_RADIUS_FACTOR: float = 0.55   # reach at full wear, vs sharp
 const TOOL_WORN_MIN_GROWTH: float = 0.55      # at full wear, only grass at least
 											  # this grown can be caught at all -
 											  # a blunt blade can't bite short grass
+# Below this fraction of a full tank an engine starts to stutter, so running dry
+# is something you can see coming and decide about, not an ambush.
+const TOOL_LOW_FUEL_FRACTION: float = 0.15
+# End-over-end tumble given to a thrown tool. Very sensitive: a long item has
+# little inertia about its short axes, so small changes here read as a big
+# difference between "turns over once" and "whirls like a propeller".
+const TOOL_THROW_SPIN: float = 0.06
 
 #GRASS THINGS
 const HAND_CUT_RADIUS: float = 1.0

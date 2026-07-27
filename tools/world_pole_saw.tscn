@@ -1,0 +1,15 @@
+[gd_scene format=3 uid="uid://bpnvs0c6nah6u"]
+
+[ext_resource type="PackedScene" uid="uid://d3mvhsbwbrfcm" path="res://assets/models/pole_saw.glb" id="1_r0lo6"]
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_3e8q6"]
+size = Vector3(0.15, 3, 0.145)
+
+[node name="WorldPoleSaw" type="Node3D" unique_id=1403308758]
+
+[node name="Root Scene" parent="." unique_id=1838946162 instance=ExtResource("1_r0lo6")]
+transform = Transform3D(-3.4969112e-08, 0, 0.8, 0, 0.8, 0, -0.8, 0, -3.4969112e-08, 0, 0.05, -0.5)
+
+[node name="a" type="CollisionShape3D" parent="." unique_id=764284454]
+transform = Transform3D(0.8, 0, 0, 0, -3.4969112e-08, -0.8, 0, 0.8, -3.4969112e-08, 0, 0.05, -0.3002993)
+shape = SubResource("BoxShape3D_3e8q6")

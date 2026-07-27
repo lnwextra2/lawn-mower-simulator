@@ -1,10 +1,19 @@
 [gd_resource type="Resource" script_class="ToolData" format=3 uid="uid://b0wxx3k06huub"]
 
 [ext_resource type="Script" uid="uid://dtc13bsu3m22g" path="res://tools/tool_data.gd" id="1_uo16k"]
+[ext_resource type="PackedScene" uid="uid://efukp1ihkn8e" path="res://tools/viewmodel_pole_saw.tscn" id="2_uuyid"]
+[ext_resource type="PackedScene" uid="uid://bpnvs0c6nah6u" path="res://tools/world_pole_saw.tscn" id="3_3w0c1"]
 
 [resource]
 script = ExtResource("1_uo16k")
-tool_name = "Trimmer"
-cut_radius = 0.8
+tool_name = "Pole Saw"
+cut_radius = 0.7
 two_handed = true
+wear_per_grass = 0.0
+fuel_capacity = 90.0
+continuous = true
+cut_offset = 1.7
+deploy_angle_deg = -75.0
+view_model_scene = ExtResource("2_uuyid")
+world_model_scene = ExtResource("3_3w0c1")
 metadata/_custom_type_script = "uid://dtc13bsu3m22g"

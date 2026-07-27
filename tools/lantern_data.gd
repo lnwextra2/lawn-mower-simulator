@@ -7,8 +7,8 @@ class_name LanternData
 ## which is meaningless here; the player routes a LanternData to the lantern slot
 ## instead of the tool slot, so it is never used to cut.
 
-## Seconds of burn time on a full tank.
-@export var fuel_capacity: float = 240.0
+## Burn time comes from ToolData.fuel_capacity, shared with the powered tools -
+## a lantern and a pole saw both just have a tank that empties.
 
 ## Held in hand: bright, and aimed where you look.
 @export var held_energy: float = 4.0

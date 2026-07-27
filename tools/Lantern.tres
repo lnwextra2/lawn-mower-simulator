@@ -6,5 +6,6 @@
 
 [resource]
 script = ExtResource("1_wx4mc")
+fuel_capacity = 90.0
 view_model_scene = ExtResource("2_x8p2m")
 world_model_scene = ExtResource("3_6ypvs")
