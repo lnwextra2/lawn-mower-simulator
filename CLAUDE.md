@@ -30,10 +30,10 @@ buy upgrades/unlocks → survive the night → repeat.
 - Player can hide in the house, but the door can be broken down — deliberate
   pressure to go out and earn gold to repair it rather than camp until dawn.
 - **No fighting back, ever.** At most, temporarily drive a monster off.
-- Shop: 4 unlockable areas (higher-value grass) · tools (knife→trimmer→
-  scythe→ride-on mower) · tool repair · expensive 1-HP heal · lantern fuel ·
-  light posts (fixed unlockable spots) · upgrades (sale bonus, move speed,
-  cart capacity, soil/regrowth speed, faster cart auto-collect).
+- Shop: 4 unlockable areas (higher-value grass) · tools (sickle→pole saw→
+  scythe→ride-on mower) · tool repair · expensive 1-HP heal · lamp oil ·
+  engine fuel · light posts (fixed unlockable spots) · upgrades (sale bonus,
+  move speed, cart capacity, soil/regrowth speed, faster cart auto-collect).
 
 ### Decided 2026-07-27 (was open, now settled — don't reopen without the owner)
 - **No tax system.** The gold sink is *tool repair + lantern fuel* instead:
@@ -58,12 +58,71 @@ buy upgrades/unlocks → survive the night → repeat.
   cart is a further step to buy rather than something the mower obsoletes, and
   both cart upgrades keep their point. The mower is loud and noise draws
   monsters: late game buys speed and money at the cost of danger, rather than
-  buying safety.
-- **Refuelling happens at base.** A fuel tank there, hold-to-fill: fuel flows
-  in while gold drains, and releasing stops it, so "fill as much as you can
+  buying safety. It drinks fuel rather than wearing out — an end-game running
+  cost expressed through a number the player already reads.
+  **Shape is still undecided and it is NOT being built yet.** A bare tractor
+  can't cut anything (it's wheels and a body), so the leading idea is a train:
+  tractor tows the cutting implement, which tows the cart — visible progress
+  as you buy each piece, and it explains why deep grass jams it. Also unsolved:
+  every tractor/mower model found so far is CC-BY, while the rest of the
+  project's assets are CC0.
+- **Refuelling happens at base, and is instant.** Hold-to-fill: fuel flows in
+  while gold drains, and releasing stops it, so "fill as much as you can
   afford" is the player's call, not a calculation. Forcing the trip home
   keeps the walk back at night meaningful. A portable can is a later,
-  expensive shop upgrade — convenience earned, not assumed.
+  expensive shop upgrade — convenience earned, not assumed, and it costs
+  carrying room, so fuel competes with the grass you came to fetch.
+  Deliberately *not* routed through the repair box: refuelling and repairing
+  have opposite natural timescales, and making a dry engine cost half a day
+  would punish it far out of proportion.
+- **Two fuels, not one.** Lamp oil for the lantern, engine fuel for motors.
+  They aren't interchangeable in reality and shouldn't be here; sharing one
+  tank would be simpler but buys no decision worth the loss of flavour.
+
+#### Powered vs hand tools — one rule for the whole tool line
+- **Hand tools dull; powered tools run dry.** A hand tool (sickle, scythe)
+  wears gradually and is always usable. A powered tool (pole saw, mower) never
+  dulls, runs at full power to the last drop, and then simply stops. Two
+  categories, so the player learns the rule once instead of memorising each
+  item. Giving a powered tool wear *as well* was considered and rejected: it
+  needed a compensating buff, which is the tell that a system is adding
+  complexity without adding value.
+- **Nothing ever leaves the player stuck.** The sickle can't be dropped, so a
+  dead engine means falling back to slow manual work, never being unable to
+  play. A dry mower can still be pushed at normal speed, or left where it
+  died and refuelled on the spot with the portable can.
+- **Engines sputter before they die.** Low fuel stutters the sound and the
+  cut. Failing without warning is the same "annoying, not scary" trap as a
+  random chance to fail; a warned failure turns into a real decision — push
+  on, or start walking back now.
+
+#### The pole saw (mid-game tool, replaces the prototype's trimmer)
+- Long-handled powered saw. **Cuts continuously** — no swinging, it eats
+  whatever its head touches — and its cut lands **out at the end of the pole,
+  not around the player**, with a small radius.
+- The point of it is **reach**: clear ahead of yourself without stepping into
+  tall grass, which is exactly where the game's blind spots are. That's a
+  different axis from the scythe's wide arc.
+- It is **loud** (draws monsters) and drinks engine fuel — an early taste of
+  the trade the mower demands later.
+
+#### The repair box (the gold sink's front end)
+- One big drop-in box at base: throw tools in, a button shows the price, press
+  it and wait a countdown. Items come back serviced.
+- **Several items at once, with a batch discount** on the total time. The real
+  cost is being without all of them at once, so "how much do I dare send?" is
+  the decision — not an artificial one-at-a-time rule.
+- **Time scales with how worn the item is**, over a minimum handling time. A
+  flat time would make it correct to run everything into the ground before
+  servicing, i.e. to play permanently with blunt tools — the worst-feeling
+  state.
+- **No jumping the queue**: nothing else goes in until the current batch is
+  done. And the box must *signal* when it's finished, or players will walk
+  past it for days.
+- The wait is meant to be long — long enough that you leave and work rather
+  than stand there.
+- This is also what makes paying to sharpen make sense: you're buying a
+  service, not renting your own whetstone.
 - **Grass regrowth is real-time and phase-independent.** A blade grows 0→100%
   over GRASS_REGROW_DAYS in-game days, each blade at a slightly different
   rate so the field fills in patchily rather than stepping in lockstep (the
