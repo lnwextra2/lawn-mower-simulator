@@ -31,14 +31,45 @@ buy upgrades/unlocks → survive the night → repeat.
   pressure to go out and earn gold to repair it rather than camp until dawn.
 - **No fighting back, ever.** At most, temporarily drive a monster off.
 - Shop: 4 unlockable areas (higher-value grass) · tools (knife→trimmer→
-  ride-on mower→scythe) · expensive 1-HP heal · lantern fuel · light posts
-  (fixed unlockable spots) · upgrades (sale bonus, move speed, cart capacity,
-  soil/regrowth speed, faster cart auto-collect).
+  scythe→ride-on mower) · tool repair · expensive 1-HP heal · lantern fuel ·
+  light posts (fixed unlockable spots) · upgrades (sale bonus, move speed,
+  cart capacity, soil/regrowth speed, faster cart auto-collect).
+
+### Decided 2026-07-27 (was open, now settled — don't reopen without the owner)
+- **No tax system.** The gold sink is *tool repair + lantern fuel* instead:
+  both scale with how much you actually play, and unlike a tax they're felt
+  in the moment rather than deducted off-screen.
+- **Tools dull, they never break.** Wear reduces cutting reach and raises the
+  minimum grass height a tool can catch — a blunt blade can't bite short
+  grass. Deliberately not a random "chance to fail": randomness in the action
+  the player performs most reads as the game cheating. Never becomes
+  unusable, so a worn tool is a decision (repair, or work around it) and
+  never a dead stop in the field at night.
+- **Tools have domains, split by grass height.** The scythe clears anything,
+  tall growth included; the ride-on mower is fast and wide but can't drive
+  into deep grass. So the mower comes *after* the scythe (order changed) and
+  never obsoletes it: scythe knocks wild ground down, the mower then keeps
+  that ground cropped, and ground left to regrow too long needs the scythe
+  again.
+- **The mower is the end-game rig.** It cuts *and* collects, and tows the
+  cart (which stays meaningful as its capacity — the prototype pointedly gave
+  the mower no cargo to protect the cart; this replaces that). It is loud, and
+  noise draws monsters: late game buys speed and money at the cost of danger,
+  rather than buying safety.
+- **Refuelling happens at base.** A fuel tank there, hold-to-fill: fuel flows
+  in while gold drains, and releasing stops it, so "fill as much as you can
+  afford" is the player's call, not a calculation. Forcing the trip home
+  keeps the walk back at night meaningful. A portable can is a later,
+  expensive shop upgrade — convenience earned, not assumed.
+- **Grass regrowth is real-time and phase-independent.** A blade grows 0→100%
+  over GRASS_REGROW_DAYS in-game days, each blade at a slightly different
+  rate so the field fills in patchily rather than stepping in lockstep (the
+  prototype grew every blade together every 4 in-game hours). Grass is
+  *measured, not counted*: cutting a half-grown blade yields half as much.
+
 - **Open questions — do not invent answers, raise them:** win condition
-  (leading idea: pay off a debt for freedom, not finalized), tax system
-  specifics, which monsters + their mechanics, how grass regrowth interacts
-  with day/night (the prototype used a flat timer, phase-independent — a
-  placeholder, not a decision).
+  (leading idea: pay off a debt for freedom, not finalized), which monsters +
+  their mechanics.
 
 ## Godot project conventions (establish these early, keep them consistent)
 This is a from-scratch project, so there's no "current architecture" yet —
