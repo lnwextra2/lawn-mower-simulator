@@ -1,0 +1,26 @@
+[gd_scene format=3 uid="uid://nl38p2c72r4"]
+
+[ext_resource type="Script" uid="uid://cbo65qjuoiy1g" path="res://world/fuel_station.gd" id="1_t5a3f"]
+
+[sub_resource type="CylinderShape3D" id="CylinderShape3D_5h11f"]
+height = 1.2
+radius = 0.4
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_t5a3f"]
+
+[sub_resource type="CylinderMesh" id="CylinderMesh_bx8n8"]
+material = SubResource("StandardMaterial3D_t5a3f")
+top_radius = 0.4
+bottom_radius = 0.4
+height = 1.2
+
+[node name="FuelStation" type="StaticBody3D" unique_id=2001302714]
+script = ExtResource("1_t5a3f")
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="." unique_id=1724807348]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.6, 0)
+shape = SubResource("CylinderShape3D_5h11f")
+
+[node name="MeshInstance3D" type="MeshInstance3D" parent="." unique_id=1949032170]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.6, 0)
+mesh = SubResource("CylinderMesh_bx8n8")

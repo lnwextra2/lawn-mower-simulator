@@ -42,6 +42,9 @@ func _on_look_target_changed(target: Node3D) -> void:
 	elif target.is_in_group("tool_pickup"):
 		interact_prompt.text = "[E] เก็บ %s" % target.tool_data.tool_name
 		interact_prompt.visible = true
+	elif target.is_in_group("fuel_station"):
+		interact_prompt.text = "[กด E ค้าง] เติม%s" % target.label()
+		interact_prompt.visible = true
 	else:
 		interact_prompt.text = "[E] โต้ตอบ"
 		interact_prompt.visible = true

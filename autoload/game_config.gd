@@ -43,6 +43,10 @@ const TOOL_LOW_FUEL_FRACTION: float = 0.15
 # little inertia about its short axes, so small changes here read as a big
 # difference between "turns over once" and "whirls like a propeller".
 const TOOL_THROW_SPIN: float = 0.06
+# Refuelling: fuel flows while you hold the key, and gold drains with it, so the
+# player decides how much to afford instead of the game calculating it.
+const FUEL_FILL_RATE: float = 25.0        # fuel units per second
+const FUEL_PRICE_PER_UNIT: float = 0.5    # gold per fuel unit
 
 #GRASS THINGS
 const HAND_CUT_RADIUS: float = 1.0

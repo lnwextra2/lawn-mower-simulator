@@ -29,6 +29,7 @@ var knife_wear: float = 0.0
 ## it - they dull instead. Per-item, same as wear.
 var held_fuel: float = 0.0
 var _cut_accum: float = 0.0   # paces a continuous tool's bites
+var _fuel_owed: float = 0.0   # part-of-a-coin fuel cost, billed once it's whole
 ## How far a continuous tool has swung down from shouldered (0) to working (1).
 ## Eased rather than snapped, so raising and lowering the saw reads as a motion.
 var deploy_amount: float = 0.0
@@ -202,7 +203,14 @@ func _physics_process(delta: float) -> void:
 			swing_buffered = false   # arms are full now; don't swing once they're free
 			_update_carry_model()
 	
-	if Input.is_action_just_pressed("interact"):
+	# A fuel tank is filled by HOLDING E: fuel flows and gold drains for as long as
+	# you hold it, so "as much as I can afford" is a judgement you make with your
+	# finger, not a sum the game does for you. It takes the key outright while
+	# you're looking at one, so a tap can't also sell your grass.
+	if current_target and current_target.is_in_group("fuel_station"):
+		if Input.is_action_pressed("interact"):
+			_refuel_from(current_target, delta)
+	elif Input.is_action_just_pressed("interact"):
 		# E is context-sensitive: pick up a looked-at tool if hands are free
 		# (holding only the knife); otherwise fall back to selling grass.
 		if current_target and current_target.is_in_group("tool_pickup") and _can_pick_up(current_target):
@@ -267,6 +275,39 @@ func _update_carry_model() -> void:
 	view_model.visible = carried_grass <= 0.0
 	_rebuild_lantern_model()
 	_refresh_lantern()
+
+## Pours fuel into whatever this station serves, charging as it goes. Stops on
+## its own when the tank is full or the money runs out.
+func _refuel_from(station: Node, delta: float) -> void:
+	# Cost accrues in fractions of a coin, and is only charged once a whole coin
+	# is owed - otherwise a continuous flow could never bill an integer currency.
+	var space := 0.0
+	if station.kind == FuelStation.Kind.LAMP_OIL:
+		if lantern == null:
+			return
+		space = lantern.fuel_capacity - lantern_fuel
+	else:
+		if held_tool.fuel_capacity <= 0.0:
+			return   # nothing in hand that burns this
+		space = held_tool.fuel_capacity - held_fuel
+	if space <= 0.0:
+		return
+
+	var poured: float = minf(GameConfig.FUEL_FILL_RATE * delta, space)
+	_fuel_owed += poured * GameConfig.FUEL_PRICE_PER_UNIT
+	var coins := int(_fuel_owed)
+	if coins > 0:
+		if not Economy.spend(coins):
+			_fuel_owed = 0.0
+			return   # out of money: the flow simply stops
+		_fuel_owed -= coins
+
+	if station.kind == FuelStation.Kind.LAMP_OIL:
+		lantern_fuel += poured
+		_refresh_lantern()
+	else:
+		held_fuel += poured
+		tool_fuel_changed.emit(held_fuel, held_tool.fuel_capacity)
 
 func _try_sell() -> void:
 	var flat_player := Vector2(global_position.x, global_position.z)
