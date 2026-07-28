@@ -17,11 +17,11 @@
 [ext_resource type="PackedScene" uid="uid://cvfs65iaql7xh" path="res://world/display_cart.tscn" id="15_sp42q"]
 
 [sub_resource type="BoxShape3D" id="BoxShape3D_5h11f"]
-size = Vector3(50, 1, 50)
+size = Vector3(160, 1, 160)
 
 [sub_resource type="BoxMesh" id="BoxMesh_5h11f"]
 material = ExtResource("1_kfa7i")
-size = Vector3(50, 1, 50)
+size = Vector3(160, 1, 160)
 
 [sub_resource type="SphereShape3D" id="SphereShape3D_5h11f"]
 
@@ -99,6 +99,21 @@ environment = SubResource("Environment_5h11f")
 script = ExtResource("4_x27he")
 
 [node name="GrassField" parent="." unique_id=825723574 instance=ExtResource("3_434qw")]
+
+[node name="GrassField_West" parent="." unique_id=825723575 instance=ExtResource("3_434qw")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -52, 0, 0)
+field_size = 40.0
+blade_count = 4500
+
+[node name="GrassField_East" parent="." unique_id=825723576 instance=ExtResource("3_434qw")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 52, 0, 0)
+field_size = 40.0
+blade_count = 4500
+
+[node name="GrassField_North" parent="." unique_id=825723577 instance=ExtResource("3_434qw")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, -52)
+field_size = 40.0
+blade_count = 4500
 
 [node name="DropOff" type="StaticBody3D" parent="." unique_id=2142596691 groups=["drop_off"]]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 20, 0.05, 10)
