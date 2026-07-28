@@ -1,0 +1,8 @@
+[gd_scene load_steps=2 format=3]
+
+[ext_resource type="PackedScene" uid="uid://x0q3td0hihbj" path="res://assets/models/nature/plant_big.glb" id="1_glb"]
+
+[node name="PlantBig" instance=ExtResource("1_glb")]
+
+[node name="Plant_1_Big" parent="RootNode" index="0"]
+cast_shadow = 0

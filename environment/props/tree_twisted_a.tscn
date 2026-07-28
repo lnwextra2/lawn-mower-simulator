@@ -1,0 +1,19 @@
+[gd_scene format=3 uid="uid://bqqp15dihsnib"]
+
+[ext_resource type="PackedScene" uid="uid://dv2p071ercxxc" path="res://assets/models/nature/tree_twisted_a.glb" id="1_glb"]
+
+[sub_resource type="CylinderShape3D" id="CylinderShape3D_trunk"]
+height = 8.817305
+radius = 0.91845703
+
+[node name="TreeTwistedA" unique_id=1061597902 instance=ExtResource("1_glb")]
+
+[node name="TwistedTree_3" parent="RootNode" parent_id_path=PackedInt32Array(371058604) index="0" unique_id=1875588460]
+cast_shadow = 0
+
+[node name="Trunk" type="StaticBody3D" parent="." index="1" unique_id=2089122106]
+collision_mask = 0
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Trunk" index="0" unique_id=1769355799]
+transform = Transform3D(1, 0, 0, 0, 0.9866411, 0.16290884, 0, -0.16290884, 0.9866411, 0.010470271, 3.5936244, -0.5356591)
+shape = SubResource("CylinderShape3D_trunk")
