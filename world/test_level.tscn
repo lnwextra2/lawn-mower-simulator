@@ -15,6 +15,7 @@
 [ext_resource type="PackedScene" uid="uid://c35e460tw5qil" path="res://world/shop_stand.tscn" id="12_q2g7m"]
 [ext_resource type="PackedScene" uid="uid://bd0d34j2nja7w" path="res://world/cart.tscn" id="14_gi17s"]
 [ext_resource type="PackedScene" uid="uid://cvfs65iaql7xh" path="res://world/display_cart.tscn" id="15_sp42q"]
+[ext_resource type="Script" uid="uid://cr2qm8ya8hwsy" path="res://world/prop_scatter.gd" id="16_prop"]
 
 [sub_resource type="BoxShape3D" id="BoxShape3D_5h11f"]
 size = Vector3(160, 1, 160)
@@ -114,6 +115,9 @@ blade_count = 4500
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, -52)
 field_size = 40.0
 blade_count = 4500
+
+[node name="PropScatter" type="Node3D" parent="." unique_id=1610900001]
+script = ExtResource("16_prop")
 
 [node name="DropOff" type="StaticBody3D" parent="." unique_id=2142596691 groups=["drop_off"]]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 20, 0.05, 10)
