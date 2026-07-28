@@ -204,6 +204,25 @@ not retrofit later:
    commit log — same spirit (what changed, why, what was verified), just
    living in `git log` instead of a comment block. Don't let commit messages
    undersell the actual diff (see rule 1).
+7. **The owner tunes feel; you build the machinery. Work in small,
+   testable steps — do NOT batch.** This is how every good session here has
+   gone, and skipping it is what makes a session feel like it ran away from
+   the owner. Concretely:
+   - **One change, then stop and let them run it.** A feature is a
+     back-and-forth of small increments the owner plays after each, not a
+     big drop they review at the end. Land the smallest thing that can be
+     felt, hand it back, adjust from what they say.
+   - **Expose every feel-affecting number as an `@export` or a named `const`,
+     never a buried literal** — swing angles, throw force, follow speed,
+     spawn rate, densities. The owner adjusts these by hand and by eye; that
+     is their half of the work, so make it reachable. When you pick a value,
+     say which knob it is and what nearby values do.
+   - **Anything spatial or visual is theirs to place and judge** — where
+     props go, how a model sits in-hand, whether a layout reads right. You
+     can't see the screen. Give a scatter/placement *tool* with knobs, or a
+     deterministic starting point to drag from; don't hand-place a hundred
+     things blind and call it done.
+   - **Don't fix feel you weren't asked to.** Flag it, offer, wait.
 
 ## Priority when things conflict
 Gameplay → Behavior → Readability → Architecture → Performance → Code
