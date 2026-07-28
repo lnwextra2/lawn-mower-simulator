@@ -9,7 +9,7 @@ signal tool_fuel_changed(fuel: float, capacity: float)
 signal lantern_changed(lantern: LanternData, lit: bool, fuel: float)
 
 const TOOL_PICKUP_SCENE := preload("res://tools/tool_pickup.tscn")
-const GRASS_PILE_SCENE := preload("res://world/grass_pile.tscn")
+const GRASS_PILE_SCENE := preload("res://grass/grass_pile.tscn")
 
 ## The default belt-clipped tool (a rice sickle). Assigned in the Inspector to
 ## knife.tres. It's the "empty hands" state - always held when nothing else is,

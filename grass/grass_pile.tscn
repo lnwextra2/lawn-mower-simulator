@@ -1,6 +1,6 @@
 [gd_scene format=3 uid="uid://bnb8cois23ar4"]
 
-[ext_resource type="Script" uid="uid://ba6wkfj5fweiw" path="res://world/grass_pile.gd" id="1_lxqqe"]
+[ext_resource type="Script" uid="uid://ba6wkfj5fweiw" path="res://grass/grass_pile.gd" id="1_lxqqe"]
 
 [node name="GrassPile" type="Node3D" unique_id=896945215]
 script = ExtResource("1_lxqqe")

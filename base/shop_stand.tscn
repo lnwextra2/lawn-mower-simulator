@@ -1,6 +1,6 @@
 [gd_scene format=3 uid="uid://c35e460tw5qil"]
 
-[ext_resource type="Script" uid="uid://3a8rmr86jlsf" path="res://world/shop_stand.gd" id="1_gwx7g"]
+[ext_resource type="Script" uid="uid://3a8rmr86jlsf" path="res://base/shop_stand.gd" id="1_gwx7g"]
 [ext_resource type="Texture2D" uid="uid://bsk87y1b3qidn" path="res://assets/textures/ground048/Ground048_1K-JPG_NormalGL.jpg" id="2_fgauq"]
 
 [sub_resource type="BoxShape3D" id="BoxShape3D_5h11f"]

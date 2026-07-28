@@ -1,27 +1,26 @@
 [gd_scene format=3 uid="uid://2b1itpc4jfbp"]
 
-[ext_resource type="PackedScene" uid="uid://crk8xw4lu2ftp" path="res://player/player.tscn" id="1_8jkpt"]
-[ext_resource type="Material" uid="uid://c2bnvttbfx38s" path="res://assets/textures/ground048/Ground048_1K-JPG.tres" id="1_kfa7i"]
-[ext_resource type="PackedScene" uid="uid://cyy4qah0fufr0" path="res://ui/hud.tscn" id="2_abcqb"]
-[ext_resource type="PackedScene" uid="uid://cag4mjiiu3xxj" path="res://world/grass_field.tscn" id="3_434qw"]
-[ext_resource type="Script" uid="uid://bm86i0uuq3hvr" path="res://world/lighting_controller.gd" id="4_x27he"]
-[ext_resource type="PackedScene" uid="uid://c32btr4mcljm2" path="res://tools/tool_pickup.tscn" id="6_mmx4b"]
-[ext_resource type="Script" uid="uid://dxnp5sfbjdcre" path="res://world/drop_off.gd" id="6_v3fn7"]
-[ext_resource type="Resource" uid="uid://b0wxx3k06huub" path="res://tools/trimmer.tres" id="7_yi58r"]
-[ext_resource type="Resource" uid="uid://bbeweuac3g0j1" path="res://tools/scythe.tres" id="8_dnf1e"]
-[ext_resource type="Resource" uid="uid://cv3kjy337r4uu" path="res://tools/Lantern.tres" id="9_3e8q6"]
-[ext_resource type="PackedScene" uid="uid://nl38p2c72r4" path="res://world/fuel_station.tscn" id="10_qpyc1"]
-[ext_resource type="PackedScene" uid="uid://dtpkpvd4aeg7d" path="res://world/repair_box.tscn" id="11_nd4t6"]
-[ext_resource type="PackedScene" uid="uid://c35e460tw5qil" path="res://world/shop_stand.tscn" id="12_q2g7m"]
-[ext_resource type="PackedScene" uid="uid://bd0d34j2nja7w" path="res://world/cart.tscn" id="14_gi17s"]
-[ext_resource type="PackedScene" uid="uid://cvfs65iaql7xh" path="res://world/display_cart.tscn" id="15_sp42q"]
-[ext_resource type="Script" uid="uid://cr2qm8ya8hwsy" path="res://world/prop_scatter.gd" id="16_prop"]
+[ext_resource type="Material" uid="uid://c2bnvttbfx38s" path="res://assets/textures/ground048/Ground048_1K-JPG.tres" id="1_0vv12"]
+[ext_resource type="PackedScene" uid="uid://crk8xw4lu2ftp" path="res://player/player.tscn" id="2_o5yuq"]
+[ext_resource type="PackedScene" uid="uid://cyy4qah0fufr0" path="res://ui/hud.tscn" id="3_wjuib"]
+[ext_resource type="Script" uid="uid://bm86i0uuq3hvr" path="res://environment/lighting_controller.gd" id="4_xag4j"]
+[ext_resource type="PackedScene" uid="uid://cag4mjiiu3xxj" path="res://grass/grass_field.tscn" id="5_pgbyh"]
+[ext_resource type="Script" uid="uid://dxnp5sfbjdcre" path="res://base/drop_off.gd" id="6_68kkm"]
+[ext_resource type="PackedScene" uid="uid://c32btr4mcljm2" path="res://tools/tool_pickup.tscn" id="7_n4g7x"]
+[ext_resource type="Resource" uid="uid://b0wxx3k06huub" path="res://tools/trimmer.tres" id="8_atrxo"]
+[ext_resource type="Resource" uid="uid://bbeweuac3g0j1" path="res://tools/scythe.tres" id="9_vr6yy"]
+[ext_resource type="Resource" uid="uid://cv3kjy337r4uu" path="res://tools/Lantern.tres" id="10_ra35m"]
+[ext_resource type="PackedScene" uid="uid://nl38p2c72r4" path="res://base/fuel_station.tscn" id="11_x7oem"]
+[ext_resource type="PackedScene" uid="uid://dtpkpvd4aeg7d" path="res://base/repair_box.tscn" id="12_ec2iw"]
+[ext_resource type="PackedScene" uid="uid://c35e460tw5qil" path="res://base/shop_stand.tscn" id="13_ulql8"]
+[ext_resource type="PackedScene" uid="uid://bd0d34j2nja7w" path="res://vehicles/cart.tscn" id="14_3i7yh"]
+[ext_resource type="PackedScene" uid="uid://cvfs65iaql7xh" path="res://base/display_cart.tscn" id="15_5y2bn"]
 
 [sub_resource type="BoxShape3D" id="BoxShape3D_5h11f"]
 size = Vector3(160, 1, 160)
 
 [sub_resource type="BoxMesh" id="BoxMesh_5h11f"]
-material = ExtResource("1_kfa7i")
+material = ExtResource("1_0vv12")
 size = Vector3(160, 1, 160)
 
 [sub_resource type="SphereShape3D" id="SphereShape3D_5h11f"]
@@ -90,38 +89,35 @@ transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 24, 1.4, 2.4)
 mesh = SubResource("BoxMesh_p3nrv")
 surface_material_override/0 = SubResource("StandardMaterial3D_8jkpt")
 
-[node name="Player" parent="." unique_id=799154422 instance=ExtResource("1_8jkpt")]
+[node name="Player" parent="." unique_id=799154422 instance=ExtResource("2_o5yuq")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 2, 0)
 
-[node name="HUD" parent="." unique_id=1194393735 instance=ExtResource("2_abcqb")]
+[node name="HUD" parent="." unique_id=1194393735 instance=ExtResource("3_wjuib")]
 
 [node name="WorldEnvironment" type="WorldEnvironment" parent="." unique_id=695950947]
 environment = SubResource("Environment_5h11f")
-script = ExtResource("4_x27he")
+script = ExtResource("4_xag4j")
 
-[node name="GrassField" parent="." unique_id=825723574 instance=ExtResource("3_434qw")]
+[node name="GrassField" parent="." unique_id=825723574 instance=ExtResource("5_pgbyh")]
 
-[node name="GrassField_West" parent="." unique_id=825723575 instance=ExtResource("3_434qw")]
+[node name="GrassField_West" parent="." unique_id=825723575 instance=ExtResource("5_pgbyh")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -52, 0, 0)
 field_size = 40.0
 blade_count = 4500
 
-[node name="GrassField_East" parent="." unique_id=825723576 instance=ExtResource("3_434qw")]
+[node name="GrassField_East" parent="." unique_id=825723576 instance=ExtResource("5_pgbyh")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 52, 0, 0)
 field_size = 40.0
 blade_count = 4500
 
-[node name="GrassField_North" parent="." unique_id=825723577 instance=ExtResource("3_434qw")]
+[node name="GrassField_North" parent="." unique_id=825723577 instance=ExtResource("5_pgbyh")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, -52)
 field_size = 40.0
 blade_count = 4500
 
-[node name="PropScatter" type="Node3D" parent="." unique_id=1610900001]
-script = ExtResource("16_prop")
-
 [node name="DropOff" type="StaticBody3D" parent="." unique_id=2142596691 groups=["drop_off"]]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 20, 0.05, 10)
-script = ExtResource("6_v3fn7")
+script = ExtResource("6_68kkm")
 
 [node name="MeshInstance3D" type="MeshInstance3D" parent="DropOff" unique_id=1187613514]
 mesh = SubResource("CylinderMesh_kfa7i")
@@ -129,52 +125,64 @@ mesh = SubResource("CylinderMesh_kfa7i")
 [node name="CollisionShape3D" type="CollisionShape3D" parent="DropOff" unique_id=1997864424]
 shape = SubResource("CylinderShape3D_5h11f")
 
-[node name="ToolPickup_PoleSaw" parent="." unique_id=223509862 instance=ExtResource("6_mmx4b")]
+[node name="ToolPickup_PoleSaw" parent="." unique_id=223509862 instance=ExtResource("7_n4g7x")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 3, 0, 3)
-tool_data = ExtResource("7_yi58r")
+tool_data = ExtResource("8_atrxo")
 fuel = 90.0
 
-[node name="ToolPickup_Scythe" parent="." unique_id=1299284099 instance=ExtResource("6_mmx4b")]
+[node name="ToolPickup_Scythe" parent="." unique_id=1299284099 instance=ExtResource("7_n4g7x")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 5, 0, 3)
-tool_data = ExtResource("8_dnf1e")
+tool_data = ExtResource("9_vr6yy")
 
-[node name="ToolPickup_Lantern" parent="." unique_id=81745028 instance=ExtResource("6_mmx4b")]
+[node name="ToolPickup_Lantern" parent="." unique_id=81745028 instance=ExtResource("7_n4g7x")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -2.0221887, 1.7027088, -2.0076036)
-tool_data = ExtResource("9_3e8q6")
+tool_data = ExtResource("10_ra35m")
 fuel = 90.0
 
-[node name="FuelStation_lampOil" parent="." unique_id=2001302714 instance=ExtResource("10_qpyc1")]
+[node name="FuelStation_lampOil" parent="." unique_id=2001302714 instance=ExtResource("11_x7oem")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 20, 0, 15)
 kind = 0
 
-[node name="FuelStation_Engine" parent="." unique_id=1599333905 instance=ExtResource("10_qpyc1")]
+[node name="FuelStation_Engine" parent="." unique_id=1599333905 instance=ExtResource("11_x7oem")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 20, 0, 17)
 
-[node name="RepairBox" parent="." unique_id=1752753685 instance=ExtResource("11_nd4t6")]
+[node name="RepairBox" parent="." unique_id=1752753685 instance=ExtResource("12_ec2iw")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 17, 0, 20)
 
 [node name="ShopCounter" type="Node3D" parent="." unique_id=1227730286 groups=["shop_collect"]]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 22, 0, -6)
 
-[node name="ShopStand1" parent="." unique_id=58590521 instance=ExtResource("12_q2g7m")]
+[node name="ShopStand1" parent="." unique_id=58590521 instance=ExtResource("13_ulql8")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 22, 0, 0)
-item = ExtResource("9_3e8q6")
+item = ExtResource("10_ra35m")
 
-[node name="ShopStand2" parent="." unique_id=1477591519 instance=ExtResource("12_q2g7m")]
+[node name="ShopStand2" parent="." unique_id=1477591519 instance=ExtResource("13_ulql8")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 22, 0, 3)
-item = ExtResource("8_dnf1e")
+item = ExtResource("9_vr6yy")
 
-[node name="ShopStand3" parent="." unique_id=420269588 instance=ExtResource("12_q2g7m")]
+[node name="ShopStand3" parent="." unique_id=420269588 instance=ExtResource("13_ulql8")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 22, 0, 6)
-item = ExtResource("7_yi58r")
+item = ExtResource("8_atrxo")
 unique = true
 
-[node name="Cart" parent="." unique_id=1380027441 instance=ExtResource("14_gi17s")]
+[node name="Cart" parent="." unique_id=1380027441 instance=ExtResource("14_3i7yh")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 22, 0, -9)
 
-[node name="ShopStand" parent="." unique_id=1064033044 instance=ExtResource("12_q2g7m")]
+[node name="ShopStand" parent="." unique_id=1064033044 instance=ExtResource("13_ulql8")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 22, 0, -3)
-product_scene = ExtResource("14_gi17s")
-display_scene = ExtResource("15_sp42q")
+product_scene = ExtResource("14_3i7yh")
+display_scene = ExtResource("15_5y2bn")
 product_name = "Cart"
 price = 10
+
+[node name="CSGCombiner3D" type="CSGCombiner3D" parent="." unique_id=1888042281]
+use_collision = true
+
+[node name="CSGBox3D" type="CSGBox3D" parent="CSGCombiner3D" unique_id=1177509701]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 3.3017502, 0.628479, -7.2770853)
+size = Vector3(3.885254, 2.256958, 3.635254)
+
+[node name="CSGCylinder3D" type="CSGCylinder3D" parent="CSGCombiner3D" unique_id=1266777421]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 1.6552979, -0.040039063, -5.663051)
+radius = 1.9726563
+height = 1.9199219

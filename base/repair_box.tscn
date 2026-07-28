@@ -1,6 +1,6 @@
 [gd_scene format=3 uid="uid://dtpkpvd4aeg7d"]
 
-[ext_resource type="Script" uid="uid://c6458nh8halc7" path="res://world/repair_box.gd" id="1_antgj"]
+[ext_resource type="Script" uid="uid://c6458nh8halc7" path="res://base/repair_box.gd" id="1_antgj"]
 [ext_resource type="Texture2D" uid="uid://i8flbtpuvrtr" path="res://assets/textures/ground048/Ground048_1K-JPG_Roughness.jpg" id="2_l8am2"]
 [ext_resource type="Texture2D" uid="uid://cdwf1a5k2l7o6" path="res://assets/textures/ground048/Ground048_1K-JPG_AmbientOcclusion.jpg" id="3_n8kfg"]
 
