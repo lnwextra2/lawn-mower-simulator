@@ -1,6 +1,6 @@
 [gd_scene format=3 uid="uid://djs7ay1x2n4or"]
 
-[ext_resource type="PackedScene" uid="uid://ch3wel8xt6e6f" path="res://assets/models/scythe.glb" id="1_vb4ub"]
+[ext_resource type="PackedScene" uid="uid://ch3wel8xt6e6f" path="res://assets/models/nature/scythe.glb" id="1_vb4ub"]
 
 [sub_resource type="BoxShape3D" id="BoxShape3D_5h11f"]
 size = Vector3(0.244, 0.07, 2)

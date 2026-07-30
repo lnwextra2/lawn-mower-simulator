@@ -1,6 +1,6 @@
 [gd_scene format=3 uid="uid://dq30ilqy6iff4"]
 
-[ext_resource type="PackedScene" uid="uid://dah3u7j74bc6i" path="res://assets/models/lantern.glb" id="1_h5dly"]
+[ext_resource type="PackedScene" uid="uid://dah3u7j74bc6i" path="res://assets/models/nature/lantern.glb" id="1_h5dly"]
 
 [node name="ViewModelLantern" type="Node3D" unique_id=156001161]
 

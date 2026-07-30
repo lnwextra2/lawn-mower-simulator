@@ -1,6 +1,6 @@
 [gd_scene format=3 uid="uid://bpnvs0c6nah6u"]
 
-[ext_resource type="PackedScene" uid="uid://d3mvhsbwbrfcm" path="res://assets/models/pole_saw.glb" id="1_r0lo6"]
+[ext_resource type="PackedScene" uid="uid://d3mvhsbwbrfcm" path="res://assets/models/nature/pole_saw.glb" id="1_r0lo6"]
 
 [sub_resource type="BoxShape3D" id="BoxShape3D_3e8q6"]
 size = Vector3(0.15, 3, 0.145)

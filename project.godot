@@ -26,6 +26,12 @@ DayNight="*uid://dpvhtfxj0fkk6"
 window/stretch/mode="canvas_items"
 window/stretch/aspect="expand"
 
+[importer_defaults]
+
+MeshLibrary={
+&"blender/meshes/vertex_colors": 0
+}
+
 [input]
 
 move_forward={

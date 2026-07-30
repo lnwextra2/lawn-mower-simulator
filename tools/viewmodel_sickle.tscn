@@ -1,6 +1,6 @@
 [gd_scene format=3 uid="uid://bne7xt05bokx5"]
 
-[ext_resource type="PackedScene" uid="uid://coq8sx1jey620" path="res://assets/models/sickle.glb" id="1_fv6dp"]
+[ext_resource type="PackedScene" uid="uid://coq8sx1jey620" path="res://assets/models/nature/sickle.glb" id="1_fv6dp"]
 
 [node name="ViewModelSickle" type="Node3D" unique_id=1610838496]
 

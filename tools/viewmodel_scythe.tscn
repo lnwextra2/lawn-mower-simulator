@@ -1,6 +1,6 @@
 [gd_scene format=3 uid="uid://b4664ofh16cq8"]
 
-[ext_resource type="PackedScene" uid="uid://ch3wel8xt6e6f" path="res://assets/models/scythe.glb" id="1_nuncm"]
+[ext_resource type="PackedScene" uid="uid://ch3wel8xt6e6f" path="res://assets/models/nature/scythe.glb" id="1_nuncm"]
 
 [node name="ViewModelScythe" type="Node3D" unique_id=1610838496]
 

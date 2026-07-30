@@ -1,6 +1,6 @@
 [gd_scene format=3 uid="uid://efukp1ihkn8e"]
 
-[ext_resource type="PackedScene" uid="uid://d3mvhsbwbrfcm" path="res://assets/models/pole_saw.glb" id="1_esn8m"]
+[ext_resource type="PackedScene" uid="uid://d3mvhsbwbrfcm" path="res://assets/models/nature/pole_saw.glb" id="1_esn8m"]
 
 [node name="ViewModelPoleSaw" type="Node3D" unique_id=1913417641]
 
