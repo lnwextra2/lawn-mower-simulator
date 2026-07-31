@@ -18,7 +18,7 @@ enum State { UNCUT, CUT, COLLECTED }
 @export var field_size: float = 38.0
 @export var blade_count: int = 5000
 
-const BLADE_MODEL := preload("res://assets/models/tall_grass.glb")
+const BLADE_MODEL := preload("res://assets/models/nature/tall_grass.glb")
 
 const BLADE_BASE_Y := 0.0    ## where a blade meets the ground = the floor's top surface
 							 ## (Floor's 1-tall box sits at y=-0.5, so its top is y=0)
