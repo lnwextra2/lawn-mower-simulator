@@ -21,50 +21,8 @@
 [ext_resource type="Texture2D" uid="uid://dus5bos5d3534" path="res://assets/wooden_house/wooden_house_21.png" id="19_mvwtu"]
 [ext_resource type="Texture2D" uid="uid://bbcbjb13jjjad" path="res://assets/wooden_house/wooden_house_22.png" id="20_k14sr"]
 [ext_resource type="Texture2D" uid="uid://b676gcmkwkw1o" path="res://assets/wooden_house/wooden_house_23.png" id="21_p8xog"]
-
-[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_5vlwe"]
-resource_name = "DOORS"
-cull_mode = 2
-albedo_texture = ExtResource("9_mfc2e")
-roughness = 0.5
-normal_enabled = true
-normal_texture = ExtResource("10_1tup7")
-metadata/_gltf_primary_texture_coord = 0
-
-[sub_resource type="ArrayMesh" id="ArrayMesh_xhry7"]
-_surfaces = [{
-"aabb": AABB(-0.030300796, -13.062608, -0.38528013, 0.029686928, 24.996014, 0.38537073),
-"format": 34896613377,
-"index_count": 36,
-"index_data": PackedByteArray("AAABAAIAAAADAAEAAQADAAQAAAAEAAMAAgABAAUAAQAEAAUAAAAGAAQAAgAGAAAABgAFAAQAAgAFAAcABgAHAAUAAgAHAAYA"),
-"name": "DOORS",
-"primitive": 3,
-"uv_scale": Vector4(0, 0, 0, 0),
-"vertex_count": 8,
-"vertex_data": PackedByteArray("/v8AAP//AAAAAP////8AAP7//////wAAAAAAAP//AAAAAAAAAAAAAAAA//8AAAAA//8AAAAAAAD/////AAAAAA==")
-}]
-blend_shape_mode = 0
-
-[sub_resource type="ArrayMesh" id="ArrayMesh_1v4l0"]
-resource_name = "Sketchfab_Scene_Object_20"
-_surfaces = [{
-"aabb": AABB(-0.030300796, -13.062608, -0.38528013, 0.029686928, 24.996014, 0.38537073),
-"attribute_data": PackedByteArray("7AVfK+wFXyuzAGvVswBr1ewFa9XsBWvVswBfK7MAXyvsBV8r7AVfK7MAa9WzAGvVswBfK7MAXyvsBWvV7AVr1e4AUjfuAFI3HH8+Phx/Pj4cf1I3HH9SN+4APj7uAD4+7gBSN+4AUjccfz4+HH8+Pu4APj7uAD4+HH9SNxx/UjcgAWP/IAFj/y9+jAAvfowAIAGMACABjAAvfmP/L35j/yABY/8gAWP/L36MAC9+jAAvfmP/L35j/yABjAAgAYwA"),
-"format": 34896613431,
-"index_count": 36,
-"index_data": PackedByteArray("AAABAAIAAAADAAEABAAFAAYABAAHAAUACAAJAAoACAALAAkADAANAA4ADAAPAA0AEAARABIAEAATABEAFAAVABYAFAAXABUA"),
-"material": SubResource("StandardMaterial3D_5vlwe"),
-"name": "DOORS",
-"primitive": 3,
-"uv_scale": Vector4(0, 0, 0, 0),
-"vertex_count": 24,
-"vertex_data": PackedByteArray("/v8AAP//AIAAAP////8AgP7//////wCAAAAAAP//AID//wAAAAAAAAAA//8AAAAAAAAAAAAAAAD/////AAAAAP7//////1TVAAD//wAAVNX/////AABU1QAA/////1TV/v8AAP//qioAAAAAAACqKgAAAAD//6oq//8AAAAAqir+////////v///AAAAAP+//v8AAP///7//////AAD/vwAA/////wAAAAAAAAAAAAAAAP//AAAAAAAAAAD//wAA/3////9/////f////3///////3////9/////f////39U1aoqVNWqKlTVqipU1aoqVFVVVVRVVVVUVVVVVFVVVf9/AAD/fwAA/38AAP9/AAD///+/////v////7////+/")
-}]
-blend_shape_mode = 0
-shadow_mesh = SubResource("ArrayMesh_xhry7")
-
-[sub_resource type="BoxShape3D" id="BoxShape3D_25115"]
-size = Vector3(0.029686928, 24.996014, 0.38537073)
+[ext_resource type="Script" uid="uid://djy7om3mv28lo" path="res://base/door.gd" id="22_t4tjm"]
+[ext_resource type="Script" uid="uid://cj6lslfylqruu" path="res://base/door_hitbox.gd" id="23_t4jpg"]
 
 [sub_resource type="StandardMaterial3D" id="StandardMaterial3D_s3pgr"]
 resource_name = "Floor"
@@ -326,6 +284,15 @@ _surfaces = [{
 }]
 blend_shape_mode = 0
 shadow_mesh = SubResource("ArrayMesh_y1kfg")
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_5vlwe"]
+resource_name = "DOORS"
+cull_mode = 2
+albedo_texture = ExtResource("9_mfc2e")
+roughness = 0.5
+normal_enabled = true
+normal_texture = ExtResource("10_1tup7")
+metadata/_gltf_primary_texture_coord = 0
 
 [sub_resource type="ArrayMesh" id="ArrayMesh_y0i1f"]
 _surfaces = [{
@@ -1149,312 +1116,348 @@ shadow_mesh = SubResource("ArrayMesh_bgfq6")
 [sub_resource type="BoxShape3D" id="BoxShape3D_y1eye"]
 size = Vector3(7.8744564, 1.9653902, 35.943947)
 
-[node name="Sketchfab_Scene" type="Node3D" unique_id=154134640]
+[sub_resource type="ArrayMesh" id="ArrayMesh_xhry7"]
+_surfaces = [{
+"aabb": AABB(-0.030300796, -13.062608, -0.38528013, 0.029686928, 24.996014, 0.38537073),
+"format": 34896613377,
+"index_count": 36,
+"index_data": PackedByteArray("AAABAAIAAAADAAEAAQADAAQAAAAEAAMAAgABAAUAAQAEAAUAAAAGAAQAAgAGAAAABgAFAAQAAgAFAAcABgAHAAUAAgAHAAYA"),
+"name": "DOORS",
+"primitive": 3,
+"uv_scale": Vector4(0, 0, 0, 0),
+"vertex_count": 8,
+"vertex_data": PackedByteArray("/v8AAP//AAAAAP////8AAP7//////wAAAAAAAP//AAAAAAAAAAAAAAAA//8AAAAA//8AAAAAAAD/////AAAAAA==")
+}]
+blend_shape_mode = 0
 
-[node name="Sketchfab_model" type="Node3D" parent="." unique_id=397167325]
-transform = Transform3D(1, 0, 0, 0, 2.220446e-16, 1, 0, -1, 2.220446e-16, 0, 0, 0)
+[sub_resource type="ArrayMesh" id="ArrayMesh_1v4l0"]
+resource_name = "Sketchfab_Scene_Object_20"
+_surfaces = [{
+"aabb": AABB(-0.030300796, -13.062608, -0.38528013, 0.029686928, 24.996014, 0.38537073),
+"attribute_data": PackedByteArray("7AVfK+wFXyuzAGvVswBr1ewFa9XsBWvVswBfK7MAXyvsBV8r7AVfK7MAa9WzAGvVswBfK7MAXyvsBWvV7AVr1e4AUjfuAFI3HH8+Phx/Pj4cf1I3HH9SN+4APj7uAD4+7gBSN+4AUjccfz4+HH8+Pu4APj7uAD4+HH9SNxx/UjcgAWP/IAFj/y9+jAAvfowAIAGMACABjAAvfmP/L35j/yABY/8gAWP/L36MAC9+jAAvfmP/L35j/yABjAAgAYwA"),
+"format": 34896613431,
+"index_count": 36,
+"index_data": PackedByteArray("AAABAAIAAAADAAEABAAFAAYABAAHAAUACAAJAAoACAALAAkADAANAA4ADAAPAA0AEAARABIAEAATABEAFAAVABYAFAAXABUA"),
+"material": SubResource("StandardMaterial3D_5vlwe"),
+"name": "DOORS",
+"primitive": 3,
+"uv_scale": Vector4(0, 0, 0, 0),
+"vertex_count": 24,
+"vertex_data": PackedByteArray("/v8AAP//AIAAAP////8AgP7//////wCAAAAAAP//AID//wAAAAAAAAAA//8AAAAAAAAAAAAAAAD/////AAAAAP7//////1TVAAD//wAAVNX/////AABU1QAA/////1TV/v8AAP//qioAAAAAAACqKgAAAAD//6oq//8AAAAAqir+////////v///AAAAAP+//v8AAP///7//////AAD/vwAA/////wAAAAAAAAAAAAAAAP//AAAAAAAAAAD//wAA/3////9/////f////3///////3////9/////f////39U1aoqVNWqKlTVqipU1aoqVFVVVVRVVVVUVVVVVFVVVf9/AAD/fwAA/38AAP9/AAD///+/////v////7////+/")
+}]
+blend_shape_mode = 0
+shadow_mesh = SubResource("ArrayMesh_xhry7")
 
-[node name="root" type="Node3D" parent="Sketchfab_model" unique_id=1198194511]
+[sub_resource type="BoxShape3D" id="BoxShape3D_25115"]
+size = Vector3(0.029686928, 24.996014, 0.38537073)
 
-[node name="GLTF_SceneRootNode" type="Node3D" parent="Sketchfab_model/root" unique_id=603908724]
-transform = Transform3D(1.1, 0, 0, 0, -4.8082526e-08, -1.1, 0, 1.1, -4.8082526e-08, 0, 0, -0.1)
+[node name="root" type="Node3D" unique_id=154134640]
 
-[node name="Door" type="Node3D" parent="Sketchfab_model/root/GLTF_SceneRootNode" unique_id=406820529]
-transform = Transform3D(-0.58422226, 0, -3.0945072, 0, 0.08815648, 0, 2.2031405, 0, -0.82059234, 2.0734997, 1.9047254, 2.649159)
+[node name="GLTF_SceneRootNode" type="Node3D" parent="." unique_id=603908724]
+transform = Transform3D(1.1, 0, 0, 0, 1.1, -4.8082526e-08, 0, 4.8082526e-08, 1.1, 0, -0.1, -2.220446e-17)
 
-[node name="Object_44" type="MeshInstance3D" parent="Sketchfab_model/root/GLTF_SceneRootNode/Door" unique_id=177415411]
-mesh = SubResource("ArrayMesh_1v4l0")
-
-[node name="StaticBody3D" type="StaticBody3D" parent="Sketchfab_model/root/GLTF_SceneRootNode/Door/Object_44" unique_id=1193385418]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.015457332, -0.56460094, -0.19259477)
-
-[node name="CollisionShape3D" type="CollisionShape3D" parent="Sketchfab_model/root/GLTF_SceneRootNode/Door/Object_44/StaticBody3D" unique_id=1932888678]
-shape = SubResource("BoxShape3D_25115")
-
-[node name="Floor and Ceiling_22" type="Node3D" parent="Sketchfab_model/root/GLTF_SceneRootNode" unique_id=1167267247]
+[node name="Floor and Ceiling_22" type="Node3D" parent="GLTF_SceneRootNode" unique_id=1167267247]
 transform = Transform3D(2.279286, 0, 0, 0, 0.08815646, 0, 0, 0, 3.20146, -0.15106171, 0.6650162, -0.3839941)
 
-[node name="Object_46" type="MeshInstance3D" parent="Sketchfab_model/root/GLTF_SceneRootNode/Floor and Ceiling_22" unique_id=200273461]
+[node name="Object_46" type="MeshInstance3D" parent="GLTF_SceneRootNode/Floor and Ceiling_22" unique_id=200273461]
 mesh = SubResource("ArrayMesh_jygon")
 
-[node name="StaticBody3D" type="StaticBody3D" parent="Sketchfab_model/root/GLTF_SceneRootNode/Floor and Ceiling_22/Object_46" unique_id=1862875783]
+[node name="StaticBody3D" type="StaticBody3D" parent="GLTF_SceneRootNode/Floor and Ceiling_22/Object_46" unique_id=1862875783]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.31858218, 11.056211, 2.9802322e-07)
 
-[node name="CollisionShape3D" type="CollisionShape3D" parent="Sketchfab_model/root/GLTF_SceneRootNode/Floor and Ceiling_22/Object_46/StaticBody3D" unique_id=144083329]
+[node name="CollisionShape3D" type="CollisionShape3D" parent="GLTF_SceneRootNode/Floor and Ceiling_22/Object_46/StaticBody3D" unique_id=144083329]
 transform = Transform3D(1, 0, 0, 0, 1.0000001, 0, 0, 0, 1, -0.27550972, -14.076808, -0.024174936)
 shape = SubResource("BoxShape3D_t4tjm")
 
-[node name="CollisionShape3D3" type="CollisionShape3D" parent="Sketchfab_model/root/GLTF_SceneRootNode/Floor and Ceiling_22/Object_46/StaticBody3D" unique_id=1243061697]
+[node name="CollisionShape3D3" type="CollisionShape3D" parent="GLTF_SceneRootNode/Floor and Ceiling_22/Object_46/StaticBody3D" unique_id=1243061697]
 transform = Transform3D(1, 0, 0, 0, 1.0000001, 0, 0, 0, 1.0000004, -0.27550974, 21.931482, -0.024174996)
 shape = SubResource("BoxShape3D_t4tjm")
 
-[node name="CollisionShape3D2" type="CollisionShape3D" parent="Sketchfab_model/root/GLTF_SceneRootNode/Floor and Ceiling_22/Object_46/StaticBody3D" unique_id=1704392224]
+[node name="CollisionShape3D2" type="CollisionShape3D" parent="GLTF_SceneRootNode/Floor and Ceiling_22/Object_46/StaticBody3D" unique_id=1704392224]
 transform = Transform3D(1, 0, 0, 0, 1.0000001, 0, 0, 0, 1, 0.68355054, -18.039001, 0.554)
 shape = SubResource("ConvexPolygonShape3D_t4jpg")
 
-[node name="Wood_23" type="Node3D" parent="Sketchfab_model/root/GLTF_SceneRootNode" unique_id=627996731]
+[node name="Wood_23" type="Node3D" parent="GLTF_SceneRootNode" unique_id=627996731]
 transform = Transform3D(2.279286, 0, 0, 0, 0.08815646, 0, 0, 0, 3.20146, -0.15106171, 0.6650162, -0.3839941)
 
-[node name="Object_48" type="MeshInstance3D" parent="Sketchfab_model/root/GLTF_SceneRootNode/Wood_23" unique_id=485929618]
+[node name="Object_48" type="MeshInstance3D" parent="GLTF_SceneRootNode/Wood_23" unique_id=485929618]
 mesh = SubResource("ArrayMesh_4i7yh")
 
-[node name="Wall Inside_24" type="Node3D" parent="Sketchfab_model/root/GLTF_SceneRootNode" unique_id=710592203]
+[node name="Wall Inside_24" type="Node3D" parent="GLTF_SceneRootNode" unique_id=710592203]
 transform = Transform3D(2.279286, 0, 0, 0, 0.08815646, 0, 0, 0, 3.20146, -0.15106171, 0.6650162, -0.3839941)
 
-[node name="Object_50" type="MeshInstance3D" parent="Sketchfab_model/root/GLTF_SceneRootNode/Wall Inside_24" unique_id=562374523]
+[node name="Object_50" type="MeshInstance3D" parent="GLTF_SceneRootNode/Wall Inside_24" unique_id=562374523]
 transform = Transform3D(1, 0, 0, 0, 1.0000001, 0, 0, 0, 1, 0, 0, 0)
 mesh = SubResource("ArrayMesh_qkgq7")
 
-[node name="StaticBody3D" type="StaticBody3D" parent="Sketchfab_model/root/GLTF_SceneRootNode/Wall Inside_24/Object_50" unique_id=1522287181]
+[node name="StaticBody3D" type="StaticBody3D" parent="GLTF_SceneRootNode/Wall Inside_24/Object_50" unique_id=1522287181]
 
-[node name="CollisionShape3D" type="CollisionShape3D" parent="Sketchfab_model/root/GLTF_SceneRootNode/Wall Inside_24/Object_50/StaticBody3D" unique_id=1866954543]
+[node name="CollisionShape3D" type="CollisionShape3D" parent="GLTF_SceneRootNode/Wall Inside_24/Object_50/StaticBody3D" unique_id=1866954543]
 shape = SubResource("ConcavePolygonShape3D_25115")
 
-[node name="Roof_25" type="Node3D" parent="Sketchfab_model/root/GLTF_SceneRootNode" unique_id=2124962383]
+[node name="Roof_25" type="Node3D" parent="GLTF_SceneRootNode" unique_id=2124962383]
 transform = Transform3D(2.279286, 0, 0, 0, 0.08815646, 0, 0, 0, 3.20146, -0.15106171, 0.6650162, -0.3839941)
 
-[node name="Object_52" type="MeshInstance3D" parent="Sketchfab_model/root/GLTF_SceneRootNode/Roof_25" unique_id=1475074839]
+[node name="Object_52" type="MeshInstance3D" parent="GLTF_SceneRootNode/Roof_25" unique_id=1475074839]
 mesh = SubResource("ArrayMesh_tp7ig")
 
-[node name="WallOutside_26" type="Node3D" parent="Sketchfab_model/root/GLTF_SceneRootNode" unique_id=1631093004]
+[node name="WallOutside_26" type="Node3D" parent="GLTF_SceneRootNode" unique_id=1631093004]
 transform = Transform3D(2.279286, 0, 0, 0, 0.08815646, 0, 0, 0, 3.20146, -0.15106171, 0.6650162, -0.3839941)
 
-[node name="Object_54" type="MeshInstance3D" parent="Sketchfab_model/root/GLTF_SceneRootNode/WallOutside_26" unique_id=1010722151]
+[node name="Object_54" type="MeshInstance3D" parent="GLTF_SceneRootNode/WallOutside_26" unique_id=1010722151]
 mesh = SubResource("ArrayMesh_451fj")
 
-[node name="WindowsRams_27" type="Node3D" parent="Sketchfab_model/root/GLTF_SceneRootNode" unique_id=1608947084]
+[node name="WindowsRams_27" type="Node3D" parent="GLTF_SceneRootNode" unique_id=1608947084]
 transform = Transform3D(2.279286, 0, 0, 0, 0.08815646, 0, 0, 0, 3.20146, -0.15106171, 0.6650162, -0.3839941)
 
-[node name="Object_56" type="MeshInstance3D" parent="Sketchfab_model/root/GLTF_SceneRootNode/WindowsRams_27" unique_id=1841890297]
+[node name="Object_56" type="MeshInstance3D" parent="GLTF_SceneRootNode/WindowsRams_27" unique_id=1841890297]
 mesh = SubResource("ArrayMesh_82nsl")
 
-[node name="Door2_28" type="Node3D" parent="Sketchfab_model/root/GLTF_SceneRootNode" unique_id=849175499]
+[node name="Door2_28" type="Node3D" parent="GLTF_SceneRootNode" unique_id=849175499]
 transform = Transform3D(0.87842727, -0.0813465, 1.2913004e-07, 0, -3.8534407e-09, -3.20146, 2.1032145, 0.03397514, -5.3932407e-08, 3.858, 0.15, -2.684)
 
-[node name="Object_58" type="MeshInstance3D" parent="Sketchfab_model/root/GLTF_SceneRootNode/Door2_28" unique_id=672435970]
+[node name="Object_58" type="MeshInstance3D" parent="GLTF_SceneRootNode/Door2_28" unique_id=672435970]
 mesh = SubResource("ArrayMesh_t1lsf")
 
-[node name="Window2_29" type="Node3D" parent="Sketchfab_model/root/GLTF_SceneRootNode" unique_id=1221833934]
+[node name="Window2_29" type="Node3D" parent="GLTF_SceneRootNode" unique_id=1221833934]
 transform = Transform3D(2.279286, 0, 0, 0, 0.08815646, 0, 0, 0, 3.20146, 2.0507708, 2.2525225, -0.56340504)
 
-[node name="Object_60" type="MeshInstance3D" parent="Sketchfab_model/root/GLTF_SceneRootNode/Window2_29" unique_id=425883712]
+[node name="Object_60" type="MeshInstance3D" parent="GLTF_SceneRootNode/Window2_29" unique_id=425883712]
 mesh = SubResource("ArrayMesh_71im3")
 
-[node name="Window1_30" type="Node3D" parent="Sketchfab_model/root/GLTF_SceneRootNode" unique_id=274505986]
+[node name="Window1_30" type="Node3D" parent="GLTF_SceneRootNode" unique_id=274505986]
 transform = Transform3D(2.279286, 0, 0, 0, 0.08815646, 0, 0, 0, 3.20146, -2.3554463, 2.2525225, -0.56340504)
 
-[node name="Object_62" type="MeshInstance3D" parent="Sketchfab_model/root/GLTF_SceneRootNode/Window1_30" unique_id=51948097]
+[node name="Object_62" type="MeshInstance3D" parent="GLTF_SceneRootNode/Window1_30" unique_id=51948097]
 mesh = SubResource("ArrayMesh_sy2nm")
 
-[node name="Window3_31" type="Node3D" parent="Sketchfab_model/root/GLTF_SceneRootNode" unique_id=2031640302]
+[node name="Window3_31" type="Node3D" parent="GLTF_SceneRootNode" unique_id=2031640302]
 transform = Transform3D(0, 0, 3.20146, 0, 0.08815646, 0, -2.279286, 0, 0, -0.5513625, 2.2525225, -3.5034516)
 
-[node name="Object_64" type="MeshInstance3D" parent="Sketchfab_model/root/GLTF_SceneRootNode/Window3_31" unique_id=1003753692]
+[node name="Object_64" type="MeshInstance3D" parent="GLTF_SceneRootNode/Window3_31" unique_id=1003753692]
 mesh = SubResource("ArrayMesh_jwir0")
 
-[node name="Table" type="Node3D" parent="Sketchfab_model/root/GLTF_SceneRootNode" unique_id=1073379876]
+[node name="Table" type="Node3D" parent="GLTF_SceneRootNode" unique_id=1073379876]
 
-[node name="Table_0" type="Node3D" parent="Sketchfab_model/root/GLTF_SceneRootNode/Table" unique_id=889330572]
+[node name="Table_0" type="Node3D" parent="GLTF_SceneRootNode/Table" unique_id=889330572]
 transform = Transform3D(0.604679, 0, 0, 0, -0.018586392, 0, 0, 0, 0.604679, 0.8685332, 1.7092093, -2.3843327)
 
-[node name="Object_4" type="MeshInstance3D" parent="Sketchfab_model/root/GLTF_SceneRootNode/Table/Table_0" unique_id=1051556089]
+[node name="Object_4" type="MeshInstance3D" parent="GLTF_SceneRootNode/Table/Table_0" unique_id=1051556089]
 mesh = SubResource("ArrayMesh_l3oo5")
 
-[node name="Chair1_1" type="Node3D" parent="Sketchfab_model/root/GLTF_SceneRootNode/Table" unique_id=491317109]
+[node name="Chair1_1" type="Node3D" parent="GLTF_SceneRootNode/Table" unique_id=491317109]
 transform = Transform3D(0.30712876, 0, 0, 0, 0.024569197, 0, 0, 0, 0.25602365, 0.35393935, 1.286235, -2.4848337)
 
-[node name="Object_6" type="MeshInstance3D" parent="Sketchfab_model/root/GLTF_SceneRootNode/Table/Chair1_1" unique_id=1630661384]
+[node name="Object_6" type="MeshInstance3D" parent="GLTF_SceneRootNode/Table/Chair1_1" unique_id=1630661384]
 mesh = SubResource("ArrayMesh_jp6oa")
 
-[node name="Chair2_2" type="Node3D" parent="Sketchfab_model/root/GLTF_SceneRootNode/Table" unique_id=402125596]
+[node name="Chair2_2" type="Node3D" parent="GLTF_SceneRootNode/Table" unique_id=402125596]
 transform = Transform3D(0.30712876, 0, 0, 0, 0.024569197, 0, 0, 0, 0.25602365, 0.35393935, 1.286235, -2.4848337)
 
-[node name="Object_8" type="MeshInstance3D" parent="Sketchfab_model/root/GLTF_SceneRootNode/Table/Chair2_2" unique_id=630810102]
+[node name="Object_8" type="MeshInstance3D" parent="GLTF_SceneRootNode/Table/Chair2_2" unique_id=630810102]
 mesh = SubResource("ArrayMesh_g46uy")
 
-[node name="Chair1_001_3" type="Node3D" parent="Sketchfab_model/root/GLTF_SceneRootNode/Table" unique_id=2072940420]
+[node name="Chair1_001_3" type="Node3D" parent="GLTF_SceneRootNode/Table" unique_id=2072940420]
 transform = Transform3D(0, 0, 0.25602365, 0, 0.024569197, 0, -0.30712876, 0, 0, 1.0190115, 1.286235, -1.8673553)
 
-[node name="Object_10" type="MeshInstance3D" parent="Sketchfab_model/root/GLTF_SceneRootNode/Table/Chair1_001_3" unique_id=1439975531]
+[node name="Object_10" type="MeshInstance3D" parent="GLTF_SceneRootNode/Table/Chair1_001_3" unique_id=1439975531]
 mesh = SubResource("ArrayMesh_lpqgo")
 
-[node name="Chair2_001_4" type="Node3D" parent="Sketchfab_model/root/GLTF_SceneRootNode/Table" unique_id=984282475]
+[node name="Chair2_001_4" type="Node3D" parent="GLTF_SceneRootNode/Table" unique_id=984282475]
 transform = Transform3D(0, 0, 0.25602365, 0, 0.024569197, 0, -0.30712876, 0, 0, 1.0190115, 1.286235, -1.8673553)
 
-[node name="Object_12" type="MeshInstance3D" parent="Sketchfab_model/root/GLTF_SceneRootNode/Table/Chair2_001_4" unique_id=536249537]
+[node name="Object_12" type="MeshInstance3D" parent="GLTF_SceneRootNode/Table/Chair2_001_4" unique_id=536249537]
 mesh = SubResource("ArrayMesh_gg15i")
 
-[node name="StaticBody3D" type="StaticBody3D" parent="Sketchfab_model/root/GLTF_SceneRootNode/Table" unique_id=1787780890]
+[node name="StaticBody3D" type="StaticBody3D" parent="GLTF_SceneRootNode/Table" unique_id=1787780890]
 
-[node name="CollisionShape3D" type="CollisionShape3D" parent="Sketchfab_model/root/GLTF_SceneRootNode/Table/StaticBody3D" unique_id=1563616044]
+[node name="CollisionShape3D" type="CollisionShape3D" parent="GLTF_SceneRootNode/Table/StaticBody3D" unique_id=1563616044]
 transform = Transform3D(1, 0, 0, 0, 1, 7.1054274e-15, 0, -7.1054274e-15, 1, 0.8418194, 1.2471197, -2.3392303)
 shape = SubResource("BoxShape3D_5h11f")
 
-[node name="Fence" type="Node3D" parent="Sketchfab_model/root/GLTF_SceneRootNode" unique_id=517847793]
+[node name="Fence" type="Node3D" parent="GLTF_SceneRootNode" unique_id=517847793]
 
-[node name="Fence_7" type="Node3D" parent="Sketchfab_model/root/GLTF_SceneRootNode/Fence" unique_id=1903196171]
+[node name="Fence_7" type="Node3D" parent="GLTF_SceneRootNode/Fence" unique_id=1903196171]
 transform = Transform3D(0.010907972, 0, 0, 0, 0.13503072, -0.041339036, 0, 1.4028368, 0.0039791083, 6.5960984, 0.7058462, -0.34239864)
 
-[node name="Object_16" type="MeshInstance3D" parent="Sketchfab_model/root/GLTF_SceneRootNode/Fence/Fence_7" unique_id=797084262]
+[node name="Object_16" type="MeshInstance3D" parent="GLTF_SceneRootNode/Fence/Fence_7" unique_id=797084262]
 mesh = SubResource("ArrayMesh_d5isi")
 
-[node name="StaticBody3D" type="StaticBody3D" parent="Sketchfab_model/root/GLTF_SceneRootNode/Fence/Fence_7/Object_16" unique_id=2033701346]
+[node name="StaticBody3D" type="StaticBody3D" parent="GLTF_SceneRootNode/Fence/Fence_7/Object_16" unique_id=2033701346]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 2.9372282, 0.03947836, 0.9299011)
 
-[node name="CollisionShape3D" type="CollisionShape3D" parent="Sketchfab_model/root/GLTF_SceneRootNode/Fence/Fence_7/Object_16/StaticBody3D" unique_id=2133241892]
+[node name="CollisionShape3D" type="CollisionShape3D" parent="GLTF_SceneRootNode/Fence/Fence_7/Object_16/StaticBody3D" unique_id=2133241892]
 shape = SubResource("BoxShape3D_t4jpg")
 
-[node name="Fence_001_8" type="Node3D" parent="Sketchfab_model/root/GLTF_SceneRootNode/Fence" unique_id=564898390]
+[node name="Fence_001_8" type="Node3D" parent="GLTF_SceneRootNode/Fence" unique_id=564898390]
 transform = Transform3D(0.010907972, 0, 0, 0, 0.13503072, -0.041339036, 0, 1.4028368, 0.0039791083, 6.5960984, 0.7058462, -3.1104326)
 
-[node name="Object_18" type="MeshInstance3D" parent="Sketchfab_model/root/GLTF_SceneRootNode/Fence/Fence_001_8" unique_id=439778959]
+[node name="Object_18" type="MeshInstance3D" parent="GLTF_SceneRootNode/Fence/Fence_001_8" unique_id=439778959]
 mesh = SubResource("ArrayMesh_31dbr")
 
-[node name="StaticBody3D" type="StaticBody3D" parent="Sketchfab_model/root/GLTF_SceneRootNode/Fence/Fence_001_8/Object_18" unique_id=1210062167]
+[node name="StaticBody3D" type="StaticBody3D" parent="GLTF_SceneRootNode/Fence/Fence_001_8/Object_18" unique_id=1210062167]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 2.9372282, 0.03947836, 0.9299011)
 
-[node name="CollisionShape3D" type="CollisionShape3D" parent="Sketchfab_model/root/GLTF_SceneRootNode/Fence/Fence_001_8/Object_18/StaticBody3D" unique_id=818432109]
+[node name="CollisionShape3D" type="CollisionShape3D" parent="GLTF_SceneRootNode/Fence/Fence_001_8/Object_18/StaticBody3D" unique_id=818432109]
 shape = SubResource("BoxShape3D_axysa")
 
-[node name="Fence_002_9" type="Node3D" parent="Sketchfab_model/root/GLTF_SceneRootNode/Fence" unique_id=1812427519]
+[node name="Fence_002_9" type="Node3D" parent="GLTF_SceneRootNode/Fence" unique_id=1812427519]
 transform = Transform3D(0.010907972, 0, 0, 0, 0.13503072, -0.041339036, 0, 1.4028368, 0.0039791083, 6.5960984, 0.7058462, -3.1104326)
 
-[node name="Object_20" type="MeshInstance3D" parent="Sketchfab_model/root/GLTF_SceneRootNode/Fence/Fence_002_9" unique_id=658342554]
+[node name="Object_20" type="MeshInstance3D" parent="GLTF_SceneRootNode/Fence/Fence_002_9" unique_id=658342554]
 mesh = SubResource("ArrayMesh_hmbbw")
 
-[node name="StaticBody3D" type="StaticBody3D" parent="Sketchfab_model/root/GLTF_SceneRootNode/Fence/Fence_002_9/Object_20" unique_id=282513094]
+[node name="StaticBody3D" type="StaticBody3D" parent="GLTF_SceneRootNode/Fence/Fence_002_9/Object_20" unique_id=282513094]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 2.9372282, 0.03947836, 0.9299011)
 
-[node name="CollisionShape3D" type="CollisionShape3D" parent="Sketchfab_model/root/GLTF_SceneRootNode/Fence/Fence_002_9/Object_20/StaticBody3D" unique_id=393784423]
+[node name="CollisionShape3D" type="CollisionShape3D" parent="GLTF_SceneRootNode/Fence/Fence_002_9/Object_20/StaticBody3D" unique_id=393784423]
 shape = SubResource("BoxShape3D_h3vvf")
 
-[node name="Fence_003_10" type="Node3D" parent="Sketchfab_model/root/GLTF_SceneRootNode/Fence" unique_id=256101194]
+[node name="Fence_003_10" type="Node3D" parent="GLTF_SceneRootNode/Fence" unique_id=256101194]
 transform = Transform3D(5.333972e-09, -1.4028368, -0.003979111, -0.0010268395, 0.13443112, -0.04115546, 0.010859533, 0.012712026, -0.0038915146, 5.2665505, 0.7058462, -4.4565897)
 
-[node name="Object_22" type="MeshInstance3D" parent="Sketchfab_model/root/GLTF_SceneRootNode/Fence/Fence_003_10" unique_id=111106023]
+[node name="Object_22" type="MeshInstance3D" parent="GLTF_SceneRootNode/Fence/Fence_003_10" unique_id=111106023]
 mesh = SubResource("ArrayMesh_hj1uo")
 
-[node name="StaticBody3D" type="StaticBody3D" parent="Sketchfab_model/root/GLTF_SceneRootNode/Fence/Fence_003_10/Object_22" unique_id=295236604]
+[node name="StaticBody3D" type="StaticBody3D" parent="GLTF_SceneRootNode/Fence/Fence_003_10/Object_22" unique_id=295236604]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 2.9372282, 0.03947836, 0.9299011)
 
-[node name="CollisionShape3D" type="CollisionShape3D" parent="Sketchfab_model/root/GLTF_SceneRootNode/Fence/Fence_003_10/Object_22/StaticBody3D" unique_id=2046928670]
+[node name="CollisionShape3D" type="CollisionShape3D" parent="GLTF_SceneRootNode/Fence/Fence_003_10/Object_22/StaticBody3D" unique_id=2046928670]
 shape = SubResource("BoxShape3D_oy8ma")
 
-[node name="Fence_004_11" type="Node3D" parent="Sketchfab_model/root/GLTF_SceneRootNode/Fence" unique_id=2092425572]
+[node name="Fence_004_11" type="Node3D" parent="GLTF_SceneRootNode/Fence" unique_id=2092425572]
 transform = Transform3D(-8.55709e-09, 1.4028368, 0.0039791088, 0.00026718402, 0.13499026, -0.04132663, -0.0109047, 0.003306394, -0.0010125771, 2.5062728, 0.7058462, -4.4565897)
 
-[node name="Object_24" type="MeshInstance3D" parent="Sketchfab_model/root/GLTF_SceneRootNode/Fence/Fence_004_11" unique_id=846299344]
+[node name="Object_24" type="MeshInstance3D" parent="GLTF_SceneRootNode/Fence/Fence_004_11" unique_id=846299344]
 mesh = SubResource("ArrayMesh_obare")
 
-[node name="StaticBody3D" type="StaticBody3D" parent="Sketchfab_model/root/GLTF_SceneRootNode/Fence/Fence_004_11/Object_24" unique_id=1815673887]
+[node name="StaticBody3D" type="StaticBody3D" parent="GLTF_SceneRootNode/Fence/Fence_004_11/Object_24" unique_id=1815673887]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 2.9372282, 0.03947836, 0.9299011)
 
-[node name="CollisionShape3D" type="CollisionShape3D" parent="Sketchfab_model/root/GLTF_SceneRootNode/Fence/Fence_004_11/Object_24/StaticBody3D" unique_id=970304178]
+[node name="CollisionShape3D" type="CollisionShape3D" parent="GLTF_SceneRootNode/Fence/Fence_004_11/Object_24/StaticBody3D" unique_id=970304178]
 shape = SubResource("BoxShape3D_wmfvg")
 
-[node name="Fence_005_12" type="Node3D" parent="Sketchfab_model/root/GLTF_SceneRootNode/Fence" unique_id=25338976]
+[node name="Fence_005_12" type="Node3D" parent="GLTF_SceneRootNode/Fence" unique_id=25338976]
 transform = Transform3D(5.4323674e-09, -1.4028368, -0.0039791116, -0.0012725743, 0.13410868, -0.041056745, 0.010833486, 0.015754012, -0.0048228, -0.23504776, 0.7058462, -4.4565897)
 
-[node name="Object_26" type="MeshInstance3D" parent="Sketchfab_model/root/GLTF_SceneRootNode/Fence/Fence_005_12" unique_id=58706737]
+[node name="Object_26" type="MeshInstance3D" parent="GLTF_SceneRootNode/Fence/Fence_005_12" unique_id=58706737]
 mesh = SubResource("ArrayMesh_6vdxh")
 
-[node name="StaticBody3D" type="StaticBody3D" parent="Sketchfab_model/root/GLTF_SceneRootNode/Fence/Fence_005_12/Object_26" unique_id=175388233]
+[node name="StaticBody3D" type="StaticBody3D" parent="GLTF_SceneRootNode/Fence/Fence_005_12/Object_26" unique_id=175388233]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 2.9372282, 0.03947836, 0.9299011)
 
-[node name="CollisionShape3D" type="CollisionShape3D" parent="Sketchfab_model/root/GLTF_SceneRootNode/Fence/Fence_005_12/Object_26/StaticBody3D" unique_id=1407061700]
+[node name="CollisionShape3D" type="CollisionShape3D" parent="GLTF_SceneRootNode/Fence/Fence_005_12/Object_26/StaticBody3D" unique_id=1407061700]
 shape = SubResource("BoxShape3D_5hqpu")
 
-[node name="Fence_006_13" type="Node3D" parent="Sketchfab_model/root/GLTF_SceneRootNode/Fence" unique_id=1675476240]
+[node name="Fence_006_13" type="Node3D" parent="GLTF_SceneRootNode/Fence" unique_id=1675476240]
 transform = Transform3D(-8.901456e-09, 1.4028369, 0.0039791046, -0.0007020717, 0.13475055, -0.04125332, -0.010885355, -0.00869214, 0.002660708, -3.0243094, 0.7058462, -4.4565897)
 
-[node name="Object_28" type="MeshInstance3D" parent="Sketchfab_model/root/GLTF_SceneRootNode/Fence/Fence_006_13" unique_id=207769080]
+[node name="Object_28" type="MeshInstance3D" parent="GLTF_SceneRootNode/Fence/Fence_006_13" unique_id=207769080]
 transform = Transform3D(0.9912131, -0.00037539005, 0.13227597, 0.00037519677, 1, 2.4925133e-05, -0.132276, 2.5108457e-05, 0.99121296, 0, 0, 0)
 mesh = SubResource("ArrayMesh_isvka")
 
-[node name="StaticBody3D" type="StaticBody3D" parent="Sketchfab_model/root/GLTF_SceneRootNode/Fence/Fence_006_13/Object_28" unique_id=1935888147]
+[node name="StaticBody3D" type="StaticBody3D" parent="GLTF_SceneRootNode/Fence/Fence_006_13/Object_28" unique_id=1935888147]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 2.9372282, 0.03947836, 0.9299011)
 
-[node name="CollisionShape3D" type="CollisionShape3D" parent="Sketchfab_model/root/GLTF_SceneRootNode/Fence/Fence_006_13/Object_28/StaticBody3D" unique_id=804809144]
+[node name="CollisionShape3D" type="CollisionShape3D" parent="GLTF_SceneRootNode/Fence/Fence_006_13/Object_28/StaticBody3D" unique_id=804809144]
 shape = SubResource("BoxShape3D_mfc2e")
 
-[node name="Fence_007_14" type="Node3D" parent="Sketchfab_model/root/GLTF_SceneRootNode/Fence" unique_id=596005225]
+[node name="Fence_007_14" type="Node3D" parent="GLTF_SceneRootNode/Fence" unique_id=596005225]
 transform = Transform3D(0.010882857, -0.009156854, 0.0028036067, 0.0007397763, 0.13472, -0.041243855, -7.072648e-09, 1.4028368, 0.0039791116, -4.4538984, 0.7058462, -3.0968223)
 
-[node name="Object_30" type="MeshInstance3D" parent="Sketchfab_model/root/GLTF_SceneRootNode/Fence/Fence_007_14" unique_id=2100627956]
+[node name="Object_30" type="MeshInstance3D" parent="GLTF_SceneRootNode/Fence/Fence_007_14" unique_id=2100627956]
 mesh = SubResource("ArrayMesh_yil34")
 
-[node name="StaticBody3D" type="StaticBody3D" parent="Sketchfab_model/root/GLTF_SceneRootNode/Fence/Fence_007_14/Object_30" unique_id=1388142023]
+[node name="StaticBody3D" type="StaticBody3D" parent="GLTF_SceneRootNode/Fence/Fence_007_14/Object_30" unique_id=1388142023]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 2.9372282, 0.03947836, 0.9299011)
 
-[node name="CollisionShape3D" type="CollisionShape3D" parent="Sketchfab_model/root/GLTF_SceneRootNode/Fence/Fence_007_14/Object_30/StaticBody3D" unique_id=1795733885]
+[node name="CollisionShape3D" type="CollisionShape3D" parent="GLTF_SceneRootNode/Fence/Fence_007_14/Object_30/StaticBody3D" unique_id=1795733885]
 shape = SubResource("BoxShape3D_1tup7")
 
-[node name="Fence_009_16" type="Node3D" parent="Sketchfab_model/root/GLTF_SceneRootNode/Fence" unique_id=420086198]
+[node name="Fence_009_16" type="Node3D" parent="GLTF_SceneRootNode/Fence" unique_id=420086198]
 transform = Transform3D(0.010834122, 0.01568699, -0.0048022224, -0.0012671446, 0.13411632, -0.04105916, -7.128263e-09, 1.4028369, 0.003979105, -4.4538984, 0.7058462, 2.4056125)
 
-[node name="Object_34" type="MeshInstance3D" parent="Sketchfab_model/root/GLTF_SceneRootNode/Fence/Fence_009_16" unique_id=243954459]
+[node name="Object_34" type="MeshInstance3D" parent="GLTF_SceneRootNode/Fence/Fence_009_16" unique_id=243954459]
 mesh = SubResource("ArrayMesh_rmrrc")
 
-[node name="StaticBody3D" type="StaticBody3D" parent="Sketchfab_model/root/GLTF_SceneRootNode/Fence/Fence_009_16/Object_34" unique_id=242949140]
+[node name="StaticBody3D" type="StaticBody3D" parent="GLTF_SceneRootNode/Fence/Fence_009_16/Object_34" unique_id=242949140]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 2.9372282, 0.03947836, 0.9299011)
 
-[node name="CollisionShape3D" type="CollisionShape3D" parent="Sketchfab_model/root/GLTF_SceneRootNode/Fence/Fence_009_16/Object_34/StaticBody3D" unique_id=1518985279]
+[node name="CollisionShape3D" type="CollisionShape3D" parent="GLTF_SceneRootNode/Fence/Fence_009_16/Object_34/StaticBody3D" unique_id=1518985279]
 shape = SubResource("BoxShape3D_f615e")
 
-[node name="Object_34" type="MeshInstance3D" parent="Sketchfab_model/root/GLTF_SceneRootNode/Fence/Fence_009_16/Object_34" unique_id=363485165]
+[node name="Object_34" type="MeshInstance3D" parent="GLTF_SceneRootNode/Fence/Fence_009_16/Object_34" unique_id=363485165]
 transform = Transform3D(0.96688104, 0.00072440575, -0.25522685, -0.00072394294, 0.99999976, 9.3939016e-05, 0.25522673, 9.346008e-05, 0.9668813, 0.00018310547, -1.9497963, -6.3688493)
 mesh = SubResource("ArrayMesh_rmrrc")
 
-[node name="StaticBody3D" type="StaticBody3D" parent="Sketchfab_model/root/GLTF_SceneRootNode/Fence/Fence_009_16/Object_34/Object_34" unique_id=1227447712]
+[node name="StaticBody3D" type="StaticBody3D" parent="GLTF_SceneRootNode/Fence/Fence_009_16/Object_34/Object_34" unique_id=1227447712]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 2.9372282, 0.03947836, 0.9299011)
 
-[node name="CollisionShape3D" type="CollisionShape3D" parent="Sketchfab_model/root/GLTF_SceneRootNode/Fence/Fence_009_16/Object_34/Object_34/StaticBody3D" unique_id=1883948213]
+[node name="CollisionShape3D" type="CollisionShape3D" parent="GLTF_SceneRootNode/Fence/Fence_009_16/Object_34/Object_34/StaticBody3D" unique_id=1883948213]
 shape = SubResource("BoxShape3D_f615e")
 
-[node name="Fence_010_17" type="Node3D" parent="Sketchfab_model/root/GLTF_SceneRootNode/Fence" unique_id=1782724572]
+[node name="Fence_010_17" type="Node3D" parent="GLTF_SceneRootNode/Fence" unique_id=1782724572]
 transform = Transform3D(1.7705538e-08, -1.4028368, -0.0039791116, 0.0003891329, 0.13494496, -0.04131272, 0.010901029, -0.0048148376, 0.0014747423, -3.053351, 0.7058462, 3.8831344)
 
-[node name="Object_36" type="MeshInstance3D" parent="Sketchfab_model/root/GLTF_SceneRootNode/Fence/Fence_010_17" unique_id=1888477866]
+[node name="Object_36" type="MeshInstance3D" parent="GLTF_SceneRootNode/Fence/Fence_010_17" unique_id=1888477866]
 mesh = SubResource("ArrayMesh_ec3qf")
 
-[node name="StaticBody3D" type="StaticBody3D" parent="Sketchfab_model/root/GLTF_SceneRootNode/Fence/Fence_010_17/Object_36" unique_id=1974791280]
+[node name="StaticBody3D" type="StaticBody3D" parent="GLTF_SceneRootNode/Fence/Fence_010_17/Object_36" unique_id=1974791280]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 2.9372282, 0.03947836, 0.9299011)
 
-[node name="CollisionShape3D" type="CollisionShape3D" parent="Sketchfab_model/root/GLTF_SceneRootNode/Fence/Fence_010_17/Object_36/StaticBody3D" unique_id=89007229]
+[node name="CollisionShape3D" type="CollisionShape3D" parent="GLTF_SceneRootNode/Fence/Fence_010_17/Object_36/StaticBody3D" unique_id=89007229]
 shape = SubResource("BoxShape3D_3d5qf")
 
-[node name="Fence_011_18" type="Node3D" parent="Sketchfab_model/root/GLTF_SceneRootNode/Fence" unique_id=171044610]
+[node name="Fence_011_18" type="Node3D" parent="GLTF_SceneRootNode/Fence" unique_id=171044610]
 transform = Transform3D(-9.40629e-09, 1.4028368, 0.0039791074, 0.00037061409, 0.13495278, -0.04131517, -0.010901675, 0.004586654, -0.0014045568, -0.3085708, 0.7058462, 3.8831344)
 
-[node name="Object_38" type="MeshInstance3D" parent="Sketchfab_model/root/GLTF_SceneRootNode/Fence/Fence_011_18" unique_id=1990853197]
+[node name="Object_38" type="MeshInstance3D" parent="GLTF_SceneRootNode/Fence/Fence_011_18" unique_id=1990853197]
 mesh = SubResource("ArrayMesh_38jj0")
 
-[node name="StaticBody3D" type="StaticBody3D" parent="Sketchfab_model/root/GLTF_SceneRootNode/Fence/Fence_011_18/Object_38" unique_id=343800386]
+[node name="StaticBody3D" type="StaticBody3D" parent="GLTF_SceneRootNode/Fence/Fence_011_18/Object_38" unique_id=343800386]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 2.9372282, 0.03947836, 0.9299011)
 
-[node name="CollisionShape3D" type="CollisionShape3D" parent="Sketchfab_model/root/GLTF_SceneRootNode/Fence/Fence_011_18/Object_38/StaticBody3D" unique_id=748759973]
+[node name="CollisionShape3D" type="CollisionShape3D" parent="GLTF_SceneRootNode/Fence/Fence_011_18/Object_38/StaticBody3D" unique_id=748759973]
 shape = SubResource("BoxShape3D_o4k8p")
 
-[node name="Fence_012_19" type="Node3D" parent="Sketchfab_model/root/GLTF_SceneRootNode/Fence" unique_id=862912071]
+[node name="Fence_012_19" type="Node3D" parent="GLTF_SceneRootNode/Fence" unique_id=862912071]
 transform = Transform3D(1.792818e-08, -1.4028368, -0.0039791106, 0.0014333691, 0.1338602, -0.04098057, 0.010813386, -0.017741524, 0.005432189, 2.4338372, 0.7058462, 3.8831344)
 
-[node name="Object_40" type="MeshInstance3D" parent="Sketchfab_model/root/GLTF_SceneRootNode/Fence/Fence_012_19" unique_id=1790963338]
+[node name="Object_40" type="MeshInstance3D" parent="GLTF_SceneRootNode/Fence/Fence_012_19" unique_id=1790963338]
 mesh = SubResource("ArrayMesh_ileb0")
 
-[node name="StaticBody3D" type="StaticBody3D" parent="Sketchfab_model/root/GLTF_SceneRootNode/Fence/Fence_012_19/Object_40" unique_id=43077361]
+[node name="StaticBody3D" type="StaticBody3D" parent="GLTF_SceneRootNode/Fence/Fence_012_19/Object_40" unique_id=43077361]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 2.9372282, 0.03947836, 0.9299011)
 
-[node name="CollisionShape3D" type="CollisionShape3D" parent="Sketchfab_model/root/GLTF_SceneRootNode/Fence/Fence_012_19/Object_40/StaticBody3D" unique_id=1686234653]
+[node name="CollisionShape3D" type="CollisionShape3D" parent="GLTF_SceneRootNode/Fence/Fence_012_19/Object_40/StaticBody3D" unique_id=1686234653]
 shape = SubResource("BoxShape3D_7jbg6")
 
-[node name="Fence_013_20" type="Node3D" parent="Sketchfab_model/root/GLTF_SceneRootNode/Fence" unique_id=214943069]
+[node name="Fence_013_20" type="Node3D" parent="GLTF_SceneRootNode/Fence" unique_id=214943069]
 transform = Transform3D(-1.3897524e-08, 1.4028368, 0.0039791125, -0.0015701608, 0.13362433, -0.04090851, -0.010794371, -0.019438945, 0.005950591, 5.207016, 0.7058462, 3.8831344)
 
-[node name="Object_42" type="MeshInstance3D" parent="Sketchfab_model/root/GLTF_SceneRootNode/Fence/Fence_013_20" unique_id=1607999079]
+[node name="Object_42" type="MeshInstance3D" parent="GLTF_SceneRootNode/Fence/Fence_013_20" unique_id=1607999079]
 mesh = SubResource("ArrayMesh_3fof3")
 
-[node name="StaticBody3D" type="StaticBody3D" parent="Sketchfab_model/root/GLTF_SceneRootNode/Fence/Fence_013_20/Object_42" unique_id=480660819]
+[node name="StaticBody3D" type="StaticBody3D" parent="GLTF_SceneRootNode/Fence/Fence_013_20/Object_42" unique_id=480660819]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 2.9372282, 0.03947836, 0.9299011)
 
-[node name="CollisionShape3D" type="CollisionShape3D" parent="Sketchfab_model/root/GLTF_SceneRootNode/Fence/Fence_013_20/Object_42/StaticBody3D" unique_id=570731531]
+[node name="CollisionShape3D" type="CollisionShape3D" parent="GLTF_SceneRootNode/Fence/Fence_013_20/Object_42/StaticBody3D" unique_id=570731531]
 shape = SubResource("BoxShape3D_y1eye")
+
+[node name="DoorPivot" type="Node3D" parent="." unique_id=2073836646]
+transform = Transform3D(2.5072143, 0, 0, 0, 0.09697212, 0, 0, 0, 3.5216062, 2.2808497, 1.9951977, 2.914075)
+script = ExtResource("22_t4tjm")
+
+[node name="Door" type="Node3D" parent="DoorPivot" unique_id=406820529]
+transform = Transform3D(0.9999998, 0, 0, 0, 0.9999998, 0, 0, 0, 0.99999976, 0.004586816, 0, -0.004232168)
+
+[node name="Object_44" type="MeshInstance3D" parent="DoorPivot/Door" unique_id=177415411]
+transform = Transform3D(1, 3.4250447e-24, 0, -1.2401092e-20, 1, -1.6940659e-21, -4.656613e-10, -3.3087225e-24, 1, 0.028560996, 0, -8.255243e-05)
+mesh = SubResource("ArrayMesh_1v4l0")
+
+[node name="StaticBody3D" type="StaticBody3D" parent="DoorPivot/Door/Object_44" unique_id=1193385418 groups=["door", "interactable"]]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.015457332, -0.56460094, -0.19259477)
+script = ExtResource("23_t4jpg")
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="DoorPivot/Door/Object_44/StaticBody3D" unique_id=1932888678]
+shape = SubResource("BoxShape3D_25115")

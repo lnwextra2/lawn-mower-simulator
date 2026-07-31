@@ -238,6 +238,8 @@ func _physics_process(delta: float) -> void:
 			_toggle_cart(current_target)
 		elif current_target and current_target.is_in_group("drop_off"):
 			current_target.sell_all()
+		elif current_target and current_target.is_in_group("door"):
+			current_target.interact()
 		elif towed_cart:
 			# Last resort, because a cart under tow is behind you and can't be
 			# looked at: E with nothing else in view lets go of it.
