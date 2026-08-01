@@ -7,9 +7,22 @@ signal held_tool_changed(tool: ToolData)
 signal tool_wear_changed(wear: float)
 signal tool_fuel_changed(fuel: float, capacity: float)
 signal lantern_changed(lantern: LanternData, lit: bool, fuel: float)
+## Hearts, for the HUD-less health readout. current 0..MAX_HEARTS; took is how
+## many were just lost in one hit (0 on a heal), so the vignette can flash on
+## damage but not on healing.
+signal health_changed(current: int, max_hearts: int, took: int)
+signal died
 
 const TOOL_PICKUP_SCENE := preload("res://tools/tool_pickup.tscn")
 const GRASS_PILE_SCENE := preload("res://grass/grass_pile.tscn")
+
+## Three hearts, deliberately forgiving. NOT what a night monster costs you -
+## the main monsters kill on contact (a grab = death, no hearts involved).
+## Hearts are for ordinary hazards that hurt in steps, so the number stays
+## hidden until something out in the world actually bites.
+const MAX_HEARTS: int = 3
+var hearts: int = MAX_HEARTS
+var is_dead: bool = false
 
 ## The default belt-clipped tool (a rice sickle). Assigned in the Inspector to
 ## knife.tres. It's the "empty hands" state - always held when nothing else is,
@@ -92,6 +105,35 @@ func _ready() -> void:
 	# Same clump builder as the world heaps, so the armful matches what you picked up.
 	GrassPile.build_clump(carry_model)
 	_update_carry_model()   # start with empty arms: grass hidden, tool shown
+	# Let the HUD paint the (clean) starting vignette; took=0 so it doesn't flash.
+	health_changed.emit(hearts, MAX_HEARTS, 0)
+
+## Take `amount` hearts of damage. Clamped at 0, where the player dies. Ordinary
+## hazards call this; the instakill monsters bypass it and call die() directly.
+func take_damage(amount: int = 1) -> void:
+	if is_dead or amount <= 0:
+		return
+	var before := hearts
+	hearts = max(0, hearts - amount)
+	health_changed.emit(hearts, MAX_HEARTS, before - hearts)
+	if hearts == 0:
+		die()
+
+## Restore hearts (the shop's 1-HP heal, or whatever regen we settle on). took=0
+## keeps the vignette from flashing red on the way back up.
+func heal(amount: int = 1) -> void:
+	if is_dead or amount <= 0:
+		return
+	hearts = min(MAX_HEARTS, hearts + amount)
+	health_changed.emit(hearts, MAX_HEARTS, 0)
+
+func die() -> void:
+	if is_dead:
+		return
+	is_dead = true
+	died.emit()
+	# No respawn/continue flow yet (that's the next feature). For now dying just
+	# announces itself; wiring death to the save/continue system comes after.
 
 func _swap_view_model(tool: ToolData) -> void:
 	for child in swing_pivot.get_children():
@@ -128,6 +170,16 @@ func _unhandled_input(event: InputEvent) -> void:
 		rotate_y(-event.relative.x * GameConfig.MOUSE_SENSITIVITY)
 		camera.rotate_x(-event.relative.y * GameConfig.MOUSE_SENSITIVITY)
 		camera.rotation.x = clamp(camera.rotation.x, deg_to_rad(-89), deg_to_rad(89))
+
+	# --- DEBUG (temporary): nothing hurts the player yet, so H/J stand in for a
+	# hazard and a heal to tune the vignette by eye. Remove once real damage
+	# sources exist. Raw keys on purpose - not worth an Input Map action for a
+	# throwaway. ---
+	if event is InputEventKey and event.pressed and not event.echo:
+		if event.keycode == KEY_H:
+			take_damage(1)
+		elif event.keycode == KEY_J:
+			heal(1)
 
 func _physics_process(delta: float) -> void:
 	if not is_on_floor():

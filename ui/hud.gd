@@ -6,6 +6,25 @@ extends CanvasLayer
 @onready var interact_prompt: Label = $InteractPrompt
 @onready var tool_label: Label = $ToolLabel
 @onready var lantern_label: Label = $LanternLabel
+@onready var damage_vignette: ColorRect = $DamageVignette
+
+## The red the screen holds at each level of hurt, indexed by hearts LOST
+## (0 = full health = clean, up to MAX). This is the health readout - tune these
+## by eye. Non-linear on purpose: barely-there at first, alarming at the end.
+@export var vignette_by_missing: Array[float] = [0.0, 0.25, 0.55, 1.0]
+## Extra red kicked in the instant a hit lands, on top of the resting level,
+## then it drains away - so a hit reads as a hit even if health barely moved.
+@export var hit_flash: float = 0.4
+@export var hit_flash_fade: float = 1.5   ## how fast the flash drains (per second)
+## On the last heart the vignette breathes, like a pulse. Amount adds/subtracts
+## on top of the resting red; speed is beats-ish per second.
+@export var heartbeat_amount: float = 0.12
+@export var heartbeat_speed: float = 4.0
+
+var _vignette_base: float = 0.0   ## resting red from current hearts
+var _vignette_flash: float = 0.0  ## decaying kick from the latest hit
+var _heartbeat: bool = false      ## last heart -> breathe
+var _beat_time: float = 0.0
 
 var _player: Node = null
 
@@ -20,7 +39,9 @@ func _ready() -> void:
 	player.tool_wear_changed.connect(_on_tool_wear_changed)
 	player.tool_fuel_changed.connect(_on_tool_fuel_changed)
 	player.lantern_changed.connect(_on_lantern_changed)
+	player.health_changed.connect(_on_health_changed)
 
+	_on_health_changed(player.hearts, player.MAX_HEARTS, 0)
 	_on_stamina_changed(player.stamina, GameConfig.STAMINA_MAX)
 	_on_carried_changed(player.carried_grass, GameConfig.PLAYER_CARRY_CAPACITY)
 	_on_gold_changed(Economy.gold)
@@ -89,7 +110,8 @@ func _on_tool_fuel_changed(fuel: float, capacity: float) -> void:
 ## The repair bay's line changes without the look target changing - a countdown
 ## ticking, or a tool landing in the bay and moving the price - so it's rebuilt
 ## every frame while you're looking at one. Cheap, and never shows a stale quote.
-func _process(_delta: float) -> void:
+func _process(delta: float) -> void:
+	_update_vignette(delta)
 	if _looked_at and (_looked_at.is_in_group("repair_box") or _looked_at.is_in_group("drop_off") \
 			or _looked_at.is_in_group("cart")):
 		interact_prompt.text = _looked_at.prompt()
@@ -97,6 +119,28 @@ func _process(_delta: float) -> void:
 		# Grabbing or letting go of the cart changes this line without the look
 		# target changing, so it's re-evaluated here rather than only on change.
 		_on_look_target_changed(null)
+
+## Resting red is set the moment hearts change; here we add the decaying hit
+## flash and, on the last heart, a breathing pulse - then push the sum into the
+## shader. Done every frame because flash and heartbeat are time-based.
+func _on_health_changed(current: int, max_hearts: int, took: int) -> void:
+	var missing := clampi(max_hearts - current, 0, vignette_by_missing.size() - 1)
+	_vignette_base = vignette_by_missing[missing]
+	_heartbeat = current == 1
+	if took > 0:
+		_vignette_flash = hit_flash
+
+func _update_vignette(delta: float) -> void:
+	var mat := damage_vignette.material as ShaderMaterial
+	if mat == null:
+		return
+	_vignette_flash = move_toward(_vignette_flash, 0.0, hit_flash_fade * delta)
+	var beat := 0.0
+	if _heartbeat:
+		_beat_time += delta
+		beat = (sin(_beat_time * heartbeat_speed) * 0.5 + 0.5) * heartbeat_amount
+	var shown: float = clampf(_vignette_base + _vignette_flash + beat, 0.0, 1.0)
+	mat.set_shader_parameter("intensity", shown)
 
 ## Hidden entirely when you have no lantern - an empty readout for something
 ## you aren't carrying is just noise.

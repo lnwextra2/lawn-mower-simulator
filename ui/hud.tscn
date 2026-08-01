@@ -1,9 +1,26 @@
-[gd_scene format=3 uid="uid://cyy4qah0fufr0"]
+[gd_scene load_steps=4 format=3 uid="uid://cyy4qah0fufr0"]
 
 [ext_resource type="Script" uid="uid://cbgb0jwqwj5f5" path="res://ui/hud.gd" id="1_rbyyf"]
+[ext_resource type="Shader" path="res://ui/damage_vignette.gdshader" id="2_vig"]
+
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_vig"]
+shader = ExtResource("2_vig")
+shader_parameter/intensity = 0.0
+shader_parameter/blood_color = Color(0.55, 0.02, 0.02, 1.0)
+shader_parameter/edge_start = 0.35
+shader_parameter/softness = 0.55
 
 [node name="HUD" type="CanvasLayer" unique_id=1194393735]
 script = ExtResource("1_rbyyf")
+
+[node name="DamageVignette" type="ColorRect" parent="."]
+material = SubResource("ShaderMaterial_vig")
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
 
 [node name="StaminaBar" type="ProgressBar" parent="." unique_id=1747988708]
 anchors_preset = -1
