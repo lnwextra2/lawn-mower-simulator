@@ -92,7 +92,7 @@ func _build_defaults() -> void:
 
 	# Clouds: white by day, warm at dawn/dusk, dark grey by night so they recede
 	# into the night sky instead of glowing white and looming.
-	var night_cloud := Color(0.16, 0.16, 0.23)
+	var night_cloud := Color(0.122, 0.122, 0.17, 1.0)
 	var dawn_cloud := Color(1.0, 0.78, 0.62)
 	var day_cloud := Color(1.0, 1.0, 1.0)
 	cloud_color_gradient = _grad(offs,

@@ -35,19 +35,7 @@
 [ext_resource type="PackedScene" path="res://environment/celestial.tscn" id="26_ec2iw"]
 [ext_resource type="Resource" path="res://upgrades/upgrade_move_speed.tres" id="28_5y2bn"]
 [ext_resource type="PackedScene" uid="uid://b03ls8ok1d4qw" path="res://base/light_post_slot.tscn" id="29_5y2bn"]
-
-[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_mmx4b"]
-albedo_color = Color(1, 0.88600004, 0.24000001, 1)
-
-[sub_resource type="CylinderMesh" id="CylinderMesh_kfa7i"]
-material = SubResource("StandardMaterial3D_mmx4b")
-top_radius = 2.0
-bottom_radius = 2.0
-height = 0.05
-
-[sub_resource type="CylinderShape3D" id="CylinderShape3D_5h11f"]
-height = 0.3
-radius = 2.5
+[ext_resource type="PackedScene" uid="uid://clgeqks31lwws" path="res://environment/bubbles.tscn" id="29_7doj7"]
 
 [sub_resource type="BoxShape3D" id="BoxShape3D_5h11f"]
 size = Vector3(160, 1, 160)
@@ -79,6 +67,19 @@ ssao_intensity = 4.0
 glow_enabled = true
 glow_bloom = 0.2
 
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_mmx4b"]
+albedo_color = Color(1, 0.88600004, 0.24000001, 1)
+
+[sub_resource type="CylinderMesh" id="CylinderMesh_kfa7i"]
+material = SubResource("StandardMaterial3D_mmx4b")
+top_radius = 2.0
+bottom_radius = 2.0
+height = 0.05
+
+[sub_resource type="CylinderShape3D" id="CylinderShape3D_5h11f"]
+height = 0.3
+radius = 2.5
+
 [sub_resource type="SphereShape3D" id="SphereShape3D_5h11f"]
 
 [sub_resource type="SphereMesh" id="SphereMesh_bx8n8"]
@@ -93,29 +94,29 @@ size = Vector3(1, 5, 8)
 
 [node name="TestLevel" type="Node3D" unique_id=1935669822]
 
-[node name="DropOff" type="StaticBody3D" parent="." unique_id=2142596691 groups=["drop_off"]]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 20, 0.05, 10)
-script = ExtResource("6_68kkm")
+[node name="Environment" type="Node3D" parent="." unique_id=1482017305]
 
-[node name="MeshInstance3D" type="MeshInstance3D" parent="DropOff" unique_id=1187613514]
-mesh = SubResource("CylinderMesh_kfa7i")
+[node name="Bubbles" parent="Environment" unique_id=1768440940 instance=ExtResource("29_7doj7")]
 
-[node name="CollisionShape3D" type="CollisionShape3D" parent="DropOff" unique_id=1997864424]
-shape = SubResource("CylinderShape3D_5h11f")
+[node name="Floor" type="StaticBody3D" parent="Environment" unique_id=904610385]
 
-[node name="Floor" type="StaticBody3D" parent="." unique_id=904610385]
-
-[node name="CollisionShape3D" type="CollisionShape3D" parent="Floor" unique_id=1006131729]
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Environment/Floor" unique_id=1006131729]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.5, 0)
 shape = SubResource("BoxShape3D_5h11f")
 
-[node name="MeshInstance3D" type="MeshInstance3D" parent="Floor" unique_id=640729761]
+[node name="MeshInstance3D" type="MeshInstance3D" parent="Environment/Floor" unique_id=640729761]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 3.6315584, -0.46782494, 0.20633793)
 mesh = SubResource("BoxMesh_5h11f")
 
-[node name="DirectionalLight3D" type="DirectionalLight3D" parent="Floor" unique_id=824571888 groups=["sun_light"]]
+[node name="DirectionalLight3D" type="DirectionalLight3D" parent="Environment/Floor" unique_id=824571888 groups=["sun_light"]]
 transform = Transform3D(1, 0, 0, 0, 0.70710677, 0.70710677, 0, -0.70710677, 0.70710677, 0, 0, 0)
 shadow_enabled = true
+
+[node name="CelestialDome" parent="Environment" unique_id=1325779792 instance=ExtResource("26_ec2iw")]
+
+[node name="WorldEnvironment" type="WorldEnvironment" parent="Environment" unique_id=695950947]
+environment = SubResource("Environment_5h11f")
+script = ExtResource("4_xag4j")
 
 [node name="GrassField" parent="." unique_id=825723574 instance=ExtResource("5_pgbyh")]
 
@@ -138,47 +139,6 @@ blade_count = 4500
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 2, 0)
 
 [node name="HUD" parent="." unique_id=1194393735 instance=ExtResource("3_wjuib")]
-
-[node name="WorldEnvironment" type="WorldEnvironment" parent="." unique_id=695950947]
-environment = SubResource("Environment_5h11f")
-script = ExtResource("4_xag4j")
-
-[node name="CSGCombiner3D" type="CSGCombiner3D" parent="." unique_id=1888042281]
-use_collision = true
-
-[node name="CSGBox3D" type="CSGBox3D" parent="CSGCombiner3D" unique_id=1177509701]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 3.3017502, 0.628479, -7.2770853)
-size = Vector3(3.885254, 2.256958, 3.635254)
-
-[node name="CSGCylinder3D" type="CSGCylinder3D" parent="CSGCombiner3D" unique_id=1266777421]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 1.6552979, -0.040039063, -5.663051)
-radius = 1.9726563
-height = 1.9199219
-
-[node name="Circle1" type="StaticBody3D" parent="." unique_id=183466491 groups=["interactable"]]
-
-[node name="CollisionShape3D" type="CollisionShape3D" parent="Circle1" unique_id=1360794449]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -2, 1, -2)
-shape = SubResource("SphereShape3D_5h11f")
-
-[node name="MeshInstance3D" type="MeshInstance3D" parent="Circle1" unique_id=857324591]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -2, 1, -2)
-mesh = SubResource("SphereMesh_bx8n8")
-surface_material_override/0 = SubResource("StandardMaterial3D_8jkpt")
-
-[node name="Wall1" type="StaticBody3D" parent="." unique_id=1449572743 groups=["interactable"]]
-
-[node name="CollisionShape3D" type="CollisionShape3D" parent="Wall1" unique_id=1820735192]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 24, 1.4, 2.4)
-shape = SubResource("BoxShape3D_lxqqe")
-
-[node name="MeshInstance3D" type="MeshInstance3D" parent="Wall1" unique_id=85313462]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 24, 1.4, 2.4)
-mesh = SubResource("BoxMesh_p3nrv")
-surface_material_override/0 = SubResource("StandardMaterial3D_8jkpt")
-
-[node name="Cart" parent="." unique_id=1380027441 instance=ExtResource("14_3i7yh")]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 22.219658, 0, -12.667651)
 
 [node name="House" type="Node3D" parent="." unique_id=295996456]
 transform = Transform3D(-0.43659896, 0, -0.89965624, 0, 1, 0, 0.89965624, 0, -0.43659896, 20.8022, 0, -23.530313)
@@ -252,6 +212,16 @@ product_scene = ExtResource("14_3i7yh")
 display_scene = ExtResource("15_5y2bn")
 product_name = "Cart"
 price = 10
+
+[node name="DropOff" type="StaticBody3D" parent="." unique_id=2142596691 groups=["drop_off"]]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 20, 0.05, 10)
+script = ExtResource("6_68kkm")
+
+[node name="MeshInstance3D" type="MeshInstance3D" parent="DropOff" unique_id=1187613514]
+mesh = SubResource("CylinderMesh_kfa7i")
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="DropOff" unique_id=1997864424]
+shape = SubResource("CylinderShape3D_5h11f")
 
 [node name="Trees" type="Node3D" parent="." unique_id=2039054599]
 script = ExtResource("16_o5yuq")
@@ -555,4 +525,41 @@ transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 18.286453, 0, 0.24741554)
 [node name="LightPostSlot3" parent="Light Post" unique_id=933965720 instance=ExtResource("29_5y2bn")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 22.096964, -9.536743e-07, 14.39183)
 
-[node name="CelestialDome" parent="." unique_id=1325779792 instance=ExtResource("26_ec2iw")]
+[node name="Test" type="Node3D" parent="." unique_id=657334460]
+
+[node name="CSGCombiner3D" type="CSGCombiner3D" parent="Test" unique_id=1888042281]
+use_collision = true
+
+[node name="CSGBox3D" type="CSGBox3D" parent="Test/CSGCombiner3D" unique_id=1177509701]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 3.3017502, 0.628479, -7.2770853)
+size = Vector3(3.885254, 2.256958, 3.635254)
+
+[node name="CSGCylinder3D" type="CSGCylinder3D" parent="Test/CSGCombiner3D" unique_id=1266777421]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 1.6552979, -0.040039063, -5.663051)
+radius = 1.9726563
+height = 1.9199219
+
+[node name="Circle1" type="StaticBody3D" parent="Test" unique_id=183466491 groups=["interactable"]]
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Test/Circle1" unique_id=1360794449]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -2, 1, -2)
+shape = SubResource("SphereShape3D_5h11f")
+
+[node name="MeshInstance3D" type="MeshInstance3D" parent="Test/Circle1" unique_id=857324591]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -2, 1, -2)
+mesh = SubResource("SphereMesh_bx8n8")
+surface_material_override/0 = SubResource("StandardMaterial3D_8jkpt")
+
+[node name="Wall1" type="StaticBody3D" parent="Test" unique_id=1449572743 groups=["interactable"]]
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Test/Wall1" unique_id=1820735192]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 24, 1.4, 2.4)
+shape = SubResource("BoxShape3D_lxqqe")
+
+[node name="MeshInstance3D" type="MeshInstance3D" parent="Test/Wall1" unique_id=85313462]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 24, 1.4, 2.4)
+mesh = SubResource("BoxMesh_p3nrv")
+surface_material_override/0 = SubResource("StandardMaterial3D_8jkpt")
+
+[node name="Cart" parent="Test" unique_id=1380027441 instance=ExtResource("14_3i7yh")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 22.219658, 0, -12.667651)
