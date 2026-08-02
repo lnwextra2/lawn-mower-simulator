@@ -15,6 +15,7 @@ signal died
 
 const TOOL_PICKUP_SCENE := preload("res://tools/tool_pickup.tscn")
 const GRASS_PILE_SCENE := preload("res://grass/grass_pile.tscn")
+const LANTERN_GLOW_SHADER := preload("res://tools/lantern_glow.gdshader")
 
 ## Three hearts, deliberately forgiving. NOT what a night monster costs you -
 ## the main monsters kill on contact (a grab = death, no hearts involved).
@@ -28,6 +29,16 @@ var is_dead: bool = false
 ## knife.tres. It's the "empty hands" state - always held when nothing else is,
 ## and can't be dropped.
 @export var knife: ToolData
+## How hard the lantern's lit parts glow. It's the light source, so the flame and
+## glass should read as the brightest thing in frame. Only the bright pixels of
+## the texture emit (see lantern_glow.gdshader), so the metal frame stays a normal
+## object. 0 = no self-glow.
+@export var lantern_glow_energy: float = 2.0
+## Texture brightness a pixel needs before it glows. Raise until the metal frame
+## stops glowing and only the flame/glass do; lower if the flame isn't lighting up.
+@export_range(0.0, 1.0) var lantern_glow_threshold: float = 0.1
+## Soft edge above the threshold, so the glowing area doesn't cut in hard.
+@export_range(0.0, 1.0) var lantern_glow_softness: float = 0.15
 
 var gravity: float = ProjectSettings.get_setting("physics/3d/default_gravity")
 var stamina: float = GameConfig.STAMINA_MAX
@@ -55,6 +66,9 @@ var lantern_fuel: float = 0.0
 ## Clipped at the hip instead of held: a dim pool around your feet rather than a
 ## beam you can aim, but it leaves the hand free. The trade is the point.
 var lantern_hipped: bool = false
+## The lantern model's glow materials, cached when the model is spawned so the
+## per-frame refresh only twiddles shader params, never re-walks the tree.
+var _lantern_glow_mats: Array[ShaderMaterial] = []
 ## The cart you're pulling, if any. Hauling it takes your hands, exactly as an
 ## armful of grass does - which is what stops the cart from turning into a
 ## one-pass cut-and-collect rig. That combination is the mower's whole selling
@@ -527,9 +541,33 @@ func _rebuild_lantern_model() -> void:
 			if child is OmniLight3D:
 				continue   # the mount's light belongs to the mount, not the lantern
 			child.queue_free()
+	_lantern_glow_mats.clear()
 	if lantern and lantern.view_model_scene:
 		var mount: Node3D = lantern_hip if _lantern_at_hip() else lantern_model
-		mount.add_child(lantern.view_model_scene.instantiate())
+		var model := lantern.view_model_scene.instantiate()
+		mount.add_child(model)
+		_collect_glow_mats(model)
+
+## Walks a freshly spawned lantern model and swaps each surface for the glow
+## shader, fed the surface's own texture, caching the materials so _refresh_lantern
+## can turn the glow up when lit and off when dark. A material per surface, not the
+## shared GLB one, so only THIS lantern glows - not every lantern, shop display
+## included.
+func _collect_glow_mats(node: Node) -> void:
+	if node is MeshInstance3D:
+		var mi := node as MeshInstance3D
+		for i in mi.get_surface_override_material_count():
+			var base := mi.get_active_material(i)
+			var tex: Texture2D = null
+			if base is StandardMaterial3D:
+				tex = base.albedo_texture
+			var mat := ShaderMaterial.new()
+			mat.shader = LANTERN_GLOW_SHADER
+			mat.set_shader_parameter("tex", tex)
+			mi.set_surface_override_material(i, mat)
+			_lantern_glow_mats.append(mat)
+	for child in node.get_children():
+		_collect_glow_mats(child)
 
 ## Pushes the lantern's state onto the visuals. Hiding a mount hides its light
 ## too, so only the mount the lantern is actually on can shine.
@@ -540,6 +578,12 @@ func _refresh_lantern() -> void:
 	lantern_hip.visible = carried and at_hip
 	lantern_light.visible = lantern_lit
 	hip_light.visible = lantern_lit
+	# The flame glows only while lit - a dark lantern is just an object again.
+	var glow := lantern_glow_energy if lantern_lit else 0.0
+	for mat in _lantern_glow_mats:
+		mat.set_shader_parameter("glow", glow)
+		mat.set_shader_parameter("threshold", lantern_glow_threshold)
+		mat.set_shader_parameter("softness", lantern_glow_softness)
 	if lantern:
 		lantern_light.light_energy = lantern.held_energy
 		lantern_light.omni_range = lantern.held_range
