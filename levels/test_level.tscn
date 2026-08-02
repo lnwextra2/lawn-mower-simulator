@@ -24,6 +24,8 @@
 [ext_resource type="PackedScene" path="res://environment/props/plant.tscn" id="22_3i7yh"]
 [ext_resource type="PackedScene" path="res://environment/props/plant_big.tscn" id="23_5y2bn"]
 [ext_resource type="PackedScene" uid="uid://c42uhvhwcikmi" path="res://base/wooden_house.tscn" id="24_ra35m"]
+[ext_resource type="PackedScene" path="res://base/bed.tscn" id="25_x7oem"]
+[ext_resource type="PackedScene" path="res://environment/celestial.tscn" id="26_ec2iw"]
 
 [sub_resource type="BoxShape3D" id="BoxShape3D_5h11f"]
 size = Vector3(160, 1, 160)
@@ -45,7 +47,10 @@ size = Vector3(1, 5, 8)
 size = Vector3(1, 5, 8)
 
 [sub_resource type="Environment" id="Environment_5h11f"]
-ambient_light_energy = 0.3
+ssao_enabled = true
+ssao_intensity = 4.0
+glow_enabled = true
+glow_bloom = 0.2
 
 [sub_resource type="StandardMaterial3D" id="StandardMaterial3D_mmx4b"]
 albedo_color = Color(1, 0.88600004, 0.24000001, 1)
@@ -488,3 +493,8 @@ transform = Transform3D(0.84332794, 0, 0.76014066, 0, 1.1353483, 0, -0.76014066,
 
 [node name="Sketchfab_Scene" parent="." unique_id=154134640 instance=ExtResource("24_ra35m")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -25.335464, 0, 22.457531)
+
+[node name="Bed" parent="." unique_id=554349253 instance=ExtResource("25_x7oem")]
+transform = Transform3D(-4.371139e-08, 0, 1, 0, 1, 0, -1, 0, -4.371139e-08, -27.221426, 0.8635214, 19.776436)
+
+[node name="CelestialDome" parent="." unique_id=76560342 instance=ExtResource("26_ec2iw")]
