@@ -18,6 +18,8 @@
 [ext_resource type="Resource" path="res://upgrades/upgrade_cart_capacity.tres" id="17_ec2iw"]
 [ext_resource type="PackedScene" uid="uid://bqqp15dihsnib" path="res://environment/props/tree_twisted_a.tscn" id="17_vr6yy"]
 [ext_resource type="PackedScene" uid="uid://d2cslfm2m2xy" path="res://environment/props/tree_twisted_b.tscn" id="18_ra35m"]
+[ext_resource type="Resource" uid="uid://boek6a5x2cssb" path="res://upgrades/upgrade_sale_bonus.tres" id="18_ulql8"]
+[ext_resource type="Resource" uid="uid://brjvkm1t71h4h" path="res://upgrades/upgrade_cart_magnet.tres" id="19_3i7yh"]
 [ext_resource type="PackedScene" path="res://environment/props/pine_a.tscn" id="19_x7oem"]
 [ext_resource type="PackedScene" path="res://environment/props/rock_a.tscn" id="20_ec2iw"]
 [ext_resource type="PackedScene" path="res://environment/props/rock_b.tscn" id="21_ulql8"]
@@ -202,6 +204,17 @@ price = 1
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 27.520027, 0, -3.6478648)
 upgrade = ExtResource("17_ec2iw")
 price = 1
+
+[node name="ShopStand_upgrade3" parent="Shop" unique_id=1305665798 instance=ExtResource("13_ulql8")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 29.23623, 0, -3.6478648)
+upgrade = ExtResource("18_ulql8")
+price = 1
+
+[node name="ShopStand_upgrade4" parent="Shop" unique_id=33012364 instance=ExtResource("13_ulql8")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 31.082064, 0, -3.6478648)
+upgrade = ExtResource("19_3i7yh")
+price = 1
+price_growth = 1
 
 [node name="ShopStand" parent="Shop" unique_id=1064033044 instance=ExtResource("13_ulql8")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 22, 0, -3)
