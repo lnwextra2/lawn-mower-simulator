@@ -14,6 +14,11 @@ size = Vector3(1.2, 0.9, 1.6)
 
 [node name="Cart" type="CharacterBody3D" unique_id=1380027441]
 script = ExtResource("1_ocrbd")
+highlight_color = Color(0.20072815, 0.69848573, 0.9999998, 1)
+highlight_rim_power = 1.0
+highlight_rim_strength = 0.2
+highlight_pulse_speed = 7.0
+highlight_pulse_amount = 0.8
 
 [node name="CollisionShape3D" type="CollisionShape3D" parent="." unique_id=1948881287]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.45, 0)

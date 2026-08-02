@@ -34,6 +34,20 @@ const COLLECT_INTERVAL := 0.35 ## seconds between sweeps while moving
 const STEP_CLEARANCE := 0.22
 
 @export var capacity: float = 600.0
+## Rim glow shown while the player holds an upgrade that targets the cart, so
+## it's clear what to throw it at. A Fresnel rim (edges glow, faces don't), so it
+## hugs the silhouette with no gap and its width is tunable independent of it.
+const HIGHLIGHT_RIM_SHADER := preload("res://upgrades/highlight_rim.gdshader")
+@export var highlight_color: Color = Color(0.3, 0.7, 1.0)
+## Higher = thinner rim at the very edge; lower = a wider band creeping inward.
+@export var highlight_rim_power: float = 3.0
+@export var highlight_rim_strength: float = 1.5
+## Gentle breathing pulse of the rim. amount 0 = steady; speed ~pulses/second.
+@export var highlight_pulse_speed: float = 3.0
+@export var highlight_pulse_amount: float = 0.3
+
+var _highlight_mats: Array[Material] = []
+var _rim_mat: ShaderMaterial
 
 var cargo: float = 0.0
 var tower: Node3D = null
@@ -54,6 +68,44 @@ func _ready() -> void:
 
 func toggle_tow(by: Node3D) -> void:
 	tower = null if tower else by
+
+## Total capacity: the base plus whatever cart-capacity upgrades have added. Read
+## live so throwing a capacity upgrade at the cart takes effect immediately.
+func cap() -> float:
+	return capacity + Upgrades.cart_capacity_bonus
+
+## Turn the "throw it here" glow on or off. Called by the player while it holds a
+## cart-targeted upgrade. The emission materials are built on first use so a cart
+## nobody upgrades never pays for them.
+func set_highlight(on: bool) -> void:
+	if on and _highlight_mats.is_empty():
+		_build_rim()
+	# The rim is a second render pass on each surface; hanging it on or off is all
+	# it takes to show or hide it.
+	for m in _highlight_mats:
+		m.next_pass = _rim_mat if on else null
+
+## Builds the rim material and the per-surface copies it hangs off.
+func _build_rim() -> void:
+	_rim_mat = ShaderMaterial.new()
+	_rim_mat.shader = HIGHLIGHT_RIM_SHADER
+	_rim_mat.set_shader_parameter("rim_color", highlight_color)
+	_rim_mat.set_shader_parameter("rim_power", highlight_rim_power)
+	_rim_mat.set_shader_parameter("rim_strength", highlight_rim_strength)
+	_rim_mat.set_shader_parameter("pulse_speed", highlight_pulse_speed)
+	_rim_mat.set_shader_parameter("pulse_amount", highlight_pulse_amount)
+	_collect_highlight_mats(self)
+
+func _collect_highlight_mats(node: Node) -> void:
+	if node is MeshInstance3D:
+		var mi := node as MeshInstance3D
+		for i in mi.get_surface_override_material_count():
+			var base := mi.get_active_material(i)
+			var mat: Material = base.duplicate() if base else StandardMaterial3D.new()
+			mi.set_surface_override_material(i, mat)
+			_highlight_mats.append(mat)
+	for child in node.get_children():
+		_collect_highlight_mats(child)
 
 func _physics_process(delta: float) -> void:
 	if not is_on_floor():
@@ -91,14 +143,14 @@ func _physics_process(delta: float) -> void:
 ## is the cart's whole reason to exist: grass can already be moved by hand, but
 ## only by pressing for every single load.
 func _sweep(delta: float) -> void:
-	if cargo >= capacity:
+	if cargo >= cap():
 		return
 	_sweep_timer += delta
 	if _sweep_timer < COLLECT_INTERVAL:
 		return
 	_sweep_timer = 0.0
 
-	var room := capacity - cargo
+	var room := cap() - cargo
 	var picked := 0.0
 	for field in get_tree().get_nodes_in_group("grass_field"):
 		if picked >= room:
@@ -113,15 +165,15 @@ func _sweep(delta: float) -> void:
 			picked += pile.take(room - picked)
 	if picked > 0.0:
 		cargo += picked
-		cargo_changed.emit(cargo, capacity)
+		cargo_changed.emit(cargo, cap())
 
 ## Empties the cart, returning what came out - used by the sale pad.
 func unload() -> float:
 	var out := cargo
 	cargo = 0.0
-	cargo_changed.emit(cargo, capacity)
+	cargo_changed.emit(cargo, cap())
 	return out
 
 func prompt() -> String:
 	var state := "ปล่อย" if tower else "ลาก"
-	return "[E] %s เกวียน (%d / %d)" % [state, int(round(cargo)), int(capacity)]
+	return "[E] %s เกวียน (%d / %d)" % [state, int(round(cargo)), int(cap())]

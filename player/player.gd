@@ -18,6 +18,7 @@ signal held_upgrade_changed(upgrade: UpgradeData)
 const TOOL_PICKUP_SCENE := preload("res://tools/tool_pickup.tscn")
 const GRASS_PILE_SCENE := preload("res://grass/grass_pile.tscn")
 const LANTERN_GLOW_SHADER := preload("res://tools/lantern_glow.gdshader")
+const UPGRADE_PICKUP_SCENE := preload("res://upgrades/upgrade_pickup.tscn")
 
 ## Three hearts, deliberately forgiving. NOT what a night monster costs you -
 ## the main monsters kill on contact (a grab = death, no hearts involved).
@@ -41,6 +42,10 @@ var is_dead: bool = false
 @export_range(0.0, 1.0) var lantern_glow_threshold: float = 0.1
 ## Soft edge above the threshold, so the glowing area doesn't cut in hard.
 @export_range(0.0, 1.0) var lantern_glow_softness: float = 0.15
+## How hard a TARGET upgrade is thrown at its object (RigidBody impulse: forward
+## from the camera, plus lift for the arc).
+@export var upgrade_throw_force: float = 7.0
+@export var upgrade_throw_lift: float = 4.0
 
 var gravity: float = ProjectSettings.get_setting("physics/3d/default_gravity")
 var stamina: float = GameConfig.STAMINA_MAX
@@ -57,6 +62,8 @@ var held_fuel: float = 0.0
 ## An upgrade in hand, if any. It takes the hand from the tool while held: pick
 ## one up and the tool is put away until the upgrade is spent (or dropped).
 var held_upgrade: UpgradeData = null
+## The group currently lit as a throw target while a TARGET upgrade is held.
+var _highlighted_group: String = ""
 var _cut_accum: float = 0.0   # paces a continuous tool's bites
 var _fuel_owed: float = 0.0   # part-of-a-coin fuel cost, billed once it's whole
 ## How far a continuous tool has swung down from shouldered (0) to working (1).
@@ -339,11 +346,16 @@ func _physics_process(delta: float) -> void:
 		_swap_lantern_position()
 
 	if Input.is_action_just_pressed("drop"):
-		# Grass first: it's what's blocking the tool, so the same key that frees
+		# An upgrade in hand leaves first: drop is how it goes, whether lobbed at
+		# its target (TARGET) or just set back down (SELF). E spends a SELF upgrade
+		# in place; drop is for getting it out of your hand without spending it.
+		if held_upgrade:
+			_throw_upgrade()
+		# Grass next: it's what's blocking the tool, so the same key that frees
 		# your hands shouldn't also throw away what you're holding. Then the tool,
 		# then the lantern - the lantern is the thing you least often want to put
 		# down at night, so it's last in line.
-		if carried_grass > 0.0:
+		elif carried_grass > 0.0:
 			_drop_grass()
 		elif held_tool != knife:
 			_drop_tool()
@@ -516,6 +528,7 @@ func _pick_up_upgrade(pickup: Node) -> void:
 	held_upgrade = pickup.upgrade_data
 	_show_upgrade_model()
 	held_upgrade_changed.emit(held_upgrade)
+	_update_target_highlight()
 	pickup.queue_free()
 	current_target = null
 	look_target_changed.emit(null)
@@ -534,6 +547,39 @@ func _use_self_upgrade() -> void:
 	held_upgrade = null
 	held_upgrade_changed.emit(null)
 	_swap_view_model(held_tool)
+	_update_target_highlight()
+
+## Lob the held upgrade out. It arcs as an armed pickup: a TARGET upgrade applies
+## itself on hitting a body in its target group (e.g. the cart); a SELF upgrade
+## (no target group) just lands as a pickup to grab again. Either way this is how
+## an upgrade leaves the hand without being spent. Aimed with the camera.
+func _throw_upgrade() -> void:
+	var thrown := UPGRADE_PICKUP_SCENE.instantiate()
+	thrown.upgrade_data = held_upgrade
+	get_parent().add_child(thrown)
+	var forward := -camera.global_transform.basis.z
+	thrown.global_position = global_position + forward * 0.6 + Vector3(0, 1.2, 0)
+	thrown.arm()
+	thrown.apply_central_impulse(forward * upgrade_throw_force + Vector3(0, upgrade_throw_lift, 0))
+	held_upgrade = null
+	held_upgrade_changed.emit(null)
+	_swap_view_model(held_tool)
+	_update_target_highlight()
+
+## Lights up (or clears) the throw-target group for the held upgrade, so it's
+## clear where a TARGET upgrade goes. Duck-typed: any node in the target group
+## with a set_highlight(bool) method plays along (the cart now, light posts later).
+func _update_target_highlight() -> void:
+	if _highlighted_group != "":
+		for node in get_tree().get_nodes_in_group(_highlighted_group):
+			if node.has_method("set_highlight"):
+				node.set_highlight(false)
+		_highlighted_group = ""
+	if held_upgrade and held_upgrade.mode == UpgradeData.Mode.TARGET:
+		_highlighted_group = held_upgrade.target_group
+		for node in get_tree().get_nodes_in_group(_highlighted_group):
+			if node.has_method("set_highlight"):
+				node.set_highlight(true)
 
 func _drop_lantern() -> void:
 	# A set-down lantern keeps burning where it lies with the fuel it had - you

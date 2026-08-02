@@ -123,9 +123,9 @@ func _process(delta: float) -> void:
 	if _player and _player.held_upgrade:
 		var u = _player.held_upgrade
 		if u.mode == UpgradeData.Mode.SELF:
-			interact_prompt.text = "[E] ใช้ %s" % u.upgrade_name
+			interact_prompt.text = "[E] ใช้ %s    [Q] วาง" % u.upgrade_name
 		else:
-			interact_prompt.text = "โยน %s ใส่เป้าหมาย" % u.upgrade_name
+			interact_prompt.text = "[Q] โยน %s ใส่เป้าหมาย" % u.upgrade_name
 		interact_prompt.visible = true
 		return
 	if _looked_at and (_looked_at.is_in_group("repair_box") or _looked_at.is_in_group("drop_off") \
