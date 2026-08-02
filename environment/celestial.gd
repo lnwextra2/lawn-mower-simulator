@@ -10,6 +10,8 @@ extends Node3D
 ## resource to dig into. They're unshaded, so they glow the same whatever the
 ## light is doing (the sun shouldn't dim itself).
 
+const MOON_GLOW_SHADER := preload("res://environment/moon_glow.gdshader")
+
 @export var sun_color: Color = Color(1.0, 0.85, 0.4)
 @export var moon_color: Color = Color(0.9, 0.93, 1.0)
 @export var sun_radius: float = 18.0
@@ -24,6 +26,13 @@ extends Node3D
 @export var horizon_fade: float = 40.0
 ## Follow the player so the sky never gets closer. Off = dome stays at the origin.
 @export var follow_player: bool = true
+## The ProceduralSky already draws a sun glow from the light's direction, so the
+## celestial sun disc is off by default - leaving just the moon here. Turn on for
+## a solid sun disc on top of the sky's glow as well.
+@export var show_celestial_sun: bool = false
+## Moon glow shape: higher = tighter bright core with a softer falloff.
+@export var moon_core_power: float = 20.0
+@export var moon_strength: float = 1.3
 
 var _sun_disc: MeshInstance3D
 var _moon_disc: MeshInstance3D
@@ -31,10 +40,12 @@ var _player: Node3D
 
 func _ready() -> void:
 	_player = get_tree().get_first_node_in_group("player")
-	# Sun sits in the +Z of the dome (the direction the light comes FROM); the
-	# moon directly opposite it.
-	_sun_disc = _make_disc(sun_radius, sun_color, distance)
-	_moon_disc = _make_disc(moon_radius, moon_color, -distance)
+	# Sun sits in the +Z of the dome (the direction the light comes FROM); the moon
+	# directly opposite it. The sun disc is optional (the sky draws its own); the
+	# moon is a soft glow orb to match that sky sun rather than a hard disc.
+	if show_celestial_sun:
+		_sun_disc = _make_disc(sun_radius, sun_color, distance)
+	_moon_disc = _make_glow(moon_radius, moon_color, -distance)
 
 func _process(_delta: float) -> void:
 	if follow_player and _player:
@@ -42,7 +53,8 @@ func _process(_delta: float) -> void:
 	# Same swing as the sun light: horizon at sunrise (t=0.25), overhead at noon.
 	var day_angle := (DayNight.time - 0.25) * 360.0
 	rotation_degrees = Vector3(-day_angle, sun_yaw_deg, 0.0)
-	_fade_at_horizon(_sun_disc)
+	if _sun_disc:
+		_fade_at_horizon(_sun_disc)
 	_fade_at_horizon(_moon_disc)
 
 ## An unshaded, ground-anchored sphere at (0,0,z) in the dome's local space, so
@@ -66,9 +78,32 @@ func _make_disc(radius: float, color: Color, z: float) -> MeshInstance3D:
 	add_child(mi)
 	return mi
 
+## A soft glow orb (moon): the same sphere, but its material is the moon-glow
+## shader (bright core, edge fade) instead of a flat unshaded disc.
+func _make_glow(radius: float, color: Color, z: float) -> MeshInstance3D:
+	var mi := MeshInstance3D.new()
+	var mesh := SphereMesh.new()
+	mesh.radius = radius
+	mesh.height = radius * 2.0
+	mi.mesh = mesh
+	var mat := ShaderMaterial.new()
+	mat.shader = MOON_GLOW_SHADER
+	mat.set_shader_parameter("glow_color", color)
+	mat.set_shader_parameter("core_power", moon_core_power)
+	mat.set_shader_parameter("strength", moon_strength)
+	mi.material_override = mat
+	mi.position = Vector3(0.0, 0.0, z)
+	mi.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+	add_child(mi)
+	return mi
+
 func _fade_at_horizon(disc: MeshInstance3D) -> void:
-	var mat := disc.material_override as StandardMaterial3D
 	var height := disc.global_position.y - global_position.y
 	var a := clampf(height / horizon_fade, 0.0, 1.0)
-	mat.albedo_color.a = a
 	disc.visible = a > 0.0
+	# Fade the disc's alpha or the glow's strength, whichever material it has.
+	var mat := disc.material_override
+	if mat is StandardMaterial3D:
+		(mat as StandardMaterial3D).albedo_color.a = a
+	elif mat is ShaderMaterial:
+		(mat as ShaderMaterial).set_shader_parameter("strength", a * moon_strength)

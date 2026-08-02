@@ -1,16 +1,18 @@
 extends WorldEnvironment
 
-## Drives sky colour, ambient and the sun off DayNight.time CONTINUOUSLY, so the
-## look eases from night to dawn to day instead of snapping at phase boundaries
-## (the old version set four fixed looks on phase_changed, which stepped hard).
+## Drives a ProceduralSky, ambient and the sun off DayNight.time CONTINUOUSLY, so
+## the whole look eases from night to dawn to day instead of snapping at phase
+## boundaries. The sky is a real gradient dome now (deep overhead, bright at the
+## horizon) with the sun drawn in it, not a flat background colour.
 ##
 ## Every look value is a Gradient or Curve sampled by time (0=midnight, 0.25=
 ## sunrise, 0.5=noon, 0.75=sunset). Leave the exports empty and sensible defaults
-## are built in _ready from the old per-phase colours; assign your own in the
-## Inspector to art-direct the whole day on a single gradient ramp.
+## are built in _ready; assign your own to art-direct the whole day.
 
-## Sky/background colour across the day.
-@export var sky_gradient: Gradient
+## Colour high overhead (deepest part of the sky).
+@export var sky_top_gradient: Gradient
+## Colour down at the horizon (brighter, hazier).
+@export var sky_horizon_gradient: Gradient
 ## Sun (directional light) colour across the day - warm at the edges, white at noon.
 @export var sun_gradient: Gradient
 ## Ambient fill colour - what lights surfaces the sun doesn't hit.
@@ -29,18 +31,35 @@ extends WorldEnvironment
 
 @onready var sun: DirectionalLight3D = get_tree().get_first_node_in_group("sun_light")
 
+var _sky_mat: ProceduralSkyMaterial
+
 func _ready() -> void:
-	# Same environment setup as before: drive ambient and background from colours
-	# we control, or night never actually gets dark.
+	# Real sky dome as the background; the ProceduralSkyMaterial also draws a sun
+	# glow at the DirectionalLight's direction, so the sun's disc rides the sky as
+	# it rotates. Ambient stays a colour we control, or night never gets dark.
+	_sky_mat = ProceduralSkyMaterial.new()
+	_sky_mat.sun_angle_max = 8.0
+	_sky_mat.sun_curve = 0.08
+	var sky := Sky.new()
+	sky.sky_material = _sky_mat
+	environment.sky = sky
+	environment.background_mode = Environment.BG_SKY
 	environment.ambient_light_source = Environment.AMBIENT_SOURCE_COLOR
-	environment.background_mode = Environment.BG_COLOR
-	if sky_gradient == null or sun_gradient == null or ambient_gradient == null \
-			or sun_energy == null or ambient_energy == null:
+	if sky_top_gradient == null or sky_horizon_gradient == null or sun_gradient == null \
+			or ambient_gradient == null or sun_energy == null or ambient_energy == null:
 		_build_defaults()
 
 func _process(_delta: float) -> void:
 	var t := DayNight.time
-	environment.background_color = sky_gradient.sample(t)
+	var top := sky_top_gradient.sample(t)
+	var horizon := sky_horizon_gradient.sample(t)
+	_sky_mat.sky_top_color = top
+	_sky_mat.sky_horizon_color = horizon
+	# Ground half of the dome (below the horizon line) held at the horizon colour,
+	# NOT darkening down to the deep top colour - so looking below the horizon
+	# (mid-jump, over the floor's edge) shows bright sky, not a dark band.
+	_sky_mat.ground_horizon_color = horizon
+	_sky_mat.ground_bottom_color = horizon
 	environment.ambient_light_color = ambient_gradient.sample(t)
 	environment.ambient_light_energy = ambient_energy.sample(t)
 	if sun:
@@ -49,20 +68,25 @@ func _process(_delta: float) -> void:
 		sun.shadow_enabled = sun.light_energy > shadow_cutoff
 		# The sun swings a full circle over a day: level with the horizon at
 		# sunrise (t=0.25), overhead at noon (t=0.5), horizon again at sunset.
-		# Its transform in the scene is overridden here every frame.
 		var day_angle := (t - 0.25) * 360.0
 		sun.rotation_degrees = Vector3(-day_angle, sun_yaw_deg, 0.0)
 
-## Rebuilds the look from the old four-phase palette as smooth ramps, so it works
-## out of the box. Points sit a little before/after each phase edge so the colour
-## is already arriving as the phase turns over, rather than starting to move then.
+## Rebuilds the look from a bright, clear-sky palette. Points sit a little
+## before/after each phase edge so the colour is already arriving as the phase
+## turns over. Sky leans Frutiger-Aero: saturated blue up high, pale near the
+## horizon by day; warm orange horizon at dawn/dusk; near-black at night.
 func _build_defaults() -> void:
-	var night_sky := Color(0.04, 0.04, 0.1)
-	var warm := Color(1.0, 0.6, 0.33)      # dawn/dusk sky
-	var day_sky := Color(0.53, 0.81, 0.92)
-	sky_gradient = _grad(
-		[0.0, 0.20, 0.28, 0.40, 0.60, 0.72, 0.80, 1.0],
-		[night_sky, night_sky, warm, day_sky, day_sky, warm, night_sky, night_sky])
+	var night_top := Color(0.02, 0.03, 0.09)
+	var night_hor := Color(0.05, 0.07, 0.14)
+	var dawn_top := Color(0.35, 0.35, 0.55)
+	var dawn_hor := Color(1.0, 0.6, 0.35)
+	var day_top := Color(0.25, 0.55, 0.95)
+	var day_hor := Color(0.72, 0.88, 1.0)
+	var offs := [0.0, 0.20, 0.28, 0.40, 0.60, 0.72, 0.80, 1.0]
+	sky_top_gradient = _grad(offs,
+		[night_top, night_top, dawn_top, day_top, day_top, dawn_top, night_top, night_top])
+	sky_horizon_gradient = _grad(offs,
+		[night_hor, night_hor, dawn_hor, day_hor, day_hor, dawn_hor, night_hor, night_hor])
 
 	var sun_warm := Color(1.0, 0.6, 0.35)
 	sun_gradient = _grad(
@@ -74,7 +98,6 @@ func _build_defaults() -> void:
 		[Color(0.3, 0.35, 0.55), Color(1.0, 0.85, 0.7), Color.WHITE,
 		 Color(1.0, 0.85, 0.7), Color(0.3, 0.35, 0.55)])
 
-	# Sun energy peaks at 1.3, so the curve has to allow above 1.0.
 	sun_energy = _curve(2.0,
 		[Vector2(0.20, 0.0), Vector2(0.28, 0.9), Vector2(0.40, 1.3),
 		 Vector2(0.60, 1.3), Vector2(0.72, 0.9), Vector2(0.80, 0.0)])
