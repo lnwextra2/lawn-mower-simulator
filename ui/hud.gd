@@ -7,6 +7,7 @@ extends CanvasLayer
 @onready var tool_label: Label = $ToolLabel
 @onready var lantern_label: Label = $LanternLabel
 @onready var damage_vignette: ColorRect = $DamageVignette
+@onready var screen_fade: ColorRect = $ScreenFade
 
 ## The red the screen holds at each level of hurt, indexed by hearts LOST
 ## (0 = full health = clean, up to MAX). This is the health readout - tune these
@@ -29,6 +30,8 @@ var _beat_time: float = 0.0
 var _player: Node = null
 
 func _ready() -> void:
+	# So the bed (and anything else needing a screen-wide effect) can find us.
+	add_to_group("hud")
 	var player := get_tree().get_first_node_in_group("player")
 	_player = player
 	player.stamina_changed.connect(_on_stamina_changed)
@@ -79,7 +82,8 @@ func _on_look_target_changed(target: Node3D) -> void:
 		interact_prompt.text = "[กด E ค้าง] เติม%s" % target.label()
 		interact_prompt.visible = true
 	elif target.is_in_group("repair_box") or target.is_in_group("shop_stand") \
-			or target.is_in_group("drop_off") or target.is_in_group("cart"):
+			or target.is_in_group("drop_off") or target.is_in_group("cart") \
+			or target.is_in_group("bed"):
 		interact_prompt.text = target.prompt()
 		interact_prompt.visible = true
 	else:
@@ -113,7 +117,7 @@ func _on_tool_fuel_changed(fuel: float, capacity: float) -> void:
 func _process(delta: float) -> void:
 	_update_vignette(delta)
 	if _looked_at and (_looked_at.is_in_group("repair_box") or _looked_at.is_in_group("drop_off") \
-			or _looked_at.is_in_group("cart")):
+			or _looked_at.is_in_group("cart") or _looked_at.is_in_group("bed")):
 		interact_prompt.text = _looked_at.prompt()
 	elif _looked_at == null and _player:
 		# Grabbing or letting go of the cart changes this line without the look
@@ -141,6 +145,17 @@ func _update_vignette(delta: float) -> void:
 		beat = (sin(_beat_time * heartbeat_speed) * 0.5 + 0.5) * heartbeat_amount
 	var shown: float = clampf(_vignette_base + _vignette_flash + beat, 0.0, 1.0)
 	mat.set_shader_parameter("intensity", shown)
+
+## Fade the screen to black, run `on_black` at the darkest point, then fade back.
+## The bed uses this to hide the clock jump of a night's sleep behind the black -
+## generic on purpose so anything else that needs a covered transition can reuse
+## it. Sequenced with one tween so the callback can't fire before it's fully dark.
+func sleep_fade(on_black: Callable, out_time: float, hold_time: float, in_time: float) -> void:
+	var t := create_tween()
+	t.tween_property(screen_fade, "color:a", 1.0, out_time)
+	t.tween_callback(on_black)
+	t.tween_interval(hold_time)
+	t.tween_property(screen_fade, "color:a", 0.0, in_time)
 
 ## Hidden entirely when you have no lantern - an empty readout for something
 ## you aren't carrying is just noise.
