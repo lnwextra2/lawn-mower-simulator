@@ -15,6 +15,8 @@ class_name ShopStand
 
 ## For anything that's carried in hand.
 @export var item: ToolData
+## For an upgrade, delivered as an UpgradePickup the player then picks up and spends.
+@export var upgrade: UpgradeData
 ## For products that are their own object rather than something you hold.
 @export var product_scene: PackedScene
 ## What sits on the stand. Falls back to the tool's ground model. Must be inert
@@ -39,6 +41,8 @@ func _ready() -> void:
 	var shown: PackedScene = display_scene
 	if shown == null and item:
 		shown = item.world_model_scene
+	if shown == null and upgrade:
+		shown = upgrade.world_model_scene
 	if shown:
 		display.add_child(shown.instantiate())
 	_refresh()
@@ -46,10 +50,14 @@ func _ready() -> void:
 func title() -> String:
 	if product_name != "":
 		return product_name
-	return item.tool_name if item else "สินค้า"
+	if item:
+		return item.tool_name
+	if upgrade:
+		return upgrade.upgrade_name
+	return "สินค้า"
 
 func buy() -> bool:
-	if sold or (item == null and product_scene == null):
+	if sold or (item == null and product_scene == null and upgrade == null):
 		return false
 	var counter := get_tree().get_first_node_in_group("shop_collect")
 	if counter == null:
@@ -65,6 +73,9 @@ func buy() -> bool:
 		# Sold new: sharp, and with a full tank if it takes one.
 		goods.tool_wear = 0.0
 		goods.fuel = item.fuel_capacity
+	elif upgrade:
+		goods = preload("res://upgrades/upgrade_pickup.tscn").instantiate()
+		goods.upgrade_data = upgrade
 	else:
 		goods = product_scene.instantiate()
 	counter.add_child(goods)
