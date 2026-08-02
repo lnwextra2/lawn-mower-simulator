@@ -26,6 +26,9 @@ class_name ShopStand
 ## Shown on the price tag. Falls back to the tool's name.
 @export var product_name: String = ""
 @export var price: int = 100
+## Added to the price after each purchase, so a repeatable upgrade costs more the
+## more you've bought. 0 = flat price forever.
+@export var price_growth: int = 0
 ## Sells once and then stands empty - for the things there's no point owning two
 ## of. Leave off for stock that's always available.
 @export var unique: bool = false
@@ -85,6 +88,8 @@ func buy() -> bool:
 		sold = true
 		for child in display.get_children():
 			child.queue_free()
+	# Next one costs more, so a repeatable upgrade ramps in price as you stack it.
+	price += price_growth
 	_refresh()
 	return true
 

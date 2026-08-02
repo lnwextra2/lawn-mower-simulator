@@ -71,4 +71,4 @@ func prompt() -> String:
 	if grass <= 0.0:
 		return "โยนหญ้าลงบนแท่นเพื่อขาย"
 	return "[E] ขายหญ้า %d — ได้ %d ทอง" % [
-		int(round(grass)), int(grass * GameConfig.SELL_RATE)]
+		int(round(grass)), int(grass * GameConfig.SELL_RATE * Upgrades.sale_mult)]

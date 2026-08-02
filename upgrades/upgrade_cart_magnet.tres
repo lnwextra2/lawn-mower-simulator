@@ -1,0 +1,11 @@
+[gd_resource type="Resource" script_class="UpgradeData" format=3 uid="uid://brjvkm1t71h4h"]
+
+[ext_resource type="Script" uid="uid://rsknfv7oaytr" path="res://upgrades/upgrade_data.gd" id="1_ud"]
+
+[resource]
+script = ExtResource("1_ud")
+upgrade_name = "แม่เหล็กเกวียน"
+mode = 1
+effect = 2
+value = 0.5
+target_group = "cart"

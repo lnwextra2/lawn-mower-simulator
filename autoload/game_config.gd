@@ -53,9 +53,10 @@ const TOOL_THROW_SPIN: float = 0.06
 # player decides how much to afford instead of the game calculating it.
 const FUEL_FILL_RATE: float = 25.0        # fuel units per second
 const FUEL_PRICE_PER_UNIT: float = 0.5    # gold per fuel unit
-# The cart sweeps a wider path than you can reach by hand - it's doing the job
-# for you, which is what it's for.
-const CART_COLLECT_RADIUS: float = 2.2
+# The cart's base auto-collect reach - small, just enough to pick up grass set
+# down right against it (so you can toss an armful straight into the cart). Magnet
+# upgrades widen it from here.
+const CART_COLLECT_RADIUS: float = 0.5
 
 # Collision layers. Layer 1 is the solid world; things on LAYER_LOOK_ONLY can be
 # aimed at by the interact ray but are walked and driven straight through - for

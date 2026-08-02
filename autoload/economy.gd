@@ -5,7 +5,7 @@ signal gold_changed(current: int)
 var gold: int = 0
 
 func sell(amount: float) -> void:
-	gold += int(amount * GameConfig.SELL_RATE)
+	gold += int(amount * GameConfig.SELL_RATE * Upgrades.sale_mult)
 	gold_changed.emit(gold)
 
 ## Spends `amount` if it's affordable, and reports whether it went through, so

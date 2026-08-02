@@ -151,17 +151,21 @@ func _sweep(delta: float) -> void:
 	_sweep_timer = 0.0
 
 	var room := cap() - cargo
+	# Magnet upgrades add collect AREA, not radius, so each widens the reach less
+	# than the last - convert base radius to area, add the bonus, back to radius.
+	var base_area := PI * GameConfig.CART_COLLECT_RADIUS * GameConfig.CART_COLLECT_RADIUS
+	var radius := sqrt((base_area + Upgrades.cart_collect_bonus) / PI)
 	var picked := 0.0
 	for field in get_tree().get_nodes_in_group("grass_field"):
 		if picked >= room:
 			break
-		picked += field.collect_near(global_position, GameConfig.CART_COLLECT_RADIUS, room - picked)
+		picked += field.collect_near(global_position, radius, room - picked)
 	for pile in get_tree().get_nodes_in_group("grass_pile"):
 		if picked >= room:
 			break
 		if pile.is_flying:
 			continue
-		if global_position.distance_to(pile.global_position) <= GameConfig.CART_COLLECT_RADIUS:
+		if global_position.distance_to(pile.global_position) <= radius:
 			picked += pile.take(room - picked)
 	if picked > 0.0:
 		cargo += picked

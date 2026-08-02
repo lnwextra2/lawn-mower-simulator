@@ -14,7 +14,11 @@ signal changed
 var move_speed_mult: float = 1.0
 var cart_capacity_bonus: float = 0.0
 var sale_mult: float = 1.0
-var magnet_enabled: bool = false
+## Extra auto-collect AREA (m^2) the magnet upgrades have added - area, not
+## radius, so each magnet widens the reach LESS than the last (radius grows with
+## the square root): built-in diminishing returns, no special-casing. The cart
+## turns this into a radius.
+var cart_collect_bonus: float = 0.0
 var regrow_mult: float = 1.0
 
 ## Back to a fresh run - called when a new game starts (no such flow yet, but the
@@ -23,7 +27,7 @@ func reset() -> void:
 	move_speed_mult = 1.0
 	cart_capacity_bonus = 0.0
 	sale_mult = 1.0
-	magnet_enabled = false
+	cart_collect_bonus = 0.0
 	regrow_mult = 1.0
 	changed.emit()
 
@@ -36,7 +40,9 @@ func apply(data: UpgradeData) -> void:
 		UpgradeData.Effect.CART_CAPACITY:
 			cart_capacity_bonus += data.value
 		UpgradeData.Effect.CART_MAGNET:
-			magnet_enabled = true
+			# Adds a flat chunk of AREA each time; the cart converts it to radius, so
+			# the taper is automatic (see cart_collect_bonus).
+			cart_collect_bonus += data.value
 		UpgradeData.Effect.SALE_BONUS:
 			sale_mult += data.value
 		UpgradeData.Effect.REGROW_SPEED:
