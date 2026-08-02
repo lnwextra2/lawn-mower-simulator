@@ -78,6 +78,9 @@ func _on_look_target_changed(target: Node3D) -> void:
 	elif target.is_in_group("tool_pickup"):
 		interact_prompt.text = "[E] เก็บ %s" % target.tool_data.tool_name
 		interact_prompt.visible = true
+	elif target.is_in_group("upgrade_pickup"):
+		interact_prompt.text = "[E] เก็บ %s" % target.upgrade_data.upgrade_name
+		interact_prompt.visible = true
 	elif target.is_in_group("fuel_station"):
 		interact_prompt.text = "[กด E ค้าง] เติม%s" % target.label()
 		interact_prompt.visible = true
@@ -116,6 +119,15 @@ func _on_tool_fuel_changed(fuel: float, capacity: float) -> void:
 ## every frame while you're looking at one. Cheap, and never shows a stale quote.
 func _process(delta: float) -> void:
 	_update_vignette(delta)
+	# Holding an upgrade overrides the look prompt - it's what your hand is on.
+	if _player and _player.held_upgrade:
+		var u = _player.held_upgrade
+		if u.mode == UpgradeData.Mode.SELF:
+			interact_prompt.text = "[E] ใช้ %s" % u.upgrade_name
+		else:
+			interact_prompt.text = "โยน %s ใส่เป้าหมาย" % u.upgrade_name
+		interact_prompt.visible = true
+		return
 	if _looked_at and (_looked_at.is_in_group("repair_box") or _looked_at.is_in_group("drop_off") \
 			or _looked_at.is_in_group("cart") or _looked_at.is_in_group("bed")):
 		interact_prompt.text = _looked_at.prompt()

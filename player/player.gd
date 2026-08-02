@@ -12,6 +12,8 @@ signal lantern_changed(lantern: LanternData, lit: bool, fuel: float)
 ## damage but not on healing.
 signal health_changed(current: int, max_hearts: int, took: int)
 signal died
+## The upgrade in hand (or null). The HUD reads it to prompt "[E] use".
+signal held_upgrade_changed(upgrade: UpgradeData)
 
 const TOOL_PICKUP_SCENE := preload("res://tools/tool_pickup.tscn")
 const GRASS_PILE_SCENE := preload("res://grass/grass_pile.tscn")
@@ -52,6 +54,9 @@ var knife_wear: float = 0.0
 ## Fuel in the held tool, for powered ones. Hand tools leave it at 0 and ignore
 ## it - they dull instead. Per-item, same as wear.
 var held_fuel: float = 0.0
+## An upgrade in hand, if any. It takes the hand from the tool while held: pick
+## one up and the tool is put away until the upgrade is spent (or dropped).
+var held_upgrade: UpgradeData = null
 var _cut_accum: float = 0.0   # paces a continuous tool's bites
 var _fuel_owed: float = 0.0   # part-of-a-coin fuel cost, billed once it's whole
 ## How far a continuous tool has swung down from shouldered (0) to working (1).
@@ -222,7 +227,9 @@ func _physics_process(delta: float) -> void:
 		stamina = min(GameConfig.STAMINA_MAX, stamina + GameConfig.STAMINA_REGEN_RATE * delta)
 	stamina_changed.emit(stamina, GameConfig.STAMINA_MAX)
 
-	var current_speed := GameConfig.PLAYER_SPRINT_SPEED if is_sprinting else GameConfig.PLAYER_SPEED
+	# Base pace from GameConfig, scaled by whatever move-speed upgrades are in.
+	var base_speed := GameConfig.PLAYER_SPRINT_SPEED if is_sprinting else GameConfig.PLAYER_SPEED
+	var current_speed := base_speed * Upgrades.move_speed_mult
 	# Getting up to walking pace is near-instant, but the stretch above it ramps
 	# slowly: sprinting stays a commitment you build up to (so things that read
 	# your speed, like a thrown armful, can't be maxed out the instant you press
@@ -246,8 +253,9 @@ func _physics_process(delta: float) -> void:
 		return
 
 	# Both hands are busy while carrying grass or hauling the cart: the tool is
-	# still yours, it just can't be used until they're free.
-	if _hands_free():
+	# still yours, it just can't be used until they're free. Holding an upgrade
+	# also takes the hand, so the tool can't swing until the upgrade is spent.
+	if _hands_free() and held_upgrade == null:
 		if held_tool.continuous:
 			# A powered tool runs while the trigger is held, burning fuel only
 			# while it's actually working - so how much you spend is your call.
@@ -293,9 +301,16 @@ func _physics_process(delta: float) -> void:
 		if Input.is_action_pressed("interact"):
 			_refuel_from(current_target, delta)
 	elif Input.is_action_just_pressed("interact"):
+		# Holding a SELF upgrade, E spends it on the spot - it takes priority over
+		# whatever you're looking at, since the upgrade is what's in your hand. (A
+		# TARGET upgrade is thrown at its object instead; that path comes later.)
+		if held_upgrade and held_upgrade.mode == UpgradeData.Mode.SELF:
+			_use_self_upgrade()
 		# E is context-sensitive: whatever you're looking at decides what it does.
-		if current_target and current_target.is_in_group("tool_pickup") and _can_pick_up(current_target):
+		elif current_target and current_target.is_in_group("tool_pickup") and _can_pick_up(current_target):
 			_pick_up_item(current_target)
+		elif current_target and current_target.is_in_group("upgrade_pickup") and _can_pick_up_upgrade():
+			_pick_up_upgrade(current_target)
 		elif current_target and current_target.is_in_group("repair_box"):
 			current_target.start()
 		elif current_target and current_target.is_in_group("shop_stand"):
@@ -487,6 +502,34 @@ func _pick_up_item(pickup: Node) -> void:
 	# The looked-at node is gone now; clear the prompt this frame.
 	current_target = null
 	look_target_changed.emit(null)
+
+## Same bar as picking up a tool - default tool, empty arms - plus not already
+## holding an upgrade.
+func _can_pick_up_upgrade() -> bool:
+	return held_upgrade == null and held_tool == knife and carried_grass == 0.0
+
+func _pick_up_upgrade(pickup: Node) -> void:
+	held_upgrade = pickup.upgrade_data
+	_show_upgrade_model()
+	held_upgrade_changed.emit(held_upgrade)
+	pickup.queue_free()
+	current_target = null
+	look_target_changed.emit(null)
+
+## The upgrade takes the hand: clear the tool model, show the upgrade's.
+func _show_upgrade_model() -> void:
+	for child in swing_pivot.get_children():
+		child.queue_free()
+	if held_upgrade and held_upgrade.view_model_scene:
+		swing_pivot.add_child(held_upgrade.view_model_scene.instantiate())
+
+## Spend a SELF upgrade: fold its effect into Upgrades, then it's gone and the
+## tool comes back to hand.
+func _use_self_upgrade() -> void:
+	Upgrades.apply(held_upgrade)
+	held_upgrade = null
+	held_upgrade_changed.emit(null)
+	_swap_view_model(held_tool)
 
 func _drop_lantern() -> void:
 	# A set-down lantern keeps burning where it lies with the fuel it had - you

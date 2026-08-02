@@ -20,6 +20,7 @@ config/icon="res://icon.svg"
 GameConfig="*uid://nhpc6kscocb8"
 Economy="*uid://dbijpxo0igveu"
 DayNight="*uid://dpvhtfxj0fkk6"
+Upgrades="*res://autoload/upgrades.gd"
 
 [display]
 
