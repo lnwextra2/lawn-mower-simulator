@@ -84,6 +84,13 @@ func _ready() -> void:
 	material.cull_mode = BaseMaterial3D.CULL_DISABLED
 	material_override = material
 
+	# Grass casts no shadow. With thousands of blades across several fields, the
+	# directional shadow map re-rendering them every camera turn (and every frame
+	# now the sun rotates) tanked the framerate - the turn-lag hitch that read as
+	# the camera fighting back. Thin blades throw shadows that are visual noise
+	# anyway, so dropping them costs nothing on screen and fixes the stutter.
+	cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+
 	_world_origin = Vector2(global_position.x, global_position.z)
 
 	multimesh = MultiMesh.new()
