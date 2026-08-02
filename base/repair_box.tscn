@@ -1,29 +1,17 @@
 [gd_scene format=3 uid="uid://dtpkpvd4aeg7d"]
 
 [ext_resource type="Script" uid="uid://c6458nh8halc7" path="res://base/repair_box.gd" id="1_antgj"]
-[ext_resource type="Texture2D" uid="uid://i8flbtpuvrtr" path="res://assets/textures/ground048/Ground048_1K-JPG_Roughness.jpg" id="2_l8am2"]
-[ext_resource type="Texture2D" uid="uid://cdwf1a5k2l7o6" path="res://assets/textures/ground048/Ground048_1K-JPG_AmbientOcclusion.jpg" id="3_n8kfg"]
 
 [sub_resource type="BoxShape3D" id="BoxShape3D_5h11f"]
 size = Vector3(4, 0.2, 4)
 
-[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_antgj"]
-albedo_color = Color(0.5931338, 0.5931335, 0.59313357, 1)
-albedo_texture = ExtResource("2_l8am2")
-
 [sub_resource type="BoxMesh" id="BoxMesh_5h11f"]
-material = SubResource("StandardMaterial3D_antgj")
 size = Vector3(4, 0.2, 4)
 
 [sub_resource type="BoxShape3D" id="BoxShape3D_5iqjx"]
 size = Vector3(4, 1, 4)
 
-[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_5iqjx"]
-albedo_color = Color(0.64, 0.64, 0.64, 1)
-albedo_texture = ExtResource("3_n8kfg")
-
 [sub_resource type="BoxMesh" id="BoxMesh_bx8n8"]
-material = SubResource("StandardMaterial3D_5iqjx")
 size = Vector3(4, 1.8, 0.15)
 
 [node name="RepairBox" type="StaticBody3D" unique_id=1752753685]

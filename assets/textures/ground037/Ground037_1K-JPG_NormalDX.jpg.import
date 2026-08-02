@@ -2,8 +2,8 @@
 
 importer="texture"
 type="CompressedTexture2D"
-uid="uid://cdvyl1brov0iu"
-path.s3tc="res://.godot/imported/Ground048_1K-JPG_Displacement.jpg-a61d83aee998b9cf95afcccc53c2853b.s3tc.ctex"
+uid="uid://dyie5ndmbg4u3"
+path.s3tc="res://.godot/imported/Ground037_1K-JPG_NormalDX.jpg-f0d6164f983551eda9982a15debb3122.s3tc.ctex"
 metadata={
 "imported_formats": ["s3tc_bptc"],
 "vram_texture": true
@@ -11,8 +11,8 @@ metadata={
 
 [deps]
 
-source_file="res://assets/textures/ground048/Ground048_1K-JPG_Displacement.jpg"
-dest_files=["res://.godot/imported/Ground048_1K-JPG_Displacement.jpg-a61d83aee998b9cf95afcccc53c2853b.s3tc.ctex"]
+source_file="res://assets/textures/ground037/Ground037_1K-JPG_NormalDX.jpg"
+dest_files=["res://.godot/imported/Ground037_1K-JPG_NormalDX.jpg-f0d6164f983551eda9982a15debb3122.s3tc.ctex"]
 
 [params]
 
@@ -22,12 +22,12 @@ compress/lossy_quality=0.7
 compress/uastc_level=0
 compress/rdo_quality_loss=0.0
 compress/hdr_compression=1
-compress/normal_map=0
+compress/normal_map=1
 compress/channel_pack=0
 mipmaps/generate=true
 mipmaps/limit=-1
-roughness/mode=7
-roughness/src_normal="res://assets/textures/ground048/Ground048_1K-JPG_NormalGL.jpg"
+roughness/mode=1
+roughness/src_normal="res://assets/textures/ground037/Ground037_1K-JPG_NormalDX.jpg"
 process/channel_remap/red=0
 process/channel_remap/green=1
 process/channel_remap/blue=2

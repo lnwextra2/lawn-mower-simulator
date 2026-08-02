@@ -1,10 +1,14 @@
 [gd_scene format=3 uid="uid://2b1itpc4jfbp"]
 
-[ext_resource type="Material" uid="uid://c2bnvttbfx38s" path="res://assets/textures/ground048/Ground048_1K-JPG.tres" id="1_0vv12"]
+[ext_resource type="Texture2D" uid="uid://bftvdbpg34ray" path="res://assets/textures/ground037/Ground037_1K-JPG_Color.jpg" id="2_ndqk6"]
 [ext_resource type="PackedScene" uid="uid://crk8xw4lu2ftp" path="res://player/player.tscn" id="2_o5yuq"]
+[ext_resource type="Texture2D" uid="uid://bumb4dpyrco5s" path="res://assets/textures/ground037/Ground037_1K-JPG_AmbientOcclusion.jpg" id="3_c5dyf"]
 [ext_resource type="PackedScene" uid="uid://cyy4qah0fufr0" path="res://ui/hud.tscn" id="3_wjuib"]
+[ext_resource type="Texture2D" uid="uid://berp3lg8wgdsk" path="res://assets/textures/ground037/Ground037_1K-JPG_Displacement.jpg" id="4_7doj7"]
 [ext_resource type="Script" uid="uid://bm86i0uuq3hvr" path="res://environment/lighting_controller.gd" id="4_xag4j"]
+[ext_resource type="Texture2D" uid="uid://ds28xg0lq12t" path="res://assets/textures/ground037/Ground037_1K-JPG_NormalGL.jpg" id="5_1ein0"]
 [ext_resource type="PackedScene" uid="uid://cag4mjiiu3xxj" path="res://grass/grass_field.tscn" id="5_pgbyh"]
+[ext_resource type="Texture2D" uid="uid://dtip2pu8v3h5s" path="res://assets/textures/ground037/Ground037_1K-JPG_Roughness.jpg" id="6_0qigd"]
 [ext_resource type="Script" uid="uid://dxnp5sfbjdcre" path="res://base/drop_off.gd" id="6_68kkm"]
 [ext_resource type="Resource" uid="uid://b0wxx3k06huub" path="res://tools/trimmer.tres" id="8_atrxo"]
 [ext_resource type="Resource" uid="uid://bbeweuac3g0j1" path="res://tools/scythe.tres" id="9_vr6yy"]
@@ -22,12 +26,14 @@
 [ext_resource type="Resource" uid="uid://brjvkm1t71h4h" path="res://upgrades/upgrade_cart_magnet.tres" id="19_3i7yh"]
 [ext_resource type="PackedScene" path="res://environment/props/pine_a.tscn" id="19_x7oem"]
 [ext_resource type="PackedScene" path="res://environment/props/rock_a.tscn" id="20_ec2iw"]
+[ext_resource type="Resource" path="res://upgrades/upgrade_light_post.tres" id="20_kbjoq"]
 [ext_resource type="PackedScene" path="res://environment/props/rock_b.tscn" id="21_ulql8"]
 [ext_resource type="PackedScene" path="res://environment/props/plant.tscn" id="22_3i7yh"]
 [ext_resource type="PackedScene" path="res://environment/props/plant_big.tscn" id="23_5y2bn"]
 [ext_resource type="PackedScene" uid="uid://c42uhvhwcikmi" path="res://base/wooden_house.tscn" id="24_ra35m"]
 [ext_resource type="PackedScene" path="res://base/bed.tscn" id="25_x7oem"]
 [ext_resource type="Resource" path="res://upgrades/upgrade_move_speed.tres" id="28_5y2bn"]
+[ext_resource type="PackedScene" uid="uid://b03ls8ok1d4qw" path="res://base/light_post_slot.tscn" id="29_5y2bn"]
 
 [sub_resource type="StandardMaterial3D" id="StandardMaterial3D_mmx4b"]
 albedo_color = Color(1, 0.88600004, 0.24000001, 1)
@@ -45,8 +51,25 @@ radius = 2.5
 [sub_resource type="BoxShape3D" id="BoxShape3D_5h11f"]
 size = Vector3(160, 1, 160)
 
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_qa1vt"]
+albedo_color = Color(0.68, 0.6063333, 0.51, 1)
+albedo_texture = ExtResource("2_ndqk6")
+metallic_specular = 0.0
+roughness_texture = ExtResource("6_0qigd")
+roughness_texture_channel = 4
+normal_enabled = true
+normal_texture = ExtResource("5_1ein0")
+ao_enabled = true
+ao_light_affect = 1.0
+ao_texture = ExtResource("3_c5dyf")
+ao_texture_channel = 4
+heightmap_enabled = true
+heightmap_texture = ExtResource("4_7doj7")
+uv1_scale = Vector3(60, 60, 60)
+uv1_triplanar_sharpness = 1.3195081
+
 [sub_resource type="BoxMesh" id="BoxMesh_5h11f"]
-material = ExtResource("1_0vv12")
+material = SubResource("StandardMaterial3D_qa1vt")
 size = Vector3(160, 1, 160)
 
 [sub_resource type="Environment" id="Environment_5h11f"]
@@ -86,7 +109,7 @@ transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.5, 0)
 shape = SubResource("BoxShape3D_5h11f")
 
 [node name="MeshInstance3D" type="MeshInstance3D" parent="Floor" unique_id=640729761]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.5, 0)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 3.6315584, -0.46782494, 0.20633793)
 mesh = SubResource("BoxMesh_5h11f")
 
 [node name="DirectionalLight3D" type="DirectionalLight3D" parent="Floor" unique_id=824571888 groups=["sun_light"]]
@@ -213,6 +236,12 @@ price = 1
 [node name="ShopStand_upgrade4" parent="Shop" unique_id=33012364 instance=ExtResource("13_ulql8")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 31.082064, 0, -3.6478648)
 upgrade = ExtResource("19_3i7yh")
+price = 1
+price_growth = 1
+
+[node name="ShopStand_upgrade5" parent="Shop" unique_id=829367064 instance=ExtResource("13_ulql8")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 12.672394, 0, 17.944098)
+upgrade = ExtResource("20_kbjoq")
 price = 1
 price_growth = 1
 
@@ -513,3 +542,14 @@ transform = Transform3D(0.84332794, 0, 0.76014066, 0, 1.1353483, 0, -0.76014066,
 
 [node name="Plant_29" parent="Trees" unique_id=1689628619 instance=ExtResource("23_5y2bn")]
 transform = Transform3D(1.0888402, 0, -0.5162666, 0, 1.2050328, 0, 0.5162666, 0, 1.0888402, 45.73167, 0, 65.93172)
+
+[node name="Light Post" type="Node3D" parent="." unique_id=654064899]
+
+[node name="LightPostSlot" parent="Light Post" unique_id=198144095 instance=ExtResource("29_5y2bn")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 9.131201, 0, 13.316169)
+
+[node name="LightPostSlot2" parent="Light Post" unique_id=1587240976 instance=ExtResource("29_5y2bn")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 18.286453, 0, 0.24741554)
+
+[node name="LightPostSlot3" parent="Light Post" unique_id=933965720 instance=ExtResource("29_5y2bn")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 22.096964, -9.536743e-07, 14.39183)

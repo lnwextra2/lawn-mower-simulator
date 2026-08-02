@@ -2,8 +2,8 @@
 
 importer="texture"
 type="CompressedTexture2D"
-uid="uid://cdwf1a5k2l7o6"
-path.s3tc="res://.godot/imported/Ground048_1K-JPG_AmbientOcclusion.jpg-530d52781c68ae26e3568e0addf93877.s3tc.ctex"
+uid="uid://ds28xg0lq12t"
+path.s3tc="res://.godot/imported/Ground037_1K-JPG_NormalGL.jpg-90f1500cf24e6a8c3e65347c39e8cdf3.s3tc.ctex"
 metadata={
 "imported_formats": ["s3tc_bptc"],
 "vram_texture": true
@@ -11,8 +11,8 @@ metadata={
 
 [deps]
 
-source_file="res://assets/textures/ground048/Ground048_1K-JPG_AmbientOcclusion.jpg"
-dest_files=["res://.godot/imported/Ground048_1K-JPG_AmbientOcclusion.jpg-530d52781c68ae26e3568e0addf93877.s3tc.ctex"]
+source_file="res://assets/textures/ground037/Ground037_1K-JPG_NormalGL.jpg"
+dest_files=["res://.godot/imported/Ground037_1K-JPG_NormalGL.jpg-90f1500cf24e6a8c3e65347c39e8cdf3.s3tc.ctex"]
 
 [params]
 
@@ -22,12 +22,12 @@ compress/lossy_quality=0.7
 compress/uastc_level=0
 compress/rdo_quality_loss=0.0
 compress/hdr_compression=1
-compress/normal_map=0
+compress/normal_map=1
 compress/channel_pack=0
 mipmaps/generate=true
 mipmaps/limit=-1
-roughness/mode=8
-roughness/src_normal="res://assets/textures/ground048/Ground048_1K-JPG_NormalGL.jpg"
+roughness/mode=1
+roughness/src_normal="res://assets/textures/ground037/Ground037_1K-JPG_NormalGL.jpg"
 process/channel_remap/red=0
 process/channel_remap/green=1
 process/channel_remap/blue=2
