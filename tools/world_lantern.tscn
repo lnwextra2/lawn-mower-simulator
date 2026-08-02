@@ -1,9 +1,10 @@
 [gd_scene format=3 uid="uid://d0nfarel1sddu"]
 
 [ext_resource type="PackedScene" uid="uid://dah3u7j74bc6i" path="res://assets/models/nature/lantern.glb" id="1_7n5te"]
+[ext_resource type="Script" uid="uid://cjdrdhpd5gx1q" path="res://tools/self_glow.gd" id="2_glow"]
 
 [sub_resource type="BoxShape3D" id="BoxShape3D_5h11f"]
-size = Vector3(0.55, 1, 0.55)
+size = Vector3(0.55, 0.76257324, 0.55)
 
 [node name="WorldLantern" type="Node3D" unique_id=916393310]
 
@@ -11,5 +12,9 @@ size = Vector3(0.55, 1, 0.55)
 transform = Transform3D(0.7, 0, 0, 0, 0.7, 0, 0, 0, 0.7, 0, 0, 0)
 
 [node name="CollisionShape3D" type="CollisionShape3D" parent="." unique_id=1927600974]
-transform = Transform3D(0.7, 0, 0, 0, 0.7, 0, 0, 0, 0.7, 0, 0.25, 0)
+transform = Transform3D(0.7, 0, 0, 0, 0.7, 0, 0, 0, 0.7, 0, 0.2681606, 0)
 shape = SubResource("BoxShape3D_5h11f")
+
+[node name="SelfGlow" type="Node3D" parent="." unique_id=982026978]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.2711441, 0)
+script = ExtResource("2_glow")

@@ -20,8 +20,10 @@ func _ready() -> void:
 	add_to_group("interactable")
 	add_to_group("upgrade_pickup")
 	# Loose-item layer: falls onto the world and is aimable at, but isn't a wall.
+	# Masks the world (to land on it) and look-only (to hit light-post slots, which
+	# sit on that layer so the player walks through them).
 	collision_layer = GameConfig.LAYER_LOOSE_ITEM
-	collision_mask = GameConfig.LAYER_WORLD
+	collision_mask = GameConfig.LAYER_WORLD | GameConfig.LAYER_LOOK_ONLY
 	body_entered.connect(_on_body_entered)
 	if upgrade_data and upgrade_data.world_model_scene:
 		placeholder.visible = false
@@ -36,6 +38,12 @@ func arm() -> void:
 	max_contacts_reported = 4
 
 func _on_body_entered(body: Node) -> void:
-	if armed and _target_group != "" and body.is_in_group(_target_group):
+	if not armed or _target_group == "" or not body.is_in_group(_target_group):
+		return
+	# A target that installs the upgrade itself (a light-post slot) takes it;
+	# otherwise it's a global stat effect folded into Upgrades (the cart).
+	if body.has_method("receive_upgrade"):
+		body.receive_upgrade(upgrade_data)
+	else:
 		Upgrades.apply(upgrade_data)
-		queue_free()
+	queue_free()

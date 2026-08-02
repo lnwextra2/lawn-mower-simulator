@@ -1,0 +1,22 @@
+[gd_scene format=3 uid="uid://b03ls8ok1d4qw"]
+
+[ext_resource type="Script" uid="uid://blyujx5og8u11" path="res://base/light_post_slot.gd" id="1_slot"]
+[ext_resource type="PackedScene" uid="uid://8ll817ojnts5" path="res://base/light_post.tscn" id="2_post"]
+[ext_resource type="PackedScene" uid="uid://bx2eqtp4ltmhj" path="res://assets/models/nature/post_lantern.glb" id="3_ghost"]
+
+[sub_resource type="CylinderShape3D" id="CylinderShape3D_5h11f"]
+height = 3.5551758
+radius = 0.9453125
+
+[node name="LightPostSlot" type="StaticBody3D" unique_id=499255050]
+script = ExtResource("1_slot")
+light_post_scene = ExtResource("2_post")
+
+[node name="Ghost" type="Node3D" parent="." unique_id=935555255]
+
+[node name="Model" parent="Ghost" unique_id=1145712806 instance=ExtResource("3_ghost")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, -1.0064795)
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="." unique_id=686536750]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.6595128, -0.50837266)
+shape = SubResource("CylinderShape3D_5h11f")

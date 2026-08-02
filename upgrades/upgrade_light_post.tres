@@ -1,0 +1,10 @@
+[gd_resource type="Resource" script_class="UpgradeData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://upgrades/upgrade_data.gd" id="1_ud"]
+
+[resource]
+script = ExtResource("1_ud")
+upgrade_name = "เสาตะเกียง"
+mode = 1
+effect = 5
+target_group = "light_post_slot"
