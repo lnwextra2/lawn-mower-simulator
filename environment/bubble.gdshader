@@ -10,9 +10,13 @@ render_mode blend_mix, cull_disabled, unshaded, depth_draw_never, shadows_disabl
 uniform float rim_power : hint_range(0.5, 12.0) = 4.0;
 // Opacity of the edge rim.
 uniform float rim_alpha : hint_range(0.0, 1.0) = 0.4;
+// How bright the rim glows. On a dark night sky a high value makes the rim read
+// as a ring of light (like the reference); by day it's just a highlight against
+// the bright sky. 1 = no extra glow.
+uniform float rim_glow : hint_range(1.0, 6.0) = 2.5;
 // Faint body across the whole bubble so it isn't invisible head-on. Keep low -
 // water is clear.
-uniform float film_alpha : hint_range(0.0, 1.0) = 0.06;
+uniform float film_alpha : hint_range(0.0, 1.0) = 0.006;
 // The water's tint - a touch of cool blue-white, like clean water.
 uniform vec3 water_tint : source_color = vec3(0.85, 0.93, 1.0);
 // The glint. spec_power: higher = smaller, sharper. spec_strength: how bright.
@@ -28,7 +32,9 @@ void fragment() {
 	float rim = pow(1.0 - facing, rim_power);
 	// A tight white highlight where the surface faces the "sun".
 	float spec = pow(max(dot(n, normalize(spec_dir)), 0.0), spec_power) * spec_strength;
-	// Clear water: cool-white tint plus the white glint, no rainbow.
-	ALBEDO = water_tint + vec3(spec);
+	// Clear water: cool-white tint plus the white glint, no rainbow. The rim is
+	// brightened by rim_glow so on a dark sky it reads as a ring of light, while
+	// on a bright sky the extra brightness barely shows - a highlight either way.
+	ALBEDO = water_tint * (1.0 + rim * (rim_glow - 1.0)) + vec3(spec);
 	ALPHA = clamp(film_alpha + rim * rim_alpha + spec, 0.0, 1.0);
 }

@@ -7,9 +7,10 @@
 render_priority = 0
 shader = ExtResource("2_shader")
 shader_parameter/rim_power = 3.00000011875
-shader_parameter/rim_alpha = 0.44800002128
+shader_parameter/rim_alpha = 0.50000002375
+shader_parameter/rim_glow = 6.0
 shader_parameter/film_alpha = 0.0010000000475
-shader_parameter/water_tint = Color(0.6633, 0.8538751, 0.99, 1)
+shader_parameter/water_tint = Color(0.68522644, 0.9204346, 0.9967362, 1)
 shader_parameter/spec_power = 90.0
 shader_parameter/spec_strength = 1.0
 shader_parameter/spec_dir = Vector3(0.4, 0.8, 0.3)
@@ -37,7 +38,7 @@ rings = 5
 
 [node name="Bubbles" type="GPUParticles3D" unique_id=1267073619]
 material_override = SubResource("ShaderMaterial_bubble")
-amount = 100
+amount = 75
 lifetime = 9.0
 process_material = SubResource("ParticleProcessMaterial_bubble")
 draw_pass_1 = SubResource("SphereMesh_bubble")
