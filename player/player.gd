@@ -46,6 +46,9 @@ var is_dead: bool = false
 ## from the camera, plus lift for the arc).
 @export var upgrade_throw_force: float = 7.0
 @export var upgrade_throw_lift: float = 4.0
+## Where a held upgrade's placeholder box sits in hand, until the UpgradeData gets
+## a real posed view_model_scene. Tune to place it nicely in view.
+@export var upgrade_hold_offset: Vector3 = Vector3(0.6, -0.1, -0.5)
 
 var gravity: float = ProjectSettings.get_setting("physics/3d/default_gravity")
 var stamina: float = GameConfig.STAMINA_MAX
@@ -533,12 +536,25 @@ func _pick_up_upgrade(pickup: Node) -> void:
 	current_target = null
 	look_target_changed.emit(null)
 
-## The upgrade takes the hand: clear the tool model, show the upgrade's.
+## The upgrade takes the hand: clear the tool model, show the upgrade in hand.
 func _show_upgrade_model() -> void:
 	for child in swing_pivot.get_children():
 		child.queue_free()
-	if held_upgrade and held_upgrade.view_model_scene:
+	# Clear any pose a tool left on the pivot so the upgrade sits square.
+	swing_pivot.rotation_degrees = Vector3.ZERO
+	if held_upgrade == null:
+		return
+	if held_upgrade.view_model_scene:
 		swing_pivot.add_child(held_upgrade.view_model_scene.instantiate())
+	else:
+		# No custom model yet: a small placeholder so the upgrade reads as held,
+		# not vanished. Give the UpgradeData a view_model_scene to replace it.
+		var mi := MeshInstance3D.new()
+		var mesh := BoxMesh.new()
+		mesh.size = Vector3(0.18, 0.18, 0.18)
+		mi.mesh = mesh
+		mi.position = upgrade_hold_offset
+		swing_pivot.add_child(mi)
 
 ## Spend a SELF upgrade: fold its effect into Upgrades, then it's gone and the
 ## tool comes back to hand.
