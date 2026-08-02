@@ -32,6 +32,7 @@
 [ext_resource type="PackedScene" path="res://environment/props/plant_big.tscn" id="23_5y2bn"]
 [ext_resource type="PackedScene" uid="uid://c42uhvhwcikmi" path="res://base/wooden_house.tscn" id="24_ra35m"]
 [ext_resource type="PackedScene" path="res://base/bed.tscn" id="25_x7oem"]
+[ext_resource type="PackedScene" path="res://environment/celestial.tscn" id="26_ec2iw"]
 [ext_resource type="Resource" path="res://upgrades/upgrade_move_speed.tres" id="28_5y2bn"]
 [ext_resource type="PackedScene" uid="uid://b03ls8ok1d4qw" path="res://base/light_post_slot.tscn" id="29_5y2bn"]
 
@@ -553,3 +554,5 @@ transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 18.286453, 0, 0.24741554)
 
 [node name="LightPostSlot3" parent="Light Post" unique_id=933965720 instance=ExtResource("29_5y2bn")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 22.096964, -9.536743e-07, 14.39183)
+
+[node name="CelestialDome" parent="." unique_id=1325779792 instance=ExtResource("26_ec2iw")]
