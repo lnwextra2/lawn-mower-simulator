@@ -9,10 +9,15 @@ extends WorldEnvironment
 ## sunrise, 0.5=noon, 0.75=sunset). Leave the exports empty and sensible defaults
 ## are built in _ready; assign your own to art-direct the whole day.
 
+const SKY_SHADER := preload("res://environment/sky.gdshader")
+
 ## Colour high overhead (deepest part of the sky).
 @export var sky_top_gradient: Gradient
 ## Colour down at the horizon (brighter, hazier).
 @export var sky_horizon_gradient: Gradient
+## Cloud colour across the day - white by day, dark grey by night (so clouds don't
+## glow out against the night sky), warm at dawn/dusk.
+@export var cloud_color_gradient: Gradient
 ## Sun (directional light) colour across the day - warm at the edges, white at noon.
 @export var sun_gradient: Gradient
 ## Ambient fill colour - what lights surfaces the sun doesn't hit.
@@ -31,35 +36,32 @@ extends WorldEnvironment
 
 @onready var sun: DirectionalLight3D = get_tree().get_first_node_in_group("sun_light")
 
-var _sky_mat: ProceduralSkyMaterial
+var _sky_mat: ShaderMaterial
 
 func _ready() -> void:
-	# Real sky dome as the background; the ProceduralSkyMaterial also draws a sun
-	# glow at the DirectionalLight's direction, so the sun's disc rides the sky as
-	# it rotates. Ambient stays a colour we control, or night never gets dark.
-	_sky_mat = ProceduralSkyMaterial.new()
-	_sky_mat.sun_angle_max = 8.0
-	_sky_mat.sun_curve = 0.08
+	# Real sky dome via our own sky shader (gradient + sun glow + FBM clouds); it
+	# draws the sun glow at the DirectionalLight's direction, so the sun rides the
+	# sky as it rotates. Ambient stays a colour we control, or night never gets dark.
+	_sky_mat = ShaderMaterial.new()
+	_sky_mat.shader = SKY_SHADER
 	var sky := Sky.new()
 	sky.sky_material = _sky_mat
 	environment.sky = sky
 	environment.background_mode = Environment.BG_SKY
 	environment.ambient_light_source = Environment.AMBIENT_SOURCE_COLOR
-	if sky_top_gradient == null or sky_horizon_gradient == null or sun_gradient == null \
-			or ambient_gradient == null or sun_energy == null or ambient_energy == null:
+	if sky_top_gradient == null or sky_horizon_gradient == null or cloud_color_gradient == null \
+			or sun_gradient == null or ambient_gradient == null or sun_energy == null \
+			or ambient_energy == null:
 		_build_defaults()
 
 func _process(_delta: float) -> void:
 	var t := DayNight.time
 	var top := sky_top_gradient.sample(t)
 	var horizon := sky_horizon_gradient.sample(t)
-	_sky_mat.sky_top_color = top
-	_sky_mat.sky_horizon_color = horizon
-	# Ground half of the dome (below the horizon line) held at the horizon colour,
-	# NOT darkening down to the deep top colour - so looking below the horizon
-	# (mid-jump, over the floor's edge) shows bright sky, not a dark band.
-	_sky_mat.ground_horizon_color = horizon
-	_sky_mat.ground_bottom_color = horizon
+	_sky_mat.set_shader_parameter("sky_top_color", top)
+	_sky_mat.set_shader_parameter("sky_horizon_color", horizon)
+	_sky_mat.set_shader_parameter("sun_color", sun_gradient.sample(t))
+	_sky_mat.set_shader_parameter("cloud_color", cloud_color_gradient.sample(t))
 	environment.ambient_light_color = ambient_gradient.sample(t)
 	environment.ambient_light_energy = ambient_energy.sample(t)
 	if sun:
@@ -87,6 +89,14 @@ func _build_defaults() -> void:
 		[night_top, night_top, dawn_top, day_top, day_top, dawn_top, night_top, night_top])
 	sky_horizon_gradient = _grad(offs,
 		[night_hor, night_hor, dawn_hor, day_hor, day_hor, dawn_hor, night_hor, night_hor])
+
+	# Clouds: white by day, warm at dawn/dusk, dark grey by night so they recede
+	# into the night sky instead of glowing white and looming.
+	var night_cloud := Color(0.16, 0.16, 0.23)
+	var dawn_cloud := Color(1.0, 0.78, 0.62)
+	var day_cloud := Color(1.0, 1.0, 1.0)
+	cloud_color_gradient = _grad(offs,
+		[night_cloud, night_cloud, dawn_cloud, day_cloud, day_cloud, dawn_cloud, night_cloud, night_cloud])
 
 	var sun_warm := Color(1.0, 0.6, 0.35)
 	sun_gradient = _grad(
