@@ -235,13 +235,17 @@ func _physics_process(delta: float) -> void:
 	# your speed, like a thrown armful, can't be maxed out the instant you press
 	# it) without walking feeling like it has to wait to start.
 	var target := direction * current_speed
+	# Rates are fractions of top speed, so multiply by it to get units/sec^2 - this
+	# is what keeps handling responsive as upgrades push the cap up. Walking speed
+	# scales with the same upgrade, so the walk/sprint split moves with it.
+	var walk_speed := GameConfig.PLAYER_SPEED * Upgrades.move_speed_mult
 	var rate: float
 	if not direction:
-		rate = GameConfig.PLAYER_DECELERATION
-	elif Vector2(velocity.x, velocity.z).length() < GameConfig.PLAYER_SPEED:
-		rate = GameConfig.PLAYER_WALK_ACCELERATION
+		rate = GameConfig.PLAYER_DECEL_FRACTION * current_speed
+	elif Vector2(velocity.x, velocity.z).length() < walk_speed:
+		rate = GameConfig.PLAYER_WALK_ACCEL_FRACTION * current_speed
 	else:
-		rate = GameConfig.PLAYER_SPRINT_ACCELERATION
+		rate = GameConfig.PLAYER_SPRINT_ACCEL_FRACTION * current_speed
 	velocity.x = move_toward(velocity.x, target.x, rate * delta)
 	velocity.z = move_toward(velocity.z, target.z, rate * delta)
 	_apply_cart_leash()

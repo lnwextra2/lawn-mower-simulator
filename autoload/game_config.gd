@@ -5,14 +5,18 @@ const PLAYER_SPEED: float = 5.0
 const PLAYER_JUMP_VELOCITY: float = 4.5
 const MOUSE_SENSITIVITY: float = 0.003
 const PLAYER_SPRINT_SPEED: float = 8.0
-# Units/sec^2. Walking is near-instant - having to wait to start moving at all
-# just feels unresponsive. Only the stretch ABOVE walking speed ramps slowly, so
-# sprinting stays a commitment you build up to (~0.75s from walk to full sprint).
-const PLAYER_WALK_ACCELERATION: float = 60.0
-const PLAYER_SPRINT_ACCELERATION: float = 4.0
-# Stopping is quicker than starting - it keeps control tight and stops the player
-# skating past where they meant to stop.
-const PLAYER_DECELERATION: float = 20.0
+# Acceleration as a FRACTION of current top speed per second, not an absolute
+# units/sec^2. Multiplied by top speed at runtime, so it scales WITH speed: a
+# move-speed upgrade raises the cap and how fast you reach and turn at it in step,
+# so handling stays as responsive as at base speed instead of getting sluggish as
+# the cap climbs. Walking is near-instant; only the stretch above walking ramps
+# slowly, so sprinting stays a commitment you build up to.
+const PLAYER_WALK_ACCEL_FRACTION: float = 12.0
+const PLAYER_SPRINT_ACCEL_FRACTION: float = 0.7
+# Stopping (and turning, which decelerates the old heading) is quicker than
+# starting - it keeps control tight and lets you change direction at speed
+# without waiting to coast down first.
+const PLAYER_DECEL_FRACTION: float = 4.0
 const STAMINA_MAX: float = 100.0
 const STAMINA_DRAIN_RATE: float = 25.0
 const STAMINA_REGEN_RATE: float = 15.0
