@@ -1,0 +1,45 @@
+[gd_scene format=3 uid="uid://cb12ykkm8mqfr"]
+
+[ext_resource type="Script" uid="uid://dljda0gsxq3ul" path="res://creatures/creature.gd" id="1_crt"]
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_crt"]
+albedo_color = Color(1, 0.55, 0.25, 1)
+
+[sub_resource type="SphereMesh" id="SphereMesh_crt"]
+material = SubResource("StandardMaterial3D_crt")
+radius = 0.4
+height = 0.8
+
+[sub_resource type="SphereShape3D" id="SphereShape3D_crt"]
+radius = 0.4
+
+[sub_resource type="SphereMesh" id="SphereMesh_5h11f"]
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_5iqjx"]
+albedo_color = Color(0.19434929, 0.19434926, 0.19434926, 1)
+
+[sub_resource type="SphereMesh" id="SphereMesh_bx8n8"]
+material = SubResource("StandardMaterial3D_5iqjx")
+
+[node name="Creature" type="CharacterBody3D" unique_id=1535583619]
+script = ExtResource("1_crt")
+
+[node name="Mesh" type="MeshInstance3D" parent="." unique_id=286847956]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.4, 0)
+mesh = SubResource("SphereMesh_crt")
+
+[node name="Collision" type="CollisionShape3D" parent="." unique_id=681140669]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.4, 0)
+shape = SubResource("SphereShape3D_crt")
+
+[node name="MeshInstance3D" type="MeshInstance3D" parent="." unique_id=1430827470]
+transform = Transform3D(0.7, 0, 0, 0, 0.7, 0, 0, 0, 0.7, -0.0044537187, 0.42277974, 0.07940072)
+mesh = SubResource("SphereMesh_5h11f")
+
+[node name="MeshInstance3D2" type="MeshInstance3D" parent="." unique_id=176045957]
+transform = Transform3D(0.3, 0, 0, 0, 0.3, 0, 0, 0, 0.3, 0.06732237, 0.5530419, 0.24110794)
+mesh = SubResource("SphereMesh_bx8n8")
+
+[node name="MeshInstance3D3" type="MeshInstance3D" parent="." unique_id=1763979507]
+transform = Transform3D(0.3, 0, 0, 0, 0.3, 0, 0, 0, 0.3, -0.09819767, 0.5530419, 0.23641759)
+mesh = SubResource("SphereMesh_bx8n8")

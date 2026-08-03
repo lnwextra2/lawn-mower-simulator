@@ -46,6 +46,8 @@ var is_dead: bool = false
 ## from the camera, plus lift for the arc).
 @export var upgrade_throw_force: float = 7.0
 @export var upgrade_throw_lift: float = 4.0
+## How hard a swing knocks a creature flying.
+@export var creature_hit_force: float = 6.0
 ## Where a held upgrade's placeholder box sits in hand, until the UpgradeData gets
 ## a real posed view_model_scene. Tune to place it nicely in view.
 @export var upgrade_hold_offset: Vector3 = Vector3(0.6, -0.1, -0.5)
@@ -817,6 +819,10 @@ func _cut_with_tool() -> void:
 	for field in get_tree().get_nodes_in_group("grass_field"):
 		cut += field.cut_near(at, radius, min_growth)
 	_wear_tool(cut)
+	# A swing that sweeps through a creature knocks it flying, away from the player.
+	for creature in get_tree().get_nodes_in_group("creature"):
+		if creature.global_position.distance_to(at) <= radius + 0.5:
+			creature.hit(global_position, creature_hit_force)
 
 func _update_swing(delta: float) -> void:
 	# Port of the prototype's sin-driven scythe swing. One sin() ramps 0->1->0
