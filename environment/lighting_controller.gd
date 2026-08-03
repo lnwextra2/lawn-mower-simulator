@@ -49,6 +49,13 @@ func _ready() -> void:
 	environment.sky = sky
 	environment.background_mode = Environment.BG_SKY
 	environment.ambient_light_source = Environment.AMBIENT_SOURCE_COLOR
+	# A soft bloom so bright things - bubble rims, the sun, lit lamps - bleed a
+	# gentle halo: the glossy Frutiger-Aero glow, and it makes bubbles read as
+	# lit. The HDR threshold keeps it to the bright stuff, not the whole scene.
+	environment.glow_enabled = true
+	environment.glow_intensity = 0.4
+	environment.glow_bloom = 0.15
+	environment.glow_hdr_threshold = 0.85
 	if sky_top_gradient == null or sky_horizon_gradient == null or cloud_color_gradient == null \
 			or sun_gradient == null or ambient_gradient == null or sun_energy == null \
 			or ambient_energy == null:
