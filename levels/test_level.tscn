@@ -36,6 +36,7 @@
 [ext_resource type="Resource" path="res://upgrades/upgrade_move_speed.tres" id="28_5y2bn"]
 [ext_resource type="PackedScene" uid="uid://b03ls8ok1d4qw" path="res://base/light_post_slot.tscn" id="29_5y2bn"]
 [ext_resource type="PackedScene" uid="uid://clgeqks31lwws" path="res://environment/bubbles.tscn" id="29_7doj7"]
+[ext_resource type="PackedScene" path="res://ui/graphics_settings_menu.tscn" id="37_1ein0"]
 
 [sub_resource type="BoxShape3D" id="BoxShape3D_5h11f"]
 size = Vector3(160, 1, 160)
@@ -563,3 +564,5 @@ surface_material_override/0 = SubResource("StandardMaterial3D_8jkpt")
 
 [node name="Cart" parent="Test" unique_id=1380027441 instance=ExtResource("14_3i7yh")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 22.219658, 0, -12.667651)
+
+[node name="GraphicsSettingsMenu" parent="." unique_id=1546655293 instance=ExtResource("37_1ein0")]
