@@ -30,6 +30,20 @@ const KEYS := [
 	"bubbles_enabled", "bubble_amount", "bubble_rim_glow",
 ]
 
+## UI metadata per setting: which section it sits in, its label, control type and
+## range. The options menu builds itself from this - add a setting to KEYS and
+## here and it appears in the menu with no UI code to touch.
+const META := {
+	"bloom_enabled": {"section": "Bloom", "label": "เปิด Bloom", "type": "bool"},
+	"bloom_intensity": {"section": "Bloom", "label": "ความแรง", "type": "float", "min": 0.0, "max": 2.0, "step": 0.05},
+	"clouds_enabled": {"section": "เมฆ", "label": "เปิดเมฆ", "type": "bool"},
+	"cloud_coverage": {"section": "เมฆ", "label": "ปริมาณ", "type": "float", "min": 0.0, "max": 1.0, "step": 0.02},
+	"cloud_speed": {"section": "เมฆ", "label": "ความเร็ว", "type": "float", "min": 0.0, "max": 0.2, "step": 0.005},
+	"bubbles_enabled": {"section": "ฟองลอย", "label": "เปิดฟอง", "type": "bool"},
+	"bubble_amount": {"section": "ฟองลอย", "label": "จำนวน", "type": "int", "min": 0, "max": 200, "step": 1},
+	"bubble_rim_glow": {"section": "ฟองลอย", "label": "ความเรือง", "type": "float", "min": 1.0, "max": 6.0, "step": 0.1},
+}
+
 func _ready() -> void:
 	load_settings()
 

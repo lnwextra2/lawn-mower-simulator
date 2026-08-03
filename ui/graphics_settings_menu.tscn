@@ -1,0 +1,31 @@
+[gd_scene load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://ui/graphics_settings_menu.gd" id="1_menu"]
+
+[node name="GraphicsSettingsMenu" type="CanvasLayer"]
+script = ExtResource("1_menu")
+
+[node name="Panel" type="Panel" parent="."]
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -230.0
+offset_top = -270.0
+offset_right = 230.0
+offset_bottom = 270.0
+
+[node name="Margin" type="MarginContainer" parent="Panel"]
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+theme_override_constants/margin_left = 18
+theme_override_constants/margin_top = 18
+theme_override_constants/margin_right = 18
+theme_override_constants/margin_bottom = 18
+
+[node name="Scroll" type="ScrollContainer" parent="Panel/Margin"]
+
+[node name="List" type="VBoxContainer" parent="Panel/Margin/Scroll"]
+custom_minimum_size = Vector2(400, 0)
+theme_override_constants/separation = 10
