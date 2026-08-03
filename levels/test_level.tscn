@@ -37,6 +37,7 @@
 [ext_resource type="PackedScene" uid="uid://b03ls8ok1d4qw" path="res://base/light_post_slot.tscn" id="29_5y2bn"]
 [ext_resource type="PackedScene" uid="uid://clgeqks31lwws" path="res://environment/bubbles.tscn" id="29_7doj7"]
 [ext_resource type="PackedScene" path="res://ui/graphics_settings_menu.tscn" id="37_1ein0"]
+[ext_resource type="PackedScene" path="res://creatures/creature.tscn" id="38_0qigd"]
 
 [sub_resource type="BoxShape3D" id="BoxShape3D_5h11f"]
 size = Vector3(160, 1, 160)
@@ -566,3 +567,14 @@ surface_material_override/0 = SubResource("StandardMaterial3D_8jkpt")
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 22.219658, 0, -12.667651)
 
 [node name="GraphicsSettingsMenu" parent="." unique_id=1546655293 instance=ExtResource("37_1ein0")]
+
+[node name="Node3D" type="Node3D" parent="." unique_id=1817691154]
+
+[node name="Creature" parent="Node3D" unique_id=951117692 instance=ExtResource("38_0qigd")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 14.669531, 0, 4.51116)
+
+[node name="Creature2" parent="Node3D" unique_id=1995223574 instance=ExtResource("38_0qigd")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 13.921847, -9.536743e-07, 14.792901)
+
+[node name="Creature3" parent="Node3D" unique_id=975331124 instance=ExtResource("38_0qigd")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 8.550177, -9.536743e-07, 15.002229)
